@@ -2,3 +2,5 @@ cpp/verifier/.*\.o
 cpp/verifier/test
 cpp/verifier/analyze_semantics
 cpp/verifier/generate_traces
+java/histories/bin
+java/histories/jar
