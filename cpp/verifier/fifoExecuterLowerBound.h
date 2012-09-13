@@ -15,10 +15,10 @@ class FifoExecuterLowerBound : public FifoExecuter {
  private:
   virtual void executeOperationWithOverlaps(Operation* element, Histogram* histogram);
   static void overlapTest1();
-//  static void overlapTest2();
-//  static void overlapTest3();
-//  static void overlapTest4();
-//  static void overlapTest5();
+  static void overlapTest2();
+  static void overlapTest3();
+  static void overlapTest4();
+  static void overlapTest5();
 //  static void insertOverlapTest1();
 //  static void insertOverlapTest2();
 //  static void insertOverlapMixedTest1();
