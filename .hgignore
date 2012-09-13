@@ -1,0 +1,4 @@
+cpp/verifier/.*\.o
+cpp/verifier/test
+cpp/verifier/analyze_semantics
+cpp/verifier/generate_traces
