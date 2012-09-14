@@ -11,20 +11,24 @@
 #include "fifoExecuterLowerBound.h"
 
 Operation::Operation() :
-    start_(0), real_start_(0), end_(0), id_(0), next_(this), prev_(this), deleted_(true) {
+    start_(0), real_start_(0), end_(0), type_(Operation::INSERT), value_(0),
+    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL){
 }
 
 Operation::Operation(Time start, Time end) :
-    start_(start), real_start_(start), end_(end), id_(0), next_(this), prev_(this), deleted_(true) {
+    start_(start), real_start_(start), end_(end), type_(Operation::INSERT), value_(0),
+    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL) {
 }
 
 Operation::Operation(Time start, Time end, int id) :
-    start_(start), real_start_(start), end_(end), id_(id), next_(this), prev_(this), deleted_(true) {
+    start_(start), real_start_(start), end_(end), type_(Operation::INSERT), value_(0),
+    next_(this), prev_(this), deleted_(false), error_(0), id_(id), order_(0), matching_op_(NULL) {
 }
 
 Operation::Operation(Time start, Time end, OperationType type, int value) :
-    start_(start), real_start_(start), end_(end), type_(type), value_(value), next_(this), prev_(
-        this), deleted_(true) {
+    start_(start), real_start_(start), end_(end), type_(type), value_(value),
+    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL) {
+
 }
 
 bool Operation::operator<(const Operation& op) const {
@@ -80,7 +84,7 @@ void Operation::test() {
 }
 
 void Operation::print() const {
-  printf("%16" PRId64 " %16" PRId64 " %6d %6d %6d %6d %6d overlaps: ", start_,
+  printf("%16" PRId64 " %16" PRId64 " %6d %6d %6d %6d %6d overlaps: ", real_start_,
       end_, id_, type_, value_, order_, error_);
 //  for (size_t i = 0; i < overlaps_.size(); i++) {
 //    printf("%d ", overlaps_[i]);
@@ -88,13 +92,7 @@ void Operation::print() const {
   printf("\n");
 }
 
-int compare_operations_by_start_time(const void* left, const void* right) {
-  return (*(Operation**) left)->start() > (*(Operation**) right)->start();
-}
 
-int compare_ops_by_value(const void* left, const void* right) {
-  return (*(Operation**) left)->value() > (*(Operation**) right)->value();
-}
 
 /**
  * Compares the start times of remove operations with the start times
@@ -105,56 +103,73 @@ int compare_ops_by_value(const void* left, const void* right) {
  * has even started.
  */
 void Operations::adjust_start_times(Operation** ops, int num_operations) {
-  Operation** insert_ops = new Operation*[num_operations];
-  Operation** remove_ops = new Operation*[num_operations];
+  insert_ops_ = new Operation*[num_operations];
+  remove_ops_ = new Operation*[num_operations];
   int insert_index = 0;
   int remove_index = 0;
   for (int i = 0; i < num_operations; i++) {
     if (ops[i]->type_ == Operation::INSERT) {
-      insert_ops[insert_index] = ops[i];
+      insert_ops_[insert_index] = ops[i];
       insert_index++;
     } else {
-      remove_ops[remove_index] = ops[i];
+      remove_ops_[remove_index] = ops[i];
       remove_index++;
     }
   }
-  qsort(insert_ops, insert_index, sizeof(Operation*), compare_ops_by_value);
-  qsort(remove_ops, remove_index, sizeof(Operation*), compare_ops_by_value);
-  int j = 0;
-  for (int i = 0; i < remove_index; i++) {
 
-    int value = remove_ops[i]->value_;
+  num_insert_ops_ = insert_index;
+  num_remove_ops_ = remove_index;
+
+  qsort(insert_ops_, num_insert_ops_, sizeof(Operation*), Operation::compare_ops_by_value);
+  qsort(remove_ops_, num_remove_ops_, sizeof(Operation*), Operation::compare_ops_by_value);
+  int j = 0;
+  for (int i = 0; i < num_remove_ops_; i++) {
+
+    int value = remove_ops_[i]->value_;
     if (value != -1) {
-      while (insert_ops[j]->value_ < value) {
+      while (insert_ops_[j]->value_ < value) {
         j++;
-        if (j >= insert_index) {
+        if (j >= num_insert_ops_) {
           fprintf(stderr,
               "FATAL3: The value %d gets removed but never inserted.\n", value);
           exit(-1);
         }
-        assert(j < insert_index);
+        assert(j < num_insert_ops_);
       }
 
-      if (insert_ops[j]->value_ != value) {
+      if (insert_ops_[j]->value_ != value) {
         fprintf(stderr,
             "FATAL4: The value %d gets removed but never inserted.\n", value);
         exit(-1);
       }
 
-      if (insert_ops[j]->start_ > remove_ops[i]->start_) {
-        if (insert_ops[j]->start_ > remove_ops[i]->end_) {
+      insert_ops_[j]->matching_op_ = remove_ops_[i];
+      remove_ops_[i]->matching_op_ = insert_ops_[j];
+
+      // If the insert operation starts before the remove operation let them
+      // both start at the same time, the remove operation cannot take effect
+      // before the remove operation has started.
+      if (insert_ops_[j]->start_ > remove_ops_[i]->start_) {
+        if (insert_ops_[j]->start_ > remove_ops_[i]->end_) {
           fprintf(stderr,
               "FATAL5: The insert operation of value %d starts after its remove operation has ended.\n",
               value);
           exit(-1);
         }
-        remove_ops[i]->start_ = insert_ops[j]->start_;
+        remove_ops_[i]->start_ = insert_ops_[j]->start_;
+      }
+
+      // If the insert operation ends after the remove operation let them both
+      // end at the same time, because the insert operation cannot take effect
+      // after the element has already been removed again.
+      if(remove_ops_[i]->end_ < insert_ops_[j]->end_) {
+        insert_ops_[j]->end_ = remove_ops_[i]->end_;
       }
     }
   }
-  delete[] insert_ops;
-  delete[] remove_ops;
 }
+
+
 
 void Operations::Initialize(Operation** ops, int num_operations) {
   ops_ = ops;
@@ -165,31 +180,7 @@ void Operations::Initialize(Operation** ops, int num_operations) {
   // No need to adjust the end times of insert operations, the adjustment of the start times of
   // remove operations fixes the problem.
 
-  qsort(ops_, num_operations_, sizeof(Operation*), compare_operations_by_start_time);
-
-  for (int i = 0; i < num_operations; i++) {
-    ops_[i]->deleted_ = false;
-    ops_[i]->id_ = i + 1;
-    if (i == 0) {
-      ops_[i]->next_ = ops_[i + 1];
-      ops_[i]->prev_ = &head_;
-
-    } else if (i == num_operations - 1) {
-      ops_[i]->next_ = &head_;
-      ops_[i]->prev_ = ops_[i - 1];
-    } else {
-      ops_[i]->next_ = ops_[i + 1];
-      ops_[i]->prev_ = ops_[i - 1];
-    }
-  }
-
-  head_.next_ = ops_[0];
-  head_.prev_ = ops_[num_operations_ - 1];
-
-//  for (int i = 0; i < num_operations; ++i) {
-//    ops_[i].id_ = i + 1;
-//    insert(&ops_[i]);
-//  }
+  create_doubly_linked_list(&head_, ops_, num_operations_);
 }
 
 Operations::Operations(FILE* input, int num_ops) :
@@ -202,8 +193,8 @@ Operations::Operations(FILE* input, int num_ops) :
     Time op_end;
     Operation::OperationType op_type;
     int op_value;
-    if (fscanf(input, "%"PRIu64" %"PRIu64" %d %d\n", &op_start,
-        &op_end, &type, &op_value) == EOF) {
+    if (fscanf(input, "%"PRIu64" %"PRIu64" %d %d\n", &op_start, &op_end, &type,
+        &op_value) == EOF) {
       fprintf(stderr, "ERROR: could not read all %d elements, abort after %d\n",
           num_operations_, i);
       exit(2);
@@ -354,6 +345,7 @@ void Operations::CalculateOverlaps() {
     Operation* tmp = element->next_;
     while (tmp != &head_ && element->end() >= tmp->start()) {
       assert(!tmp->deleted());
+      element->overlaps_insert_ops_.push_back(tmp);
       element->overlaps_.push_back(tmp->id());
       if (tmp->type() == Operation::INSERT) {
         element->insert_overlaps_value_.push_back(tmp->value());
@@ -401,7 +393,8 @@ void Operation::determineExecutionOrderLowerBound(Operations& ops,
   Time linearizable_time_window_end = end();
   for (size_t i = 0; i < overlaps_.size(); i++) {
     Operation* element = *ops[overlaps_[i]];
-    if (element->start() < linearizable_time_window_end) {
+    // AH: < or <=?
+    if (element->start() <= linearizable_time_window_end) {
       // AH: What is element->delete? It is not mentioned in the documentation of the function.
       if (!element->deleted() && element->value() != -1
           && element->type() == REMOVE) {

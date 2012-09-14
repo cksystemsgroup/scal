@@ -38,7 +38,10 @@ class Operation {
     Operation(Time start, Time end);
     Operation(Time start, Time end, int id);
     Operation(Time start, Time end, OperationType type, int value);
+    Operation(Time start, Time end, int id, OperationType type, int value);
 
+
+    vector<Operation*> overlaps_insert_ops_;
     Time start() const { return start_; }
     Time end() const { return end_; }
     int id() const { return id_; }
@@ -47,6 +50,8 @@ class Operation {
     bool deleted() const { return deleted_; }
     int order() const { return order_; }
     int error() const { return error_; }
+    void set_lin_order(int value) { lin_order = value; }
+    Operation* matching_op() {return matching_op_;}
 
     void remove() {
       next_->prev_ = prev_;
@@ -89,6 +94,15 @@ class Operation {
     bool operator>(const Operation& op) const;
     bool operator>=(const Operation& op) const;
 
+    static int compare_operations_by_start_time(const void* left, const void* right) {
+      return (*(Operation**) left)->start() > (*(Operation**) right)->start();
+    }
+
+    static int compare_ops_by_value(const void* left, const void* right) {
+      return (*(Operation**) left)->value() > (*(Operation**) right)->value();
+    }
+
+
     // Unit test this class.
     static void test();
   private:
@@ -105,7 +119,9 @@ class Operation {
     vector<int> remove_overlaps_value_;
     bool deleted_;
     int order_;
+    int lin_order;
     int error_;
+    Operation* matching_op_;
     friend class Operations;
 };
 
@@ -115,6 +131,12 @@ class Operations {
     Operations() : head_(0, 0, 0) {
       head_.deleted_ = false;
       execution_id_ = 0;
+      ops_ = NULL;
+      insert_ops_ = NULL;
+      remove_ops_ = NULL;
+      num_operations_ = 0;
+      num_insert_ops_ = 0;
+      num_remove_ops_ = 0;
     }
     Operations(FILE* input, int num_ops);
     void Initialize(Operation** ops, int num_ops);
@@ -123,10 +145,37 @@ class Operations {
     bool is_consistent();
     void print();
 
+
+    static void create_doubly_linked_list(Operation* head, Operation** ops, int num_operations) {
+      qsort(ops, num_operations, sizeof(Operation*),
+          Operation::compare_operations_by_start_time);
+      for (int i = 0; i < num_operations; i++) {
+        ops[i]->deleted_ = false;
+        ops[i]->id_ = i + 1;
+        if (i == 0) {
+          ops[i]->next_ = ops[i + 1];
+          ops[i]->prev_ = head;
+        } else if (i == num_operations - 1) {
+          ops[i]->next_ = head;
+          ops[i]->prev_ = ops[i - 1];
+        } else {
+          ops[i]->next_ = ops[i + 1];
+          ops[i]->prev_ = ops[i - 1];
+        }
+      }
+      head->next_ = ops[0];
+      head->prev_ = ops[num_operations - 1];
+    }
+
     Operation* begin() { return head_.next_; }
     void remove(Operation* op, int error) { op->remove(); op->error_ = error; op->order_ = execution_id_++; }
     bool is_empty() const { return head_.next_ == &head_; }
     bool is_single_element() const { return !is_empty() && (head_.next_ == head_.prev_); }
+
+    Operation** insert_ops(void) { return insert_ops_;}
+    Operation** remove_ops(void) { return remove_ops_;}
+    int num_insert_ops(void) { return num_insert_ops_;}
+    int num_remove_ops(void) { return num_remove_ops_;}
 
     void CalculateOverlaps();
 
@@ -148,10 +197,10 @@ class Operations {
 
     class Iterator {
      public:
-      Iterator(Operations* ops) : ops_(ops), next_(ops->head_.next_) {
+      Iterator(Operation* head) : head_(head), next_(head_->next_) {
       }
       bool valid() const {
-        return next_ != &ops_->head_;
+        return next_ != head_;
       }
       Operation* step() {
         next_ = next_->next_;
@@ -163,12 +212,16 @@ class Operations {
         return next_;
       }
      private:
-      const Operations* ops_;
+      const Operation* head_;
       Operation* next_;
     };
 
     Iterator elements() {
-      return Iterator(this);
+      return Iterator(&this->head_);
+    }
+
+    Iterator elements(Operation* head) {
+      return Iterator(head);
     }
 
     OverlapIterator* Overlaps() {
@@ -182,7 +235,11 @@ class Operations {
 
   // All operations as we read them.
     Operation** ops_;
+    Operation** insert_ops_;
+    Operation** remove_ops_;
     int num_operations_;
+    int num_insert_ops_;
+    int num_remove_ops_;
     // Operations sorted by invocation.
     Operation head_;
     int execution_id_;

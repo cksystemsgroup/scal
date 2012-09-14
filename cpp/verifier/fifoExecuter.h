@@ -15,6 +15,7 @@ class FifoExecuter : public Executer {
 
   int amountOfFinishedEnqueueOperations(Operation* removeOperation) const;
   int amountOfStartedEnqueueOperations(Operation* removeOperation) const;
+  void calculateOrder();
 
  protected:
   virtual void executeOperationWithOverlaps(Operation* element, Histogram* histogram) = 0;

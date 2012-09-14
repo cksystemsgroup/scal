@@ -129,6 +129,7 @@ void FifoExecuterLowerBound::overlapTest1() {
   Histogram histogram;
   fifo.execute(&histogram);
 
+
   assert(input[0]->error() == 0);
   assert(input[0]->order() == 4);
   assert(input[1]->error() == 0);
@@ -171,6 +172,7 @@ void FifoExecuterLowerBound::overlapTest2() {
   FifoExecuterLowerBound fifo(&ops);
   Histogram histogram;
   fifo.execute(&histogram);
+
 
   assert(input[0]->error() == 0);
   assert(input[0]->order() == 4);
@@ -258,6 +260,12 @@ void FifoExecuterLowerBound::overlapTest4() {
   FifoExecuterLowerBound fifo(&ops);
   Histogram histogram;
   fifo.execute(&histogram);
+  fifo.calculateOrder();
+
+  printf("Operations: \n");
+  for(int i = 0; i < 6; i++) {
+    input[i]->print();
+  }
 
 //  for(int i = 0; i < 6; i++) {
 //    if(input[i].value() == 1 && input[i].type() == Operation::REMOVE) {
@@ -827,12 +835,12 @@ void FifoExecuterLowerBound::overlapTest5() {
 
 void FifoExecuterLowerBound::test() {
 
-//  insertOverlapMixedTest3();
 //  overlapTest3();
-  overlapTest1();
+//  overlapTest1();
 //  overlapTest2();
 //  insertOverlapTest1();
 //  insertOverlapTest2();
+//  insertOverlapMixedTest3();
 //  insertOverlapMixedTest1();
 //  insertOverlapMixedTest2();
 //  insertOverlapMixedTest4();
@@ -840,6 +848,6 @@ void FifoExecuterLowerBound::test() {
 //  insertOverlapMixedTest6();
 //  removeNullTest1();
 //  removeNullTest2();
-//  overlapTest4();
+  overlapTest4();
 //  overlapTest5();
 }
