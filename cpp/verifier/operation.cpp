@@ -11,22 +11,22 @@
 #include "fifoExecuterLowerBound.h"
 
 Operation::Operation() :
-    start_(0), real_start_(0), end_(0), type_(Operation::INSERT), value_(0),
+    start_(0), real_start_(0), end_(0), real_end_(0), type_(Operation::INSERT), value_(0),
     next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL){
 }
 
 Operation::Operation(Time start, Time end) :
-    start_(start), real_start_(start), end_(end), type_(Operation::INSERT), value_(0),
+    start_(start), real_start_(start), end_(end), real_end_(end), type_(Operation::INSERT), value_(0),
     next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL) {
 }
 
 Operation::Operation(Time start, Time end, int id) :
-    start_(start), real_start_(start), end_(end), type_(Operation::INSERT), value_(0),
+    start_(start), real_start_(start), end_(end), real_end_(end), type_(Operation::INSERT), value_(0),
     next_(this), prev_(this), deleted_(false), error_(0), id_(id), order_(0), matching_op_(NULL) {
 }
 
 Operation::Operation(Time start, Time end, OperationType type, int value) :
-    start_(start), real_start_(start), end_(end), type_(type), value_(value),
+    start_(start), real_start_(start), end_(end), real_end_(end), type_(type), value_(value),
     next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL) {
 
 }

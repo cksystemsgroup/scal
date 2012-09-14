@@ -49,8 +49,9 @@ class Operation {
     int value() const { return value_; }
     bool deleted() const { return deleted_; }
     int order() const { return order_; }
+    int lin_order() const { return lin_order_; }
     int error() const { return error_; }
-    void set_lin_order(int value) { lin_order = value; }
+    void set_lin_order(int value) { lin_order_ = value; }
     Operation* matching_op() {return matching_op_;}
 
     void remove() {
@@ -98,6 +99,10 @@ class Operation {
       return (*(Operation**) left)->start() > (*(Operation**) right)->start();
     }
 
+    static int compare_operations_by_order(const void* left, const void* right) {
+      return (*(Operation**) left)->order() > (*(Operation**) right)->order();
+    }
+
     static int compare_ops_by_value(const void* left, const void* right) {
       return (*(Operation**) left)->value() > (*(Operation**) right)->value();
     }
@@ -108,6 +113,7 @@ class Operation {
   private:
     Time start_;
     Time real_start_;
+    Time real_end_;
     Time end_;
     int id_;
     OperationType type_;
@@ -119,7 +125,7 @@ class Operation {
     vector<int> remove_overlaps_value_;
     bool deleted_;
     int order_;
-    int lin_order;
+    int lin_order_;
     int error_;
     Operation* matching_op_;
     friend class Operations;

@@ -153,9 +153,15 @@ void FifoExecuterLowerBound::overlapTest2() {
 
   Operation* input[8];
 
-  for (int i = 0; i < 4; ++i) {
-    input[i] = new Operation(i * 2, i * 2 + 1, Operation::INSERT, i + 1);
-  }
+  Operation i_0(0, 1, Operation::INSERT, 1);
+  Operation i_1(2, 3, Operation::INSERT, 2);
+  Operation i_2(4, 5, Operation::INSERT, 3);
+  Operation i_3(6, 7, Operation::INSERT, 4);
+
+  input[0] = &i_0;
+  input[1] = &i_1;
+  input[2] = &i_2;
+  input[3] = &i_3;
 
   Operation r_0(10, 13, Operation::REMOVE, 4);
   input[4] = &r_0;
@@ -172,24 +178,34 @@ void FifoExecuterLowerBound::overlapTest2() {
   FifoExecuterLowerBound fifo(&ops);
   Histogram histogram;
   fifo.execute(&histogram);
+  fifo.calculate_order();
 
+  assert(i_0.lin_order() == 0);
+  assert(i_1.lin_order() == 1);
+  assert(i_2.lin_order() == 2);
+  assert(i_3.lin_order() == 3);
 
-  assert(input[0]->error() == 0);
-  assert(input[0]->order() == 4);
-  assert(input[1]->error() == 0);
-  assert(input[1]->order() == 6);
-  assert(input[2]->error() == 0);
-  assert(input[2]->order() == 0);
-  assert(input[3]->error() == 0);
-  assert(input[3]->order() == 2);
-  assert(input[4]->error() == 2);
-  assert(input[4]->order() == 3);
-  assert(input[5]->error() == 2);
-  assert(input[5]->order() == 1);
-  assert(input[6]->error() == 0);
-  assert(input[6]->order() == 7);
-  assert(input[7]->error() == 0);
-  assert(input[7]->order() == 5);
+  assert(r_0.lin_order() == 5);
+  assert(r_1.lin_order() == 4);
+  assert(r_2.lin_order() == 7);
+  assert(r_3.lin_order() == 6);
+//
+//  assert(input[0]->error() == 0);
+//  assert(input[0]->order() == 4);
+//  assert(input[1]->error() == 0);
+//  assert(input[1]->order() == 6);
+//  assert(input[2]->error() == 0);
+//  assert(input[2]->order() == 0);
+//  assert(input[3]->error() == 0);
+//  assert(input[3]->order() == 2);
+//  assert(input[4]->error() == 2);
+//  assert(input[4]->order() == 3);
+//  assert(input[5]->error() == 2);
+//  assert(input[5]->order() == 1);
+//  assert(input[6]->error() == 0);
+//  assert(input[6]->order() == 7);
+//  assert(input[7]->error() == 0);
+//  assert(input[7]->order() == 5);
 }
 
 void FifoExecuterLowerBound::overlapTest3() {
@@ -197,18 +213,24 @@ void FifoExecuterLowerBound::overlapTest3() {
 
   Operation* input[8];
 
-  for (int i = 0; i < 4; ++i) {
-    input[i] = new Operation (i * 2, i * 2 + 1, Operation::INSERT, i + 1);
-  }
+  Operation i_0(0, 1, Operation::INSERT, 1);
+  Operation i_1(2, 3, Operation::INSERT, 2);
+  Operation i_2(4, 5, Operation::INSERT, 3);
+  Operation i_3(6, 7, Operation::INSERT, 4);
+
+  input[0] = &i_0;
+  input[1] = &i_1;
+  input[2] = &i_2;
+  input[3] = &i_3;
 
   Operation r_0(10, 20, Operation::REMOVE, 4);
   input[4] = &r_0;
   Operation r_1(12, 14, Operation::REMOVE, 2);
   input[5] = &r_1;
-  Operation r_3(13, 16, Operation::REMOVE, 3);
-  input[6] = &r_3;
-  Operation r_2(15, 17, Operation::REMOVE, 1);
-  input[7] = &r_2;
+  Operation r_2(13, 16, Operation::REMOVE, 3);
+  input[6] = &r_2;
+  Operation r_3(15, 17, Operation::REMOVE, 1);
+  input[7] = &r_3;
 
   ops.Initialize(input, 8);
 
@@ -216,23 +238,34 @@ void FifoExecuterLowerBound::overlapTest3() {
   FifoExecuterLowerBound fifo(&ops);
   Histogram histogram;
   fifo.execute(&histogram);
+  fifo.calculate_order();
 
-  assert(input[0]->error() == 0);
-  assert(input[0]->order() == 2);
-  assert(input[1]->error() == 0);
-  assert(input[1]->order() == 0);
-  assert(input[2]->error() == 0);
-  assert(input[2]->order() == 4);
-  assert(input[3]->error() == 0);
-  assert(input[3]->order() == 6);
-  assert(input[4]->error() == 0);
-  assert(input[4]->order() == 7);
-  assert(input[5]->error() == 1);
-  assert(input[5]->order() == 1);
-  assert(input[6]->error() == 0);
-  assert(input[6]->order() == 5);
-  assert(input[7]->error() == 0);
-  assert(input[7]->order() == 3);
+  assert(i_0.lin_order() == 0);
+  assert(i_1.lin_order() == 1);
+  assert(i_2.lin_order() == 2);
+  assert(i_3.lin_order() == 3);
+
+  assert(r_0.lin_order() == 7);
+  assert(r_1.lin_order() == 4);
+  assert(r_2.lin_order() == 6);
+  assert(r_3.lin_order() == 5);
+
+//  assert(input[0]->error() == 0);
+//  assert(input[0]->order() == 2);
+//  assert(input[1]->error() == 0);
+//  assert(input[1]->order() == 0);
+//  assert(input[2]->error() == 0);
+//  assert(input[2]->order() == 4);
+//  assert(input[3]->error() == 0);
+//  assert(input[3]->order() == 6);
+//  assert(input[4]->error() == 0);
+//  assert(input[4]->order() == 7);
+//  assert(input[5]->error() == 1);
+//  assert(input[5]->order() == 1);
+//  assert(input[6]->error() == 0);
+//  assert(input[6]->order() == 5);
+//  assert(input[7]->error() == 0);
+//  assert(input[7]->order() == 3);
 
 }
 //
@@ -241,17 +274,19 @@ void FifoExecuterLowerBound::overlapTest4() {
 
   Operation* input[6];
 
-  Operation r_0(1, 11, Operation::REMOVE, 1);
-  input[0] = &r_0;
-  Operation r_1(2, 8, Operation::REMOVE, 3);
-  input[1] = &r_1;
   Operation i_0(3, 7, Operation::INSERT, 2);
-  input[2] = &i_0;
-  Operation r_2(4, 5, Operation::REMOVE, 2);
-  input[3] = &r_2;
   Operation i_1(6, 9, Operation::INSERT, 3);
-  input[4] = &i_1;
   Operation i_2(10, 12, Operation::INSERT, 1);
+
+  Operation r_0(1, 11, Operation::REMOVE, 1);
+  Operation r_1(2, 8, Operation::REMOVE, 3);
+  Operation r_2(4, 5, Operation::REMOVE, 2);
+
+  input[0] = &r_0;
+  input[1] = &r_1;
+  input[2] = &i_0;
+  input[3] = &r_2;
+  input[4] = &i_1;
   input[5] = &i_2;
 
   ops.Initialize(input, 6);
@@ -260,27 +295,15 @@ void FifoExecuterLowerBound::overlapTest4() {
   FifoExecuterLowerBound fifo(&ops);
   Histogram histogram;
   fifo.execute(&histogram);
-  fifo.calculateOrder();
+  fifo.calculate_order();
 
-  printf("Operations: \n");
-  for(int i = 0; i < 6; i++) {
-    input[i]->print();
-  }
+  assert(i_0.lin_order() == 0);
+  assert(i_1.lin_order() == 2);
+  assert(i_2.lin_order() == 4);
 
-//  for(int i = 0; i < 6; i++) {
-//    if(input[i].value() == 1 && input[i].type() == Operation::REMOVE) {
-//      assert(input[i].error() == 0);
-//      assert(input[i].order() == 5);
-//    }
-//    if(input[i].value() == 2 && input[i].type() == Operation::REMOVE) {
-//      assert(input[i].error() == 0);
-//      assert(input[i].order() == 1);
-//    }
-//    if(input[i].value() == 3 && input[i].type() == Operation::REMOVE) {
-//      assert(input[i].error() == 0);
-//      assert(input[i].order() == 3);
-//    }
-//  }
+  assert(r_0.lin_order() == 5);
+  assert(r_1.lin_order() == 3);
+  assert(r_2.lin_order() == 1);
 
   assert(i_0.error() == 0);
   assert(i_0.order() == 0);
@@ -295,20 +318,6 @@ void FifoExecuterLowerBound::overlapTest4() {
   assert(r_1.order() == 3);
   assert(r_2.error() == 0);
   assert(r_2.order() == 1);
-
-//  assert(input[0].error() == 0);
-//  assert(input[0].order() == 5);
-//  assert(input[1].error() == 0);
-//  assert(input[1].order() == 3);
-//  assert(input[2].error() == 0);
-//  assert(input[2].order() == 0);
-//  assert(input[3].error() == 0);
-//  assert(input[3].order() == 1);
-//  assert(input[4].error() == 0);
-//  assert(input[4].order() == 2);
-//  assert(input[5].error() == 0);
-//  assert(input[5].order() == 4);
-
 }
 
 void FifoExecuterLowerBound::overlapTest5() {
@@ -835,9 +844,9 @@ void FifoExecuterLowerBound::overlapTest5() {
 
 void FifoExecuterLowerBound::test() {
 
-//  overlapTest3();
+  overlapTest3();
 //  overlapTest1();
-//  overlapTest2();
+  overlapTest2();
 //  insertOverlapTest1();
 //  insertOverlapTest2();
 //  insertOverlapMixedTest3();
