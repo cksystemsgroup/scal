@@ -40,7 +40,8 @@ class Operation {
     Operation(Time start, Time end, OperationType type, int value);
     Operation(Time start, Time end, int id, OperationType type, int value);
 
-
+    // Each insert operation stores a list of overlapping insert operations to calculate
+    // the order.
     vector<Operation*> overlaps_insert_ops_;
     Time start() const { return start_; }
     Time end() const { return end_; }
@@ -52,7 +53,7 @@ class Operation {
     int lin_order() const { return lin_order_; }
     int error() const { return error_; }
     void set_lin_order(int value) { lin_order_ = value; }
-    Operation* matching_op() {return matching_op_;}
+    Operation* matching_op() const {return matching_op_;}
 
     void remove() {
       next_->prev_ = prev_;
@@ -72,17 +73,18 @@ class Operation {
     void insert_before(Operation *op);
 
     // Returns true if op overlaps with this.
-    inline bool overlaps_insert(const Operation* op) const {
-      return std::binary_search(insert_overlaps_value_.begin(), insert_overlaps_value_.end(), op->value());
-    }
+//    inline bool overlaps_insert(const Operation* op) const {
+//      return std::binary_search(insert_overlaps_value_.begin(), insert_overlaps_value_.end(), op->value());
+//    }
     // Returns true if op overlaps with this.
-    inline bool overlaps_remove(const Operation* op) const {
-      return std::binary_search(remove_overlaps_value_.begin(), remove_overlaps_value_.end(), op->value());
-    }
+//    inline bool overlaps_remove(const Operation* op) const {
+//      return std::binary_search(remove_overlaps_value_.begin(), remove_overlaps_value_.end(), op->value());
+//    }
     void determineExecutionOrderLowerBound(Operations& ops,
                                FifoExecuter* executer,
                                int errorDistance,
-                               vector<ErrorEntry>* result) const;
+                               vector<ErrorEntry>* result,
+                               Time* linearizable_time_window_end);
 
     void determineExecutionOrderUpperBound(Operations& ops,
                                FifoExecuter* executer,
@@ -113,21 +115,22 @@ class Operation {
   private:
     Time start_;
     Time real_start_;
-    Time real_end_;
     Time end_;
-    int id_;
+    Time real_end_;
     OperationType type_;
     int value_;
     Operation* next_;
     Operation* prev_;
-    vector<int> overlaps_;
-    vector<int> insert_overlaps_value_;
-    vector<int> remove_overlaps_value_;
     bool deleted_;
-    int order_;
-    int lin_order_;
     int error_;
+    int id_;
+    int order_;
     Operation* matching_op_;
+
+    vector<int> overlaps_;
+//    vector<int> insert_overlaps_value_;
+//    vector<int> remove_overlaps_value_;
+    int lin_order_;
     friend class Operations;
 };
 

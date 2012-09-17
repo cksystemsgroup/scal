@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <time.h>
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -32,18 +33,28 @@ int main(int argc, char** argv) {
   }
 
   char* filename = argv[1];
-  char* datastructure = argv[2];
+//  char* datastructure = argv[2];
   int operations = atoi(argv[3]);
   int bound = atoi(argv[4]); //0 lower bound, 1 upper bound
-  char* mode = argv[5];
-  int param = atoi(argv[6]);
+//  char* mode = argv[5];
+//  int param = atoi(argv[6]);
 
-  disable_frequency_scaling();
+//  disable_frequency_scaling();
+
+  time_t start_time = time(0);
 
   FILE* input = fopen(filename, "r");
+
+  printf("Start time: %lu\n", time(0) - start_time);
+
   Operations ops(input, operations);
+
+  printf("Time after reading file: %lu\n", time(0) - start_time);
+
   fclose(input);
   ops.CalculateOverlaps();
+
+  printf("Time after calculate overlaps: %lu\n", time(0) - start_time);
 
   FifoExecuter *executer;
   if (bound == 0) {
@@ -53,21 +64,27 @@ int main(int argc, char** argv) {
   }
   Histogram histogram;
   executer->execute(&histogram);
-  if (strcmp(datastructure, "fifo") == 0) {
-    if (strcmp(mode, "histogram") == 0) {
-      histogram.print();
-    } else if (strcmp(mode, "sum") == 0) {
-      printf("%" PRIu64 "\n", histogram.commulativeError());
-    } else if (strcmp(mode, "sumparam") == 0) {
-      printf("%d %" PRIu64 " %" PRIu64 " %f %f\n", param, histogram.commulativeError(), histogram.max(), histogram.mean(), histogram.stdv());
-    } else {
-      printf("wrong mode\n");
-    }
-  } else {
-    printf("Fatal Error: datastructure not supported\n");
-    enable_frequency_scaling();
-    exit(2);
-  }
-  enable_frequency_scaling();
+
+  printf("Time after execute: %lu\n", time(0) - start_time);
+
+  executer->calculate_order();
+
+  printf("Time after calculate_order: %lu\n", time(0) - start_time);
+//  if (strcmp(datastructure, "fifo") == 0) {
+//    if (strcmp(mode, "histogram") == 0) {
+//      histogram.print();
+//    } else if (strcmp(mode, "sum") == 0) {
+//      printf("%" PRIu64 "\n", histogram.commulativeError());
+//    } else if (strcmp(mode, "sumparam") == 0) {
+//      printf("%d %" PRIu64 " %" PRIu64 " %f %f\n", param, histogram.commulativeError(), histogram.max(), histogram.mean(), histogram.stdv());
+//    } else {
+//      printf("wrong mode\n");
+//    }
+//  } else {
+//    printf("Fatal Error: datastructure not supported\n");
+//    enable_frequency_scaling();
+//    exit(2);
+//  }
+//  enable_frequency_scaling();
   return 0;
 }

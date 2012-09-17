@@ -29,7 +29,7 @@ int FifoExecuterLowerBound::semanticalError(const Operation* removeOperation,
       // This comparison does not check if the remove operation overlaps with the current
       // operation but if the insert operation corresponding to the remove operation overlaps
       // with the current operation.
-      else if (!element->overlaps_insert(removeOperation)) {
+      else if (element->end() < removeOperation->matching_op()->start()) {
         semantical_error++;
       }
     }
@@ -55,7 +55,8 @@ void FifoExecuterLowerBound::executeOperationWithOverlaps(Operation* element,
 
   while (error > 0) {
     vector<ErrorEntry> overlaps;
-    element->determineExecutionOrderLowerBound(*ops_, this, error, &overlaps);
+    Time linearizable_time_window_end;
+    element->determineExecutionOrderLowerBound(*ops_, this, error, &overlaps, &linearizable_time_window_end);
     for (size_t i = 0; i < overlaps.size(); i++) {
       assert(overlaps[i].error_ < error);
     }
@@ -63,16 +64,24 @@ void FifoExecuterLowerBound::executeOperationWithOverlaps(Operation* element,
     if (overlaps.size() == 0) {
       break;
     }
+    bool done = false;
     // FIXME: debug check that overlaps are sorted correctly!
     for (size_t i = 0; i < overlaps.size(); i++) {
 
-      if ((i > 0) && (overlaps[i].error_ > 0)) {
-        // AH: The operation stored in overlaps[0] may be the one which returns first, hence without
-        // that operation the overlaps set may be bigger in the next iteration of the while loop.
-        // TODO: We can optimize here. We do not need to break as long as we have not processed the
-        // operation which returns first.
+//      if ((i > 0) && (overlaps[i].error_ > 0)) {
+//        // AH: The operation stored in overlaps[0] may be the one which returns first, hence without
+//        // that operation the overlaps set may be bigger in the next iteration of the while loop.
+//        // TODO: We can optimize here. We do not need to break as long as we have not processed the
+//        // operation which returns first.
+//        break;
+//      }
+
+      if(done) {
         break;
       }
+
+      done = (overlaps[i].op_->end() == linearizable_time_window_end);
+
       int newError = semanticalError(overlaps[i].op_, &matchingInsertOperation);
       histogram->add(newError);
 
@@ -341,7 +350,7 @@ void FifoExecuterLowerBound::overlapTest5() {
   Histogram histogram;
   fifo.execute(&histogram);
 
-  for(int i = 0; i < 6; i++) {
+  for(int i = 0; i < 4; i++) {
     if(input[i]->value() == 1 && input[i]->type() == Operation::REMOVE) {
       assert(input[i]->error() == 0);
       assert(input[i]->order() == 1);

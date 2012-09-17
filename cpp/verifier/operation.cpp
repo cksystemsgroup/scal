@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <list>
 #include <algorithm>
+#include <string.h>
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -13,6 +14,25 @@
 Operation::Operation() :
     start_(0), real_start_(0), end_(0), real_end_(0), type_(Operation::INSERT), value_(0),
     next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL){
+
+//  Time start_;
+//      Time real_start_;
+//      Time real_end_;
+//      Time end_;
+//      int id_;
+//      OperationType type_;
+//      int value_;
+//      Operation* next_;
+//      Operation* prev_;
+//      vector<int> overlaps_;
+//      vector<int> insert_overlaps_value_;
+//      vector<int> remove_overlaps_value_;
+//      bool deleted_;
+//      int order_;
+//      int lin_order_;
+//      int error_;
+//      Operation* matching_op_;
+//      friend class Operations;
 }
 
 Operation::Operation(Time start, Time end) :
@@ -188,25 +208,31 @@ Operations::Operations(FILE* input, int num_ops) :
   head_.deleted_ = false;
   Operation** ops = new Operation*[num_operations_];
   for (int i = 0; i < num_operations_; ++i) {
-    int type;
+//    int type;
     Time op_start;
+    int thread_id;
     Time op_end;
+    char type[8];
     Operation::OperationType op_type;
     int op_value;
-    if (fscanf(input, "%"PRIu64" %"PRIu64" %d %d\n", &op_start, &op_end, &type,
-        &op_value) == EOF) {
+    if (fscanf(input, "profile: %s %d %"PRIu64" %"PRIu64" %d\n", type, &thread_id, &op_start, &op_end, &op_value) == EOF) {
       fprintf(stderr, "ERROR: could not read all %d elements, abort after %d\n",
           num_operations_, i);
       exit(2);
     }
-    if (type == 0) {
+    if (strcmp(type, "ds_put") == 0) {
       op_type = Operation::INSERT;
     } else {
       op_type = Operation::REMOVE;
     }
     ops[i] = new Operation(op_start, op_end, op_type, op_value);
   }
+
+  printf("Finished reading file \n");
+
+
   Initialize(ops, num_ops);
+  printf("Finished Initialize \n");
 }
 
 bool Operations::OverlapIterator::has_next() const {
@@ -345,20 +371,22 @@ void Operations::CalculateOverlaps() {
     Operation* tmp = element->next_;
     while (tmp != &head_ && element->end() >= tmp->start()) {
       assert(!tmp->deleted());
-      element->overlaps_insert_ops_.push_back(tmp);
+
       element->overlaps_.push_back(tmp->id());
-      if (tmp->type() == Operation::INSERT) {
-        element->insert_overlaps_value_.push_back(tmp->value());
-      } else {
-        element->remove_overlaps_value_.push_back(tmp->value());
+      if (element->type() == Operation::INSERT && tmp->type() == Operation::INSERT) {
+        element->overlaps_insert_ops_.push_back(tmp);
+//        element->insert_overlaps_value_.push_back(tmp->value());
       }
+//      else {
+//        element->remove_overlaps_value_.push_back(tmp->value());
+//      }
       tmp = tmp->next_;
     }
-    sort(element->overlaps_.begin(), element->overlaps_.end());
-    sort(element->insert_overlaps_value_.begin(),
-        element->insert_overlaps_value_.end());
-    sort(element->remove_overlaps_value_.begin(),
-        element->remove_overlaps_value_.end());
+//    sort(element->overlaps_.begin(), element->overlaps_.end());
+//    sort(element->insert_overlaps_value_.begin(),
+//        element->insert_overlaps_value_.end());
+//    sort(element->remove_overlaps_value_.begin(),
+//        element->remove_overlaps_value_.end());
   }
 }
 
@@ -389,12 +417,18 @@ static bool compOpLowerBound(const ErrorEntry& a, const ErrorEntry& b) {
  */
 void Operation::determineExecutionOrderLowerBound(Operations& ops,
     FifoExecuter* executer, int errorDistance,
-    vector<ErrorEntry>* result) const {
-  Time linearizable_time_window_end = end();
+    vector<ErrorEntry>* result,
+    Time* linearizable_time_window_end) {
+
+
+  sort(overlaps_.begin(), overlaps_.end());
+
+  *linearizable_time_window_end = end();
+
   for (size_t i = 0; i < overlaps_.size(); i++) {
     Operation* element = *ops[overlaps_[i]];
     // AH: < or <=?
-    if (element->start() <= linearizable_time_window_end) {
+    if (element->start() <= *linearizable_time_window_end) {
       // AH: What is element->delete? It is not mentioned in the documentation of the function.
       if (!element->deleted() && element->value() != -1
           && element->type() == REMOVE) {
@@ -405,8 +439,8 @@ void Operation::determineExecutionOrderLowerBound(Operations& ops,
           ErrorEntry e(element, errorDistanceTmp, matchingInsert);
           result->push_back(e);
         }
-        if (element->end() < linearizable_time_window_end) {
-          linearizable_time_window_end = element->end();
+        if (element->end() < *linearizable_time_window_end) {
+          *linearizable_time_window_end = element->end();
         }
       }
     } else {

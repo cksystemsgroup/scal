@@ -1,6 +1,6 @@
-#CPPFLAGS=-Wall -Werror -O3 -ggdb
+CPPFLAGS= -Wall -Werror -O3
 #CPPFLAGS=-Wall -Werror -ggdb
-CPPFLAGS= -ggdb
+#CPPFLAGS= -ggdb
 LDFLAGS=#-lprofiler
 
 all: generate_traces analyze_semantics test

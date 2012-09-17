@@ -39,7 +39,13 @@ int FifoExecuter::amountOfStartedEnqueueOperations(Operation* removeOperation) c
 
 void FifoExecuter::execute(Histogram* histogram) {
   Operations::Iterator iter = ops_->elements();
+  int i = 0;
   for (Operation* element = iter.get(); iter.valid(); element = iter.step()) {
+    i++;
+
+    if(i % 100000 == 0) {
+      printf("Finished %d operations.\n", i);
+    }
     executeOperation(element, histogram);
   }
 }
@@ -70,15 +76,24 @@ void FifoExecuter::calculate_order() {
   Operation insert_head(0, 0, 0);
 
   Operations::create_doubly_linked_list(&insert_head, ops_->insert_ops(), ops_->num_insert_ops());
+  printf("After creating the linked list.\n");
 
   qsort(ops_->remove_ops(), ops_->num_remove_ops(), sizeof(Operation*), Operation::compare_operations_by_order);
+  printf("After sorting the remove ops.\n");
 
   Operations::Iterator iter = ops_->elements(&insert_head);
 
   int next_lin_order = 0;
   int remove_index = 0;
+  int i = 0;
 
   for (Operation* element = iter.get(); iter.valid(); element = iter.step()) {
+
+    i++;
+
+    if(i % 100000 == 0) {
+      printf("Finished %d operations.\n", i);
+    }
 
     std::sort(element->overlaps_insert_ops_.begin(), element->overlaps_insert_ops_.end(), compare_by_order);
 
