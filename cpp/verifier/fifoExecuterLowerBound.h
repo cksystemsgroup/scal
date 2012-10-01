@@ -19,6 +19,7 @@ class FifoExecuterLowerBound : public FifoExecuter {
   static void overlapTest3();
   static void overlapTest4();
   static void overlapTest5();
+  static void overlapTest6();
 //  static void insertOverlapTest1();
 //  static void insertOverlapTest2();
 //  static void insertOverlapMixedTest1();

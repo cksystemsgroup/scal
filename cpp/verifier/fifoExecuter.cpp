@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <stdio.h>
 
+
 #include <assert.h>
 
 /**
@@ -39,13 +40,8 @@ int FifoExecuter::amountOfStartedEnqueueOperations(Operation* removeOperation) c
 
 void FifoExecuter::execute(Histogram* histogram) {
   Operations::Iterator iter = ops_->elements();
-  int i = 0;
   for (Operation* element = iter.get(); iter.valid(); element = iter.step()) {
-    i++;
 
-    if(i % 100000 == 0) {
-      printf("Finished %d operations.\n", i);
-    }
     executeOperation(element, histogram);
   }
 }
@@ -76,26 +72,18 @@ void FifoExecuter::calculate_order() {
   Operation insert_head(0, 0, 0);
 
   Operations::create_doubly_linked_list(&insert_head, ops_->insert_ops(), ops_->num_insert_ops());
-  printf("After creating the linked list.\n");
 
   qsort(ops_->remove_ops(), ops_->num_remove_ops(), sizeof(Operation*), Operation::compare_operations_by_order);
-  printf("After sorting the remove ops.\n");
 
   Operations::Iterator iter = ops_->elements(&insert_head);
 
   int next_lin_order = 0;
   int remove_index = 0;
-  int i = 0;
 
   for (Operation* element = iter.get(); iter.valid(); element = iter.step()) {
 
-    i++;
 
-    if(i % 100000 == 0) {
-      printf("Finished %d operations.\n", i);
-    }
-
-    std::sort(element->overlaps_insert_ops_.begin(), element->overlaps_insert_ops_.end(), compare_by_order);
+    std::sort(element->overlaps_ops_same_type_.begin(), element->overlaps_ops_same_type_.end(), compare_by_order);
 
     bool earlier_found;
     Operation* earlier_op;
@@ -104,9 +92,9 @@ void FifoExecuter::calculate_order() {
       earlier_found = false;
       earlier_op = element;
       Time linearizable_time_window_end = element->end();
-      for(size_t i = 0; i < element->overlaps_insert_ops_.size(); i++) {
+      for(size_t i = 0; i < element->overlaps_ops_same_type_.size(); i++) {
 
-        Operation* tmp = element->overlaps_insert_ops_[i];
+        Operation* tmp = element->overlaps_ops_same_type_[i];
         if(tmp->deleted()) {
           continue;
         }
@@ -153,4 +141,187 @@ void FifoExecuter::calculate_order() {
     next_lin_order++;
 //    ops_->remove_ops()[remove_index]->print();
   }
+}
+
+int FifoExecuter::calculate_op_fairness() {
+
+  // Calculate the fairness of remove operations.
+  qsort(ops_->remove_ops(), ops_->num_remove_ops(), sizeof(Operation*), Operation::compare_operations_by_real_start_time);
+
+  for (int i = 0; i < ops_->num_remove_ops(); i++) {
+
+    Operation* op = ops_->remove_ops()[i];
+    Time upper_time_bound = op->end();
+
+    for (int j = i + 1; j < ops_->num_remove_ops(); j++) {
+
+      Operation* inner_op = ops_->remove_ops()[j];
+      if (inner_op->real_start() > upper_time_bound) {
+        // All following operations are started after the current operation has ended, there will
+        // be no more overtakings.
+        break;
+      }
+
+      if (inner_op->lin_order() < op->lin_order()) {
+        // The operation inner_op has overtaken the operation op.
+        op->increment_lateness();
+        inner_op->increment_age();
+      }
+      else {
+        if(inner_op->end() < upper_time_bound) {
+          // We adjust the upper_time_bound: if the operation inner_op responds earlier
+          // but has taken effect later the operation op has taken effect before the end of
+          // the operation inner_op.
+          upper_time_bound = inner_op->end();
+        }
+      }
+    }
+  }
+
+  int fairness_remove = 0;
+  int num_aged_remove = 0;
+  int num_late_remove = 0;
+  int max_age_remove = 0;
+  int max_lateness_remove = 0;
+  // Count fairness, age, and lateness of all remove operations.
+  for (int i = 0; i < ops_->num_remove_ops(); i++) {
+    Operation* op = ops_->remove_ops()[i];
+
+    if(op->age() > 0) {
+      num_aged_remove++;
+      if(max_age_remove < op->age()) {
+        max_age_remove = op->age();
+      }
+      fairness_remove += op->age();
+    }
+
+    if(op->lateness() > 0) {
+      num_late_remove++;
+      if (max_lateness_remove < op->lateness()) {
+        max_lateness_remove = op->lateness();
+      }
+    }
+  }
+
+    double avg_fairness_remove = fairness_remove;
+    avg_fairness_remove /= ops_->num_remove_ops();
+
+  // Calculate the fairness of insert operations.
+  // We can use the precalculations of calculateOverlaps here because the start time of
+  // insert operations is not changed in the initialization.
+  for (int i = 0; i < ops_->num_insert_ops(); i++) {
+    Operation* op = ops_->all_ops()[i];
+
+    for(size_t j = 0; j < op->overlaps_ops_same_type_.size(); j++) {
+      Operation* inner_op = op->overlaps_ops_same_type_[j];
+
+      // op started before inner_op, if the lin_order is higher, then
+      // the operation op is late.
+      if(op->lin_order() > inner_op->lin_order()) {
+
+        op->increment_lateness();
+        inner_op->increment_age();
+      }
+    }
+  }
+
+  int fairness_insert = 0;
+  int num_aged_insert = 0;
+  int num_late_insert = 0;
+  int max_age_insert = 0;
+  int max_lateness_insert = 0;
+  // Count fairness, age, and lateness of all insert operations.
+  for (int i = 0; i < ops_->num_insert_ops(); i++) {
+    Operation* op = ops_->insert_ops()[i];
+
+    if(op->age() > 0) {
+      num_aged_insert++;
+      if(max_age_insert < op->age()) {
+        max_age_insert = op->age();
+      }
+      fairness_insert += op->age();
+    }
+
+    if(op->lateness() > 0) {
+      num_late_insert++;
+      if (max_lateness_insert < op->lateness()) {
+        max_lateness_insert = op->lateness();
+      }
+    }
+  }
+
+  double avg_fairness_insert = fairness_insert;
+  avg_fairness_insert /= ops_->num_insert_ops();
+
+  printf("%d %.3f %d %d %d %d %d %.3f %d %d %d %d\n",
+      fairness_insert,
+      avg_fairness_insert,
+      num_aged_insert,
+      max_age_insert,
+      num_late_insert,
+      max_lateness_insert,
+
+      fairness_remove,
+      avg_fairness_remove,
+      num_aged_remove,
+      max_age_remove,
+      num_late_remove,
+      max_lateness_remove
+      );
+
+  return 0;
+//  int op_fairness = 0;
+//  int num_late_ops = 0;
+//  int num_aged_ops = 0;
+//  int max_lateness = 0;
+//  int max_age = 0;
+//
+//  // Calculate age and lateness of all operations.
+//  for (int i = 0; i < ops_->num_all_ops(); i++) {
+//    Operation* op = ops_->all_ops()[i];
+//
+//    for(size_t j = 0; j < op->overlaps_ops_same_type_.size(); j++) {
+//      Operation* inner_op = op->overlaps_ops_same_type_[j];
+//
+//      // op started before inner_op, if the lin_order is higher, then
+//      // the operation op is late.
+//      if(op->lin_order() > inner_op->lin_order()) {
+//
+//        // This is the first time we see that op is late, so we increment
+//        // the late-ops counter.
+//        if (op->lateness() == 0) {
+//          num_late_ops++;
+//        }
+//
+//        op->increment_lateness();
+//        inner_op->increment_age();
+//        op_fairness++;
+//      }
+//    }
+//
+//    if (op->lateness() > max_lateness) {
+//      max_lateness = op->lateness();
+//    }
+//  }
+//
+//  // Calculate the number of aged operations and the maximum age.
+//  for (int i = 0; i < ops_->num_all_ops(); i++) {
+//    Operation* op = ops_->all_ops()[i];
+//
+//    if (op->age() > 0) {
+//      num_aged_ops++;
+//    }
+//
+//    if (op->age() > max_age) {
+//      max_age = op->age();
+//    }
+//  }
+//
+//  double avg_op_fairness = op_fairness;
+//  avg_op_fairness /= ops_->num_all_ops();
+//
+//  printf("Total op-fairness: %d\n", op_fairness);
+//  printf("Average op-fairness: %.3f\n", avg_op_fairness);
+//  printf("Number of late ops: %d\n", num_late_ops);
+//  return op_fairness;
 }

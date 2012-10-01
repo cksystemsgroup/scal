@@ -27,49 +27,39 @@ void disable_frequency_scaling() {
 }
 
 int main(int argc, char** argv) {
-  if (argc < 7) {
-    fprintf(stderr, "usage: ./analyzer <logfilename> <fifo|lifo> <operations> <mode> <debug|sum|histogram|sumparam> <param>\n");
+  if (argc < 3) {
+    fprintf(stderr, "usage: ./analyzer <logfilename> <operations>\n");
     return 1;
   }
 
-  char* filename = argv[1];
 //  char* datastructure = argv[2];
-  int operations = atoi(argv[3]);
-  int bound = atoi(argv[4]); //0 lower bound, 1 upper bound
+  int operations = atoi(argv[1]);
+  char* filename = argv[2];
+//  int bound = atoi(argv[4]); //0 lower bound, 1 upper bound
 //  char* mode = argv[5];
 //  int param = atoi(argv[6]);
 
 //  disable_frequency_scaling();
 
-  time_t start_time = time(0);
-
   FILE* input = fopen(filename, "r");
 
-  printf("Start time: %lu\n", time(0) - start_time);
-
   Operations ops(input, operations);
-
-  printf("Time after reading file: %lu\n", time(0) - start_time);
 
   fclose(input);
   ops.CalculateOverlaps();
 
-  printf("Time after calculate overlaps: %lu\n", time(0) - start_time);
-
   FifoExecuter *executer;
-  if (bound == 0) {
-    executer = new FifoExecuterLowerBound(&ops);
-  } else {
-    executer = new FifoExecuterUpperBound(&ops);
-  }
+//  if (bound == 0) {
+  executer = new FifoExecuterLowerBound(&ops);
+//  } else {
+//    executer = new FifoExecuterUpperBound(&ops);
+//  }
   Histogram histogram;
   executer->execute(&histogram);
 
-  printf("Time after execute: %lu\n", time(0) - start_time);
-
   executer->calculate_order();
+  executer->calculate_op_fairness();
 
-  printf("Time after calculate_order: %lu\n", time(0) - start_time);
 //  if (strcmp(datastructure, "fifo") == 0) {
 //    if (strcmp(mode, "histogram") == 0) {
 //      histogram.print();

@@ -13,41 +13,27 @@
 
 Operation::Operation() :
     start_(0), real_start_(0), end_(0), real_end_(0), type_(Operation::INSERT), value_(0),
-    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL){
+    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL),
+    lateness_(0), age_(0){
 
-//  Time start_;
-//      Time real_start_;
-//      Time real_end_;
-//      Time end_;
-//      int id_;
-//      OperationType type_;
-//      int value_;
-//      Operation* next_;
-//      Operation* prev_;
-//      vector<int> overlaps_;
-//      vector<int> insert_overlaps_value_;
-//      vector<int> remove_overlaps_value_;
-//      bool deleted_;
-//      int order_;
-//      int lin_order_;
-//      int error_;
-//      Operation* matching_op_;
-//      friend class Operations;
 }
 
 Operation::Operation(Time start, Time end) :
     start_(start), real_start_(start), end_(end), real_end_(end), type_(Operation::INSERT), value_(0),
-    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL) {
+    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL),
+    lateness_(0), age_(0) {
 }
 
 Operation::Operation(Time start, Time end, int id) :
     start_(start), real_start_(start), end_(end), real_end_(end), type_(Operation::INSERT), value_(0),
-    next_(this), prev_(this), deleted_(false), error_(0), id_(id), order_(0), matching_op_(NULL) {
+    next_(this), prev_(this), deleted_(false), error_(0), id_(id), order_(0), matching_op_(NULL),
+    lateness_(0), age_(0) {
 }
 
 Operation::Operation(Time start, Time end, OperationType type, int value) :
     start_(start), real_start_(start), end_(end), real_end_(end), type_(type), value_(value),
-    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL) {
+    next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL),
+    lateness_(0), age_(0) {
 
 }
 
@@ -122,7 +108,7 @@ void Operation::print() const {
  * the remove operation cannot take effect before the insert operation
  * has even started.
  */
-void Operations::adjust_start_times(Operation** ops, int num_operations) {
+void Operations::adjust_start_and_end_times(Operation** ops, int num_operations) {
   insert_ops_ = new Operation*[num_operations];
   remove_ops_ = new Operation*[num_operations];
   int insert_index = 0;
@@ -195,10 +181,9 @@ void Operations::Initialize(Operation** ops, int num_operations) {
   ops_ = ops;
   num_operations_ = num_operations;
 
-  // Adjust the start times of remove operations which start before their matching insert operations.
-  adjust_start_times(ops, num_operations);
-  // No need to adjust the end times of insert operations, the adjustment of the start times of
-  // remove operations fixes the problem.
+  // Adjust the start times of remove operations which start before their matching insert operations,
+  // and the end times of insert operations which end after their matching remove operations.
+  adjust_start_and_end_times(ops, num_operations);
 
   create_doubly_linked_list(&head_, ops_, num_operations_);
 }
@@ -228,11 +213,11 @@ Operations::Operations(FILE* input, int num_ops) :
     ops[i] = new Operation(op_start, op_end, op_type, op_value);
   }
 
-  printf("Finished reading file \n");
+//  printf("Finished reading file \n");
 
 
   Initialize(ops, num_ops);
-  printf("Finished Initialize \n");
+//  printf("Finished Initialize \n");
 }
 
 bool Operations::OverlapIterator::has_next() const {
@@ -367,19 +352,22 @@ void Operations::CalculateOverlaps() {
   Time last_start_time = 0;
   for (Operation* element = iter.get(); iter.valid(); element = iter.step()) {
     assert(element->start() >= last_start_time);
+    assert(!element->deleted());
     last_start_time = element->start();
     Operation* tmp = element->next_;
     while (tmp != &head_ && element->end() >= tmp->start()) {
-      assert(!tmp->deleted());
 
       element->overlaps_.push_back(tmp->id());
-      if (element->type() == Operation::INSERT && tmp->type() == Operation::INSERT) {
-        element->overlaps_insert_ops_.push_back(tmp);
+      if (element->type() == Operation::INSERT
+          && tmp->type() == Operation::INSERT) {
+        element->overlaps_ops_same_type_.push_back(tmp);
 //        element->insert_overlaps_value_.push_back(tmp->value());
       }
-//      else {
-//        element->remove_overlaps_value_.push_back(tmp->value());
-//      }
+      else if (element->type() == Operation::REMOVE
+          && tmp->type() == Operation::REMOVE) {
+        element->overlaps_ops_same_type_.push_back(tmp);
+      }
+
       tmp = tmp->next_;
     }
 //    sort(element->overlaps_.begin(), element->overlaps_.end());
