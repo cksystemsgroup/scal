@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-//  char* datastructure = argv[2];
+  char* order = argv[3];
   int operations = atoi(argv[1]);
   char* filename = argv[2];
 //  int bound = atoi(argv[4]); //0 lower bound, 1 upper bound
@@ -54,10 +54,20 @@ int main(int argc, char** argv) {
 //  } else {
 //    executer = new FifoExecuterUpperBound(&ops);
 //  }
-  Histogram histogram;
-  executer->execute(&histogram);
 
-  executer->calculate_order();
+  if (strcmp(order, "tool") == 0) {
+    Histogram histogram;
+    executer->execute(&histogram);
+    executer->calculate_order();
+  } 
+  else if (strcmp(order, "response") == 0) {
+    executer->calculate_response_order();
+  }
+  else {
+    printf("Invalid mode, use tool or response\n");
+    exit(-1);
+  }
+
   executer->calculate_op_fairness();
 
 //  if (strcmp(datastructure, "fifo") == 0) {

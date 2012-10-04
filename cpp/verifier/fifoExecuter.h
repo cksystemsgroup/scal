@@ -16,6 +16,7 @@ class FifoExecuter : public Executer {
   int amountOfFinishedEnqueueOperations(Operation* removeOperation) const;
   int amountOfStartedEnqueueOperations(Operation* removeOperation) const;
   void calculate_order();
+  void calculate_response_order();
   int calculate_op_fairness();
 
  protected:

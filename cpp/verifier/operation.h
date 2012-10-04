@@ -139,6 +139,11 @@ public:
     return (*(Operation**) left)->start() > (*(Operation**) right)->start();
   }
 
+  static int compare_operations_by_end_time(const void* left,
+      const void* right) {
+    return (*(Operation**) left)->end() > (*(Operation**) right)->end();
+  }
+
   static int compare_operations_by_real_start_time(const void* left,
       const void* right) {
     return (*(Operation**) left)->real_start_
