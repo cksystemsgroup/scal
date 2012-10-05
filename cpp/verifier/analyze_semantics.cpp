@@ -13,14 +13,18 @@
 #include "histogram.h"
 
 void enable_frequency_scaling() {
-  int result = system("for i in  /sys/devices/system/cpu/cpu? /sys/devices/system/cpu/cpu??; do sudo sh -c \"echo ondemand > $i/cpufreq/scaling_governor\"; done");
+  int result =
+      system(
+          "for i in  /sys/devices/system/cpu/cpu? /sys/devices/system/cpu/cpu??; do sudo sh -c \"echo ondemand > $i/cpufreq/scaling_governor\"; done");
   if (result) {
     printf("frequency scaling error");
   }
 }
 
 void disable_frequency_scaling() {
-  int result = system("for i in  /sys/devices/system/cpu/cpu? /sys/devices/system/cpu/cpu??; do sudo sh -c \"echo performance > $i/cpufreq/scaling_governor\"; done");
+  int result =
+      system(
+          "for i in  /sys/devices/system/cpu/cpu? /sys/devices/system/cpu/cpu??; do sudo sh -c \"echo performance > $i/cpufreq/scaling_governor\"; done");
   if (result) {
     printf("frequency scaling error");
   }
@@ -46,29 +50,34 @@ int main(int argc, char** argv) {
   Operations ops(input, operations);
 
   fclose(input);
-  ops.CalculateOverlaps();
 
-  FifoExecuter *executer;
-//  if (bound == 0) {
-  executer = new FifoExecuterLowerBound(&ops);
 //  } else {
 //    executer = new FifoExecuterUpperBound(&ops);
 //  }
 
   if (strcmp(order, "tool") == 0) {
+
+    ops.CalculateOverlaps();
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
     Histogram histogram;
     executer->execute(&histogram);
     executer->calculate_order();
-  } 
-  else if (strcmp(order, "response") == 0) {
+    executer->calculate_op_fairness();
+
+  } else if (strcmp(order, "response") == 0) {
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_response_order();
-  }
-  else {
+    executer->calculate_op_fairness();
+  } else if (strcmp(order, "element") == 0) {
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+    executer->calculate_element_fairness();
+  } else {
     printf("Invalid mode, use tool or response\n");
     exit(-1);
   }
-
-  executer->calculate_op_fairness();
 
 //  if (strcmp(datastructure, "fifo") == 0) {
 //    if (strcmp(mode, "histogram") == 0) {

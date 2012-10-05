@@ -17,7 +17,8 @@ class FifoExecuter : public Executer {
   int amountOfStartedEnqueueOperations(Operation* removeOperation) const;
   void calculate_order();
   void calculate_response_order();
-  int calculate_op_fairness();
+  void calculate_element_fairness();
+  void calculate_op_fairness();
 
  protected:
   virtual void executeOperationWithOverlaps(Operation* element, Histogram* histogram) = 0;
@@ -25,6 +26,10 @@ class FifoExecuter : public Executer {
   void executeOperation(Operation* element, Histogram* histogram);
 
   Operations* ops_;
+
+private:
+  void mark_long_ops(Operation** upper_bounds, bool* ignore_flags);
+  void calculate_upper_bounds(bool* ignore_flags, Operation** upper_bounds);
 };
 
 #endif  // FIFO_EXECUTER_H
