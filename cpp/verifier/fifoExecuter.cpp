@@ -233,8 +233,6 @@ void FifoExecuter::calculate_element_fairness() {
     }
   }
 
-  printf("%d elements get ignored.\n", ignore_counter);
-
   for (int i = 0; i < ops_->num_insert_ops(); i++) {
 
     Operation* op = ops_->insert_ops()[i];
