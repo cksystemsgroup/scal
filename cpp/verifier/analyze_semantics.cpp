@@ -74,6 +74,10 @@ int main(int argc, char** argv) {
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_element_fairness();
+  } else if (strcmp(order, "new") == 0) {
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+    executer->calculate_new_element_fairness();
   } else {
     printf("Invalid mode, use tool or response\n");
     exit(-1);

@@ -95,6 +95,14 @@ public:
     return matching_op_;
   }
 
+  void set_overtakes(int value) {
+    overtakes_ = value;
+  }
+
+  int overtakes() const{
+    return overtakes_;
+  }
+
   void remove() {
     next_->prev_ = prev_;
     prev_->next_ = next_;
@@ -180,6 +188,7 @@ private:
   int lin_order_;
   int lateness_;
   int age_;
+  int overtakes_;
   friend class Operations;
 };
 

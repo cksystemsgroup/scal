@@ -18,6 +18,7 @@ class FifoExecuter : public Executer {
   void calculate_order();
   void calculate_response_order();
   void calculate_element_fairness();
+  void calculate_new_element_fairness();
   void calculate_op_fairness();
 
  protected:

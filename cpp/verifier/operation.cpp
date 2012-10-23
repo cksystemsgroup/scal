@@ -14,26 +14,26 @@
 Operation::Operation() :
     start_(0), real_start_(0), end_(0), real_end_(0), type_(Operation::INSERT), value_(0),
     next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL),
-    lateness_(0), age_(0){
+    lateness_(0), age_(0), overtakes_(0){
 
 }
 
 Operation::Operation(Time start, Time end) :
     start_(start), real_start_(start), end_(end), real_end_(end), type_(Operation::INSERT), value_(0),
     next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL),
-    lateness_(0), age_(0) {
+    lateness_(0), age_(0), overtakes_(0) {
 }
 
 Operation::Operation(Time start, Time end, int id) :
     start_(start), real_start_(start), end_(end), real_end_(end), type_(Operation::INSERT), value_(0),
     next_(this), prev_(this), deleted_(false), error_(0), id_(id), order_(0), matching_op_(NULL),
-    lateness_(0), age_(0) {
+    lateness_(0), age_(0), overtakes_(0) {
 }
 
 Operation::Operation(Time start, Time end, OperationType type, int value) :
     start_(start), real_start_(start), end_(end), real_end_(end), type_(type), value_(value),
     next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(0), matching_op_(NULL),
-    lateness_(0), age_(0) {
+    lateness_(0), age_(0), overtakes_(0) {
 
 }
 
@@ -175,8 +175,6 @@ void Operations::adjust_start_and_end_times(Operation** ops, int num_operations)
   }
 }
 
-
-
 void Operations::Initialize(Operation** ops, int num_operations) {
   ops_ = ops;
   num_operations_ = num_operations;
@@ -188,36 +186,72 @@ void Operations::Initialize(Operation** ops, int num_operations) {
   create_doubly_linked_list(&head_, ops_, num_operations_);
 }
 
+//Operations::Operations(FILE* input, int num_ops) :
+//    num_operations_(num_ops), head_(0, 0, 0) {
+//  head_.deleted_ = false;
+//  Operation** ops = new Operation*[num_operations_];
+//  for (int i = 0; i < num_operations_; ++i) {
+////    int type;
+//    Time op_start;
+//    int thread_id;
+//    Time op_end;
+//    char type[8];
+//    Operation::OperationType op_type;
+//    int op_value;
+//    if (fscanf(input, "profile: %s %d %"PRIu64" %"PRIu64" %d\n", type, &thread_id, &op_start, &op_end, &op_value) == EOF) {
+//      fprintf(stderr, "ERROR: could not read all %d elements, abort after %d\n",
+//          num_operations_, i);
+//      exit(2);
+//    }
+//    if (strcmp(type, "ds_put") == 0) {
+//      op_type = Operation::INSERT;
+//    } else {
+//      op_type = Operation::REMOVE;
+//    }
+//    ops[i] = new Operation(op_start, op_end, op_type, op_value);
+//  }
+//
+////  printf("Finished reading file \n");
+//
+//
+//  Initialize(ops, num_ops);
+////  printf("Finished Initialize \n");
+//}
+
 Operations::Operations(FILE* input, int num_ops) :
     num_operations_(num_ops), head_(0, 0, 0) {
   head_.deleted_ = false;
   Operation** ops = new Operation*[num_operations_];
   for (int i = 0; i < num_operations_; ++i) {
-//    int type;
-    Time op_start;
-    int thread_id;
-    Time op_end;
-    char type[8];
-    Operation::OperationType op_type;
+    int type;
     int op_value;
-    if (fscanf(input, "profile: %s %d %"PRIu64" %"PRIu64" %d\n", type, &thread_id, &op_start, &op_end, &op_value) == EOF) {
+    Time op_start;
+    Time lin_time;
+    Time op_end;
+
+    Operation::OperationType op_type;
+    if (fscanf(input, "%d %d %"PRIu64" %"PRIu64" %"PRIu64"\n", &type, &op_value, &op_start, &lin_time, &op_end) == EOF) {
       fprintf(stderr, "ERROR: could not read all %d elements, abort after %d\n",
           num_operations_, i);
       exit(2);
     }
-    if (strcmp(type, "ds_put") == 0) {
+    if (type == 0) {
       op_type = Operation::INSERT;
-    } else {
+    } else if (type == 1) {
       op_type = Operation::REMOVE;
+    } else {
+      fprintf(stderr, "FATAL7: Invalid operation type: %d\n", type);
+      exit(7);
     }
+
+    if (op_value == 0) {
+      op_value = -1;
+    }
+
     ops[i] = new Operation(op_start, op_end, op_type, op_value);
   }
 
-//  printf("Finished reading file \n");
-
-
   Initialize(ops, num_ops);
-//  printf("Finished Initialize \n");
 }
 
 bool Operations::OverlapIterator::has_next() const {

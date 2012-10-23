@@ -182,11 +182,157 @@ void FifoExecuter::calculate_upper_bounds(bool* ignore_flags,
   for (int i = ops_->num_insert_ops() - 1; i >= 0; i--) {
 
     Operation* op = ops_->insert_ops()[i];
-    if (!ignore_flags[op->lin_order()] && op->lin_order() < lowest->lin_order()) {
+    if (!ignore_flags[op->lin_order()]
+        && op->lin_order() < lowest->lin_order()) {
       lowest = op;
     }
     upper_bounds[i] = lowest;
   }
+}
+
+inline bool is_prophetic_insert(Operation* op) {
+
+  // Remove operations cannot be prophetic inserts.
+  if (op->type() == Operation::REMOVE) {
+    return false;
+  }
+  // Prophetic inserts only exist with a matching remove operation.
+  if (op->matching_op() == NULL) {
+    return false;
+  }
+  // If the matching remove operation is prophetic, then this insert operation is prophetic.
+  return (op->real_start() > op->matching_op()->real_start());
+}
+
+inline bool is_prophetic_remove(Operation* op) {
+  if (op->type() == Operation::INSERT) {
+    return false;
+  }
+
+  // Null returns can never be prophetic.
+  if (op->value() == -1) {
+    return false;
+  }
+
+  assert(op->matching_op() != NULL);
+
+  // A remove operation is prophetic if it occurs before the matching insert operation.
+  return (op->real_start() < op->matching_op()->real_start());
+}
+
+/**
+ * Calculates the element-fairness of all elements with prophetic dequeues.
+ * The operations of these elements are flagged such that they get ignored
+ * in the calculation of the element-fairness of all other elements.
+ */
+void ef_prophetic_dequeue(Operation** ops, int num_ops) {
+
+  int num_prophetics = 0;
+  int total_element_fairness = 0;
+  int num_queue_elements = 0;
+
+  for (int i = 0; i < num_ops; i++) {
+
+    Operation* op = ops[i];
+
+    if (op->type() == Operation::INSERT) {
+
+      if (is_prophetic_insert(op)) {
+        // Do nothing. Prophetic dequeues do not change the state.
+      } else {
+        num_queue_elements++;
+      }
+    } else {
+
+      if (is_prophetic_remove(op)) {
+
+        num_prophetics++;
+
+        // Count all insert-operations and null-returns between the
+        // prophetic dequeue and its matching enqueue.
+        int counter = 0;
+        for(int j = i + 1; j < num_ops && ops[j] != op->matching_op(); j++) {
+          if (ops[j]->type() == Operation::INSERT) {
+            // Check if it is a prophetic insert.
+            if(is_prophetic_insert(ops[j])) {
+              // Prophetic inserts increase the counter only if the matching remove
+              // operation succeeds op.
+              if(ops[j]->matching_op()->real_start() > op->real_start()) {
+                counter++;
+              }
+            } else {
+              counter++;
+            }
+          } else {
+            // Only null-returns increase the counter.
+            if(ops[j]->value() == -1) {
+              counter ++;
+            }
+          }
+        }
+        op->set_overtakes(counter + num_queue_elements);
+
+        total_element_fairness += counter + num_queue_elements;
+
+      } else if(op->value() == -1) {
+        // Null returns do not change the state. Do nothing.
+      } else {
+        num_queue_elements--;
+      }
+    }
+  }
+
+  double average = total_element_fairness;
+    average /= num_prophetics;
+
+
+  printf("prophetic dequeues: #; total; average: %d %d %.3f \n", num_prophetics, total_element_fairness, average);
+}
+
+void ef_null_returns(Operation** ops, int num_ops) {
+
+  int num_queue_elements = 0;
+  int total_element_fairness = 0;
+  int num_null_returns = 0;
+
+  for (int i = 0; i < num_ops; i++) {
+
+    Operation* op = ops[i];
+
+    if (op->type() == Operation::REMOVE) {
+      if (op->value() == -1) {
+        op->set_overtakes(num_queue_elements);
+        total_element_fairness += num_queue_elements;
+        num_null_returns++;
+      } else if (!is_prophetic_remove(op)) {
+        num_queue_elements--;
+      }
+    } else {
+      if(!is_prophetic_insert(op)) {
+        num_queue_elements++;
+      }
+    }
+
+  }
+
+  double average = total_element_fairness;
+      average /= num_null_returns;
+
+
+    printf("null returns: #; total; average: %d %d %.3f \n", num_null_returns, total_element_fairness, average);
+
+}
+
+void FifoExecuter::calculate_new_element_fairness() {
+
+  qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*),
+      Operation::compare_operations_by_real_start_time);
+
+  // 1.) Calculate element-fairness for all elements with prophetic dequeues.
+  ef_prophetic_dequeue(ops_->all_ops(), ops_->num_all_ops());
+  // 2.) Calculate element-fairness for all null-returns
+  ef_null_returns(ops_->all_ops(), ops_->num_all_ops());
+  // 3.) Calculate element-fairness for all other elements
 }
 
 void FifoExecuter::calculate_element_fairness() {
@@ -208,10 +354,11 @@ void FifoExecuter::calculate_element_fairness() {
   qsort(ops_->insert_ops(), ops_->num_insert_ops(), sizeof(Operation*),
       Operation::compare_operations_by_real_start_time);
 
-  Operation** upper_bounds = (Operation**)malloc(ops_->num_insert_ops() * sizeof(Operation*));
-  bool* ignore_flags = (bool*)malloc(ops_->num_remove_ops() * sizeof(bool));
+  Operation** upper_bounds = (Operation**) malloc(
+      ops_->num_insert_ops() * sizeof(Operation*));
+  bool* ignore_flags = (bool*) malloc(ops_->num_remove_ops() * sizeof(bool));
 
-  for( int i = 0; i < ops_->num_remove_ops(); i++) {
+  for (int i = 0; i < ops_->num_remove_ops(); i++) {
     ignore_flags[i] = false;
   }
 
@@ -237,12 +384,11 @@ void FifoExecuter::calculate_element_fairness() {
 
     Operation* op = ops_->insert_ops()[i];
 
-    if(!ignore_flags[op->lin_order()]) {
+    if (!ignore_flags[op->lin_order()]) {
 
-
-      for (int j = i + 1; j < ops_->num_insert_ops() && op->lin_order() > upper_bounds[j]->lin_order(); j++) {
-
-
+      for (int j = i + 1;
+          j < ops_->num_insert_ops()
+              && op->lin_order() > upper_bounds[j]->lin_order(); j++) {
 
         Operation* inner_op = ops_->insert_ops()[j];
 
@@ -282,9 +428,8 @@ void FifoExecuter::calculate_element_fairness() {
   double avg_fairness = fairness;
   avg_fairness /= ops_->num_remove_ops();
 
-  printf("%d %.3f %d %d %d %d \n", fairness,
-        avg_fairness, num_aged, max_age, num_late,
-        max_lateness);
+  printf("%d %.3f %d %d %d %d \n", fairness, avg_fairness, num_aged, max_age,
+      num_late, max_lateness);
 }
 
 void FifoExecuter::calculate_op_fairness() {
