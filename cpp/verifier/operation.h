@@ -99,6 +99,10 @@ public:
     overtakes_ = value;
   }
 
+  void set_real_start(int value) {
+      real_start_ = value;
+  }
+
   int overtakes() const{
     return overtakes_;
   }
