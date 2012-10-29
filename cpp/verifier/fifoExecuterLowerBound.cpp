@@ -132,7 +132,7 @@ void FifoExecuterLowerBound::overlapTest1() {
   Operation r_3(16, 17, Operation::REMOVE, 1);
   input[7] = &r_3;
 
-  ops.Initialize(input, 8);
+  ops.Initialize(input, 8, true);
 
   ops.CalculateOverlaps();
   FifoExecuterLowerBound fifo(&ops);
@@ -192,7 +192,7 @@ void FifoExecuterLowerBound::overlapTest2() {
   Operation r_3(16, 19, Operation::REMOVE, 1);
   input[7] = &r_3;
 
-  ops.Initialize(input, 8);
+  ops.Initialize(input, 8, true);
 
   ops.CalculateOverlaps();
   FifoExecuterLowerBound fifo(&ops);
@@ -262,7 +262,7 @@ void FifoExecuterLowerBound::overlapTest3() {
   Operation r_3(15, 17, Operation::REMOVE, 1);
   input[7] = &r_3;
 
-  ops.Initialize(input, 8);
+  ops.Initialize(input, 8, true);
 
   ops.CalculateOverlaps();
   FifoExecuterLowerBound fifo(&ops);
@@ -329,7 +329,7 @@ void FifoExecuterLowerBound::overlapTest4() {
   input[4] = &i_1;
   input[5] = &i_2;
 
-  ops.Initialize(input, 6);
+  ops.Initialize(input, 6, true);
 
   ops.CalculateOverlaps();
   FifoExecuterLowerBound fifo(&ops);
@@ -392,7 +392,7 @@ void FifoExecuterLowerBound::overlapTest5() {
   Operation r_1(2, 6, Operation::REMOVE, 2);
   input[3] = &r_1;
 
-  ops.Initialize(input, 4);
+  ops.Initialize(input, 4, true);
 
   ops.CalculateOverlaps();
   FifoExecuterLowerBound fifo(&ops);
@@ -443,7 +443,7 @@ void FifoExecuterLowerBound::overlapTest6() {
   input[6] = &r_2;
   input[7] = &r_3;
 
-  ops.Initialize(input, 8);
+  ops.Initialize(input, 8, true);
 
   ops.CalculateOverlaps();
   FifoExecuterLowerBound fifo(&ops);

@@ -209,8 +209,8 @@ public:
     num_insert_ops_ = 0;
     num_remove_ops_ = 0;
   }
-  Operations(FILE* input, int num_ops);
-  void Initialize(Operation** ops, int num_ops);
+  Operations(char* filename, int num_ops, bool adjust_start_times);
+  void Initialize(Operation** ops, int num_ops, bool adjust_start_times);
   const Operation** operator[](int i) const;
   Operation** operator[](int i);
   bool is_consistent();
@@ -330,7 +330,7 @@ public:
   static void test();
 private:
   void insert(Operation* op);
-  void adjust_start_and_end_times(Operation** ops, int num_operations);
+  void match_operations(Operation** ops, int num_operations, bool adjust_start_times);
 
   // All operations as we read them.
   Operation** ops_;

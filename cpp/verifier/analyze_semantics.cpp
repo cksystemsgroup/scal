@@ -45,11 +45,9 @@ int main(int argc, char** argv) {
 
 //  disable_frequency_scaling();
 
-  FILE* input = fopen(filename, "r");
 
-  Operations ops(input, operations);
 
-  fclose(input);
+
 
 //  } else {
 //    executer = new FifoExecuterUpperBound(&ops);
@@ -57,6 +55,9 @@ int main(int argc, char** argv) {
 
   if (strcmp(order, "tool") == 0) {
 
+    // Adjust start-times of remove operations because otherwise the tool calculates lin-points for
+    // insert-operations which may be before their invocation.
+    Operations ops(filename, operations, true);
     ops.CalculateOverlaps();
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
@@ -66,20 +67,28 @@ int main(int argc, char** argv) {
     executer->calculate_op_fairness();
 
   } else if (strcmp(order, "response") == 0) {
+    Operations ops(filename, operations, true);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_response_order();
     executer->calculate_op_fairness();
   } else if (strcmp(order, "element") == 0) {
+    Operations ops(filename, operations, false);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_element_fairness();
   } else if (strcmp(order, "new") == 0) {
+    Operations ops(filename, operations, false);
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+    executer->calculate_new_element_fairness();
+  } else if (strcmp(order, "new_sane") == 0) {
+    Operations ops(filename, operations, true);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_new_element_fairness();
   } else {
-    printf("Invalid mode, use tool or response\n");
+    printf("Invalid mode, use tool or response, not %s\n", order);
     exit(-1);
   }
 

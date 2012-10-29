@@ -125,9 +125,7 @@ int main(int argc, char** argv) {
   int num_ops = atoi(argv[optind++]);
 
   for (int i = 0; i < iterations; ++i) {
-    FILE* input = fopen(filename, "r");
-    Operations ops(input, num_ops);
-    fclose(input);
+    Operations ops(filename, num_ops, true);
 
     if (verbose) {
       printf("all inserted, consistent %s\n", ops.is_consistent()?"yes":"no");

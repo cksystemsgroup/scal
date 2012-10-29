@@ -201,7 +201,7 @@ inline bool is_prophetic_insert(Operation* op) {
     return false;
   }
   // If the matching remove operation is prophetic, then this insert operation is prophetic.
-  return (op->real_start() > op->matching_op()->real_start());
+  return (op->start() > op->matching_op()->start());
 }
 
 inline bool is_prophetic_remove(Operation* op) {
@@ -217,7 +217,7 @@ inline bool is_prophetic_remove(Operation* op) {
   assert(op->matching_op() != NULL);
 
   // A remove operation is prophetic if it occurs before the matching insert operation.
-  return (op->real_start() < op->matching_op()->real_start());
+  return (op->start() < op->matching_op()->start());
 }
 
 /**
@@ -259,7 +259,7 @@ void ef_prophetic_dequeue(Operation** ops, int num_ops, int* num_prophetics,
             if (is_prophetic_insert(ops[j])) {
               // Prophetic inserts increase the counter only if the matching remove
               // operation succeeds op.
-              if (ops[j]->matching_op()->real_start() > op->real_start()) {
+              if (ops[j]->matching_op()->start() > op->start()) {
                 counter++;
               }
             } else {
@@ -335,13 +335,13 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
   *max = 0;
 
   qsort(remove_ops, num_remove_ops, sizeof(Operation*),
-      Operation::compare_operations_by_real_start_time);
+      Operation::compare_operations_by_start_time);
 
   // Step 1
   Time* upper_bounds = (Time*) malloc(num_remove_ops * sizeof(Time));
 
   Time earliestInsert =
-      remove_ops[num_remove_ops - 1]->matching_op()->real_start();
+      remove_ops[num_remove_ops - 1]->matching_op()->start();
 
   for (int i = num_remove_ops - 1; i >= 0; i--) {
 
@@ -350,8 +350,8 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
     } else if (is_prophetic_remove(remove_ops[i])) {
       // Do nothing. Prophetic dequeues already got handled.
     } else {
-      if (remove_ops[i]->matching_op()->real_start() < earliestInsert) {
-        earliestInsert = remove_ops[i]->matching_op()->real_start();
+      if (remove_ops[i]->matching_op()->start() < earliestInsert) {
+        earliestInsert = remove_ops[i]->matching_op()->start();
       }
     }
     upper_bounds[i] = earliestInsert;
@@ -369,15 +369,15 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
       int counter = 0;
       for (int j = i + 1;
           j < num_remove_ops
-              && op->matching_op()->real_start() > upper_bounds[j]; j++) {
+              && op->matching_op()->start() > upper_bounds[j]; j++) {
 
         if (remove_ops[j]->value() == -1) {
           // Do nothing for null returns, they have been handled already.
         } else if (is_prophetic_remove(remove_ops[j])) {
           // Do nothing for prophetic removes, they have been handled already.
         } else {
-          if (remove_ops[j]->matching_op()->real_start()
-              < op->matching_op()->real_start()) {
+          if (remove_ops[j]->matching_op()->start()
+              < op->matching_op()->start()) {
             counter++;
           }
         }
@@ -396,7 +396,7 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
 void FifoExecuter::calculate_new_element_fairness() {
 
   qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*),
-      Operation::compare_operations_by_real_start_time);
+      Operation::compare_operations_by_start_time);
 
   int num_prophetic = 0;
   int total_prophetic = 0;
@@ -421,13 +421,19 @@ void FifoExecuter::calculate_new_element_fairness() {
       &total_normal, &max_normal);
 
   double average_prophetic = total_prophetic;
-  average_prophetic /= num_prophetic;
+  if(num_prophetic != 0) {
+    average_prophetic /= num_prophetic;
+  }
 
   double average_null = total_null;
-  average_null /= num_null;
+  if(num_null != 0) {
+    average_null /= num_null;
+  }
 
   double average_normal = total_normal;
-  average_normal /= num_normal;
+  if(num_normal != 0) {
+    average_normal /= num_normal;
+  }
 
   int num = num_prophetic + num_null + num_normal;
   int max =
@@ -437,7 +443,9 @@ void FifoExecuter::calculate_new_element_fairness() {
   int total = total_prophetic + total_null + total_normal;
 
   double average = total;
-  average /= num;
+  if(num != 0) {
+    average /= num;
+  }
 
 printf("%d %d %d %.3f %d %d %d %.3f %d %d %d %.3f %d %d %d %.3f\n", num, max, total, average,
                                                                     num_normal, max_normal, total_normal, average_normal,
@@ -454,7 +462,7 @@ void FifoExecuter::calculate_element_fairness() {
 // 3.) Calculate element fairness.
 
 qsort(ops_->remove_ops(), ops_->num_remove_ops(), sizeof(Operation*),
-    Operation::compare_operations_by_real_start_time);
+    Operation::compare_operations_by_start_time);
 
 for (int i = 0; i < ops_->num_remove_ops(); i++) {
 
@@ -463,7 +471,7 @@ for (int i = 0; i < ops_->num_remove_ops(); i++) {
 }
 
 qsort(ops_->insert_ops(), ops_->num_insert_ops(), sizeof(Operation*),
-    Operation::compare_operations_by_real_start_time);
+    Operation::compare_operations_by_start_time);
 
 Operation** upper_bounds = (Operation**) malloc(
     ops_->num_insert_ops() * sizeof(Operation*));
@@ -547,7 +555,7 @@ void FifoExecuter::calculate_op_fairness() {
 
 // Calculate the fairness of remove operations.
 qsort(ops_->remove_ops(), ops_->num_remove_ops(), sizeof(Operation*),
-    Operation::compare_operations_by_real_start_time);
+    Operation::compare_operations_by_start_time);
 
 for (int i = 0; i < ops_->num_remove_ops(); i++) {
 
@@ -557,7 +565,7 @@ for (int i = 0; i < ops_->num_remove_ops(); i++) {
   for (int j = i + 1; j < ops_->num_remove_ops(); j++) {
 
     Operation* inner_op = ops_->remove_ops()[j];
-    if (inner_op->real_start() > upper_time_bound) {
+    if (inner_op->start() > upper_time_bound) {
       // All following operations are started after the current operation has ended, there will
       // be no more overtakings.
       break;
