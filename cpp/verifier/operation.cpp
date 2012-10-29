@@ -389,6 +389,29 @@ void Operations::insert(Operation* new_op) {
   new_op->insert_before(iter);
 }
 
+void Operations::shorten_execution_times(int quotient) {
+
+  for (int i = 0; i < num_all_ops(); i++) {
+    Operation* op = all_ops()[i];
+    Time new_response = (op->real_start() + op->real_end()) / quotient;
+
+    if (op->start() > new_response) {
+      // This condition is true for the following reason: The start time of op has
+      // been adjusted because the real start time of op was
+      // smaller than the real start time of its matching insert operation, and the difference
+      // between the start times was more than 1/quotient of the execution time of op. If we adjust
+      // the response time it would be before its start time. Therefore we set it to the next higher
+      // valid value, adjusted start time.
+
+      op->end_ = op->start();
+    } else if (op->end() < new_response) {
+      // Do nothing, the response of the operation is already earlier than the new bound we want to set.
+    } else {
+      op->end_ = new_response;
+    }
+  }
+}
+
 void Operations::CalculateOverlaps() {
   Iterator iter = elements();
   Time last_start_time = 0;

@@ -551,6 +551,26 @@ printf("%d %.3f %d %d %d %d \n", fairness, avg_fairness, num_aged, max_age,
     num_late, max_lateness);
 }
 
+void FifoExecuter::aggregate_semantical_error() {
+
+  unsigned long total = 0;
+  unsigned long max = 0;
+  for (int i = 0; i < ops_->num_remove_ops(); i++) {
+    Operation* op = ops_->remove_ops()[i];
+
+    total += op->error();
+
+    if(op->error() > max) {
+      max = op->error();
+    }
+  }
+
+  double avg = total;
+  avg /= ops_->num_remove_ops();
+
+  printf("%lu %.3f %lu\n", total, avg, max);
+}
+
 void FifoExecuter::calculate_op_fairness() {
 
 // Calculate the fairness of remove operations.

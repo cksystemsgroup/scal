@@ -31,14 +31,20 @@ void disable_frequency_scaling() {
 }
 
 int main(int argc, char** argv) {
-  if (argc < 3) {
-    fprintf(stderr, "usage: ./analyzer <logfilename> <operations>\n");
+  if (argc < 4) {
+    fprintf(stderr, "usage: ./analyzer <logfilename> <operations> <mode>\n");
     return 1;
   }
 
   char* order = argv[3];
   int operations = atoi(argv[1]);
   char* filename = argv[2];
+  int execution_time_quotient = 1;
+
+  if (argc >= 5) {
+    execution_time_quotient = atoi(argv[4]);
+  }
+
 //  int bound = atoi(argv[4]); //0 lower bound, 1 upper bound
 //  char* mode = argv[5];
 //  int param = atoi(argv[6]);
@@ -53,11 +59,12 @@ int main(int argc, char** argv) {
 //    executer = new FifoExecuterUpperBound(&ops);
 //  }
 
-  if (strcmp(order, "tool") == 0) {
+  if (strcmp(order, "tool_op") == 0) {
 
     // Adjust start-times of remove operations because otherwise the tool calculates lin-points for
     // insert-operations which may be before their invocation.
     Operations ops(filename, operations, true);
+    ops.shorten_execution_times(execution_time_quotient);
     ops.CalculateOverlaps();
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
@@ -65,9 +72,19 @@ int main(int argc, char** argv) {
     executer->execute(&histogram);
     executer->calculate_order();
     executer->calculate_op_fairness();
-
-  } else if (strcmp(order, "response") == 0) {
+  } else if (strcmp(order, "tool") == 0) {
     Operations ops(filename, operations, true);
+    if (execution_time_quotient > 1) {
+      ops.shorten_execution_times(execution_time_quotient);
+    }
+    ops.CalculateOverlaps();
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+    Histogram histogram;
+    executer->execute(&histogram);
+    executer->aggregate_semantical_error();
+  } else if (strcmp(order, "response") == 0) {
+    Operations ops(filename, operations, false);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_response_order();

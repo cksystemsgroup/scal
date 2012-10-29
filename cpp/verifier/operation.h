@@ -49,9 +49,11 @@ public:
     return start_;
   }
   Time real_start() const {
-      return real_start_;
-    }
-
+    return real_start_;
+  }
+  Time real_end() const {
+    return real_end_;
+  }
   Time end() const {
     return end_;
   }
@@ -73,7 +75,7 @@ public:
   int lin_order() const {
     return lin_order_;
   }
-  int error() const {
+  unsigned int error() const {
     return error_;
   }
   void set_lin_order(int value) {
@@ -182,7 +184,7 @@ private:
   Operation* next_;
   Operation* prev_;
   bool deleted_;
-  int error_;
+  unsigned int error_;
   int id_;
   int order_;
   Operation* matching_op_;
@@ -273,6 +275,8 @@ public:
   int num_remove_ops(void) {
     return num_remove_ops_;
   }
+
+  void shorten_execution_times(int quotient);
 
   void CalculateOverlaps();
 
