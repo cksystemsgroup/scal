@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_new_element_fairness();
   } else {
-    printf("Invalid mode, use tool or response, not %s\n", order);
+    printf("Invalid mode, use tool_op, tool, response, element, new, or new_sane, not %s\n", order);
     exit(-1);
   }
 
