@@ -225,8 +225,8 @@ inline bool is_prophetic_remove(Operation* op) {
  * The operations of these elements are flagged such that they get ignored
  * in the calculation of the element-fairness of all other elements.
  */
-void ef_prophetic_dequeue(Operation** ops, int num_ops, int* num_prophetics,
-    int* total, int* max) {
+void ef_prophetic_dequeue(Operation** ops, int64_t num_ops, int64_t* num_prophetics,
+    int64_t* total, int64_t* max) {
 
   *num_prophetics = 0;
   *total = 0;
@@ -289,8 +289,8 @@ void ef_prophetic_dequeue(Operation** ops, int num_ops, int* num_prophetics,
   }
 }
 
-void ef_null_returns(Operation** ops, int num_ops, int* num_null_returns,
-    int* total, int* max) {
+void ef_null_returns(Operation** ops, int num_ops, int64_t* num_null_returns,
+    int64_t* total, int64_t* max) {
 
   *num_null_returns = 0;
   *total = 0;
@@ -324,7 +324,7 @@ void ef_null_returns(Operation** ops, int num_ops, int* num_null_returns,
 }
 
 void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
-    int* num_normal, int* total, int* max) {
+    int64_t* num_normal, int64_t* total, int64_t* max) {
   // 1.) Calculate upper bounds up to which it is possible to find other elements whose
   //     which get overtaken by the current operation.
   // 2.) Starting from a remove operation, count all other remove operations whose matching insert
@@ -398,17 +398,17 @@ void FifoExecuter::calculate_new_element_fairness() {
   qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*),
       Operation::compare_operations_by_start_time);
 
-  int num_prophetic = 0;
-  int total_prophetic = 0;
-  int max_prophetic = 0;
+  int64_t num_prophetic = 0;
+  int64_t total_prophetic = 0;
+  int64_t max_prophetic = 0;
 
-  int num_null = 0;
-  int total_null = 0;
-  int max_null = 0;
+  int64_t num_null = 0;
+  int64_t total_null = 0;
+  int64_t max_null = 0;
 
-  int num_normal = 0;
-  int total_normal = 0;
-  int max_normal = 0;
+  int64_t num_normal = 0;
+  int64_t total_normal = 0;
+  int64_t max_normal = 0;
 
   // 1.) Calculate element-fairness for all elements with prophetic dequeues.
   ef_prophetic_dequeue(ops_->all_ops(), ops_->num_all_ops(), &num_prophetic,
@@ -435,19 +435,19 @@ void FifoExecuter::calculate_new_element_fairness() {
     average_normal /= num_normal;
   }
 
-  int num = num_prophetic + num_null + num_normal;
-  int max =
+  int64_t num = num_prophetic + num_null + num_normal;
+  int64_t max =
       (max_prophetic > max_null) ?
           ((max_prophetic > max_normal) ? max_prophetic : max_normal) :
           ((max_null > max_normal) ? max_null : max_normal);
-  int total = total_prophetic + total_null + total_normal;
+  int64_t total = total_prophetic + total_null + total_normal;
 
   double average = total;
   if(num != 0) {
     average /= num;
   }
 
-printf("%d %d %d %.3f %d %d %d %.3f %d %d %d %.3f %d %d %d %.3f\n", num, max, total, average,
+printf("%lu %lu %lu %.3f %lu %lu %lu %.3f %lu %lu %lu %.3f %lu %lu %lu %.3f\n", num, max, total, average,
                                                                     num_normal, max_normal, total_normal, average_normal,
                                                                     num_null, max_null, total_null, average_null,
                                                                     num_prophetic, max_prophetic, total_prophetic, average_prophetic);
