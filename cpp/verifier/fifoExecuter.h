@@ -21,6 +21,9 @@ class FifoExecuter : public Executer {
   void calculate_new_element_fairness();
   void aggregate_semantical_error();
   void calculate_op_fairness();
+  void calculate_op_fairness_typeless();
+  void calculate_performance_index();
+
 
  protected:
   virtual void executeOperationWithOverlaps(Operation* element, Histogram* histogram) = 0;

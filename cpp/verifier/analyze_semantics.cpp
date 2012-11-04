@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_response_order();
-    executer->calculate_op_fairness();
+    executer->calculate_op_fairness_typeless();
   } else if (strcmp(order, "element") == 0) {
     Operations ops(filename, operations, false);
     FifoExecuter *executer;
@@ -99,6 +99,11 @@ int main(int argc, char** argv) {
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_new_element_fairness();
+  } else if (strcmp(order, "perf") == 0) {
+    Operations ops(filename, operations, false);
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+    executer->calculate_performance_index();
   } else if (strcmp(order, "new_sane") == 0) {
     Operations ops(filename, operations, true);
     FifoExecuter *executer;
