@@ -38,7 +38,7 @@ public:
   Operation();
   Operation(Time start, Time end);
   Operation(Time start, Time end, int id);
-  Operation(Time start, Time end, OperationType type, int value);
+  Operation(Time start, Time lin_time, Time end, OperationType type, int value);
   Operation(Time start, Time end, int id, OperationType type, int value);
 
   // Each insert operation stores a list of overlapping insert operations to calculate
@@ -57,6 +57,11 @@ public:
   Time end() const {
     return end_;
   }
+
+  Time lin_time() const {
+    return lin_time_;
+  }
+
   int id() const {
     return id_;
   }
@@ -153,12 +158,21 @@ public:
   }
 
   static uint64_t lin_point_end_time(Operation* op) {
+    return op->end();
+  }
+
+  static uint64_t lin_point_lin_time(Operation* op) {
       return op->end();
     }
 
   static int compare_operations_by_start_time(const void* left,
       const void* right) {
     return (*(Operation**) left)->start() > (*(Operation**) right)->start();
+  }
+
+  static int compare_operations_by_lin_time(const void* left,
+      const void* right) {
+    return (*(Operation**) left)->lin_time() > (*(Operation**) right)->lin_time();
   }
 
   static int compare_operations_by_end_time(const void* left,
@@ -185,6 +199,7 @@ public:
 private:
   Time start_;
   Time real_start_;
+  Time lin_time_;
   Time end_;
   Time real_end_;
   OperationType type_;
@@ -225,12 +240,15 @@ public:
   Operation** operator[](int i);
   bool is_consistent();
   void print();
+  Operation* head() {
+    return &head_;
+  }
 
   static void create_doubly_linked_list(Operation* head, Operation** ops,
-      int num_operations) {
+      int num_operations, int (*compare_ops)(const void* left, const void* right)) {
 
     qsort(ops, num_operations, sizeof(Operation*),
-        Operation::compare_operations_by_start_time);
+        compare_ops);
 
     for (int i = 0; i < num_operations; i++) {
       ops[i]->deleted_ = false;

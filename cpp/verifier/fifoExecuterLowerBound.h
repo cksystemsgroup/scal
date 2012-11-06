@@ -11,15 +11,15 @@ class FifoExecuterLowerBound : public FifoExecuter {
   FifoExecuterLowerBound(Operations* ops) : FifoExecuter(ops) {}
   virtual int semanticalError(const Operation* removeOperation,
                       Operation** matchingInsertOperation = NULL) const;
-  static void test();
+//  static void test();
  private:
   virtual void executeOperationWithOverlaps(Operation* element, Histogram* histogram);
-  static void overlapTest1();
-  static void overlapTest2();
-  static void overlapTest3();
-  static void overlapTest4();
-  static void overlapTest5();
-  static void overlapTest6();
+//  static void overlapTest1();
+//  static void overlapTest2();
+//  static void overlapTest3();
+//  static void overlapTest4();
+//  static void overlapTest5();
+//  static void overlapTest6();
 //  static void insertOverlapTest1();
 //  static void insertOverlapTest2();
 //  static void insertOverlapMixedTest1();

@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 //  fprintf(stderr, "test Traces ... \n");
 //  Traces::test();
   fprintf(stderr, "FifoExecuterLowerBound test ... \n");
-  FifoExecuterLowerBound::test();
+//  FifoExecuterLowerBound::test();
 //  fprintf(stderr, "FifoExecuterUpperBound test ... \n");
 //  FifoExecuterUpperBound::test();
   fprintf(stderr, "tests finished successfully\n");

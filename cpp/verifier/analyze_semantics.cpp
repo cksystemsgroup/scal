@@ -104,7 +104,18 @@ int main(int argc, char** argv) {
       FifoExecuter *executer;
       executer = new FifoExecuterLowerBound(&ops);
       executer->calculate_new_element_fairness(Operation::lin_point_end_time, Operation::compare_operations_by_end_time);
-  } else if (strcmp(order, "new_sane") == 0) {
+  } else if (strcmp(order, "ef_lin") == 0) {
+    Operations ops(filename, operations, true);
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+    executer->calculate_new_element_fairness(Operation::lin_point_lin_time, Operation::compare_operations_by_lin_time);
+} else if (strcmp(order, "diff") == 0) {
+  Operations ops(filename, operations, true);
+  FifoExecuter *executer;
+  executer = new FifoExecuterLowerBound(&ops);
+  executer->calculate_diff(Operation::lin_point_start_time, Operation::compare_operations_by_start_time,
+                                           Operation::lin_point_end_time, Operation::compare_operations_by_end_time);
+} else if (strcmp(order, "new_sane") == 0) {
     Operations ops(filename, operations, true);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);

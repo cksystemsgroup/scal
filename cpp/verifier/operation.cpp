@@ -32,8 +32,8 @@ Operation::Operation(Time start, Time end, int id) :
         0), overtakes_(0) {
 }
 
-Operation::Operation(Time start, Time end, OperationType type, int value) :
-    start_(start), real_start_(start), end_(end), real_end_(end), type_(type), value_(
+Operation::Operation(Time start, Time lin_time, Time end, OperationType type, int value) :
+    start_(start), real_start_(start), lin_time_(lin_time), end_(end), real_end_(end), type_(type), value_(
         value), next_(this), prev_(this), deleted_(false), error_(0), id_(0), order_(
         0), matching_op_(NULL), lateness_(0), age_(0), overtakes_(0) {
 
@@ -188,7 +188,7 @@ void Operations::Initialize(Operation** ops, int num_operations, bool adjust_sta
   // and the end times of insert operations which end after their matching remove operations.
   match_operations(ops, num_operations, adjust_start_times);
 
-  create_doubly_linked_list(&head_, ops_, num_operations_);
+
 }
 
 //Operations::Operations(FILE* input, int num_ops) :
@@ -256,7 +256,7 @@ Operations::Operations(char* filename, int num_ops, bool adjust_start_times) :
       op_value = -1;
     }
 
-    ops[i] = new Operation(op_start, op_end, op_type, op_value);
+    ops[i] = new Operation(op_start, lin_time, op_end, op_type, op_value);
   }
   fclose(input);
   Initialize(ops, num_ops, adjust_start_times);

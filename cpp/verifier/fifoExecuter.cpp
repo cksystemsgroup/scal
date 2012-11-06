@@ -42,6 +42,9 @@ int FifoExecuter::amountOfStartedEnqueueOperations(
 }
 
 void FifoExecuter::execute(Histogram* histogram) {
+
+  Operations::create_doubly_linked_list(ops_->head(), ops_->all_ops(),
+      ops_->num_all_ops(), Operation::compare_operations_by_start_time);
   Operations::Iterator iter = ops_->elements();
   for (Operation* element = iter.get(); iter.valid(); element = iter.step()) {
 
@@ -87,7 +90,7 @@ void FifoExecuter::calculate_order() {
   Operation insert_head(0, 0, 0);
 
   Operations::create_doubly_linked_list(&insert_head, ops_->insert_ops(),
-      ops_->num_insert_ops());
+      ops_->num_insert_ops(), Operation::compare_operations_by_start_time);
 
   qsort(ops_->remove_ops(), ops_->num_remove_ops(), sizeof(Operation*),
       Operation::compare_operations_by_order);
@@ -340,7 +343,8 @@ void ef_normal_dequeues(Operation** insert_ops, int num_insert_ops,
   *max = 0;
 
   Operation head;
-  Operations::create_doubly_linked_list(&head, insert_ops, num_insert_ops);
+  Operations::create_doubly_linked_list(&head, insert_ops, num_insert_ops,
+      compare_ops);
 
   qsort(remove_ops, num_remove_ops, sizeof(Operation*), compare_ops);
 
@@ -440,11 +444,146 @@ void ef_normal_dequeues(Operation** insert_ops, int num_insert_ops,
 //  }
 }
 
-void FifoExecuter::calculate_new_element_fairness(
+void ef_all_dequeues(Operations* ops, int64_t* num, int64_t* total,
+    int64_t* max,
+
+    int64_t* num_prophetic, int64_t* total_prophetic, int64_t* max_prophetic,
+
+    int64_t* num_null, int64_t* total_null, int64_t* max_null,
+
+    int64_t* num_normal, int64_t* total_normal, int64_t* max_normal,
+
     uint64_t (*lin_point)(Operation* op),
     int (*compare_ops)(const void* left, const void* right)) {
 
-  qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*), compare_ops);
+  qsort(ops->all_ops(), ops->num_all_ops(), sizeof(Operation*), compare_ops);
+
+  *num_prophetic = 0;
+  *total_prophetic = 0;
+  *max_prophetic = 0;
+
+  *num_null = 0;
+  *total_null = 0;
+  *max_null = 0;
+
+  *num_normal = 0;
+  *total_normal = 0;
+  *max_normal = 0;
+
+  // 1.) Calculate element-fairness for all elements with prophetic dequeues.
+  ef_prophetic_dequeue(ops->all_ops(), ops->num_all_ops(), num_prophetic,
+      total_prophetic, max_prophetic, lin_point);
+  // 2.) Calculate element-fairness for all null-returns
+  ef_null_returns(ops->all_ops(), ops->num_all_ops(), num_null, total_null,
+      max_null, lin_point);
+  // 3.) Calculate element-fairness for all other elements
+  ef_normal_dequeues(ops->insert_ops(), ops->num_insert_ops(),
+      ops->remove_ops(), ops->num_remove_ops(), num_normal, total_normal,
+      max_normal, lin_point, compare_ops);
+
+  *num = *num_prophetic + *num_null + *num_normal;
+  *max =
+      (*max_prophetic > *max_null) ?
+          ((*max_prophetic > *max_normal) ? *max_prophetic : *max_normal) :
+          ((*max_null > *max_normal) ? *max_null : *max_normal);
+  *total = * total_prophetic + * total_null + *total_normal;
+}
+
+int64_t abs_diff(int64_t v1, int64_t v2) {
+  if (v1 > v2) {
+    return v1 - v2;
+  }
+  return v2 - v1;
+}
+
+void FifoExecuter::calculate_diff(
+    uint64_t (*lin_point_1)(Operation* op),
+    int (*compare_ops_1)(const void* left, const void* right),
+    uint64_t (*lin_point_2)(Operation* op),
+    int (*compare_ops_2)(const void* left, const void* right)) {
+
+    int64_t num_prophetic1 = 0;
+    int64_t total_prophetic1 = 0;
+    int64_t max_prophetic1 = 0;
+
+    int64_t num_null1 = 0;
+    int64_t total_null1 = 0;
+    int64_t max_null1 = 0;
+
+    int64_t num_normal1 = 0;
+    int64_t total_normal1 = 0;
+    int64_t max_normal1 = 0;
+
+    int64_t num1 = 0;
+    int64_t max1 = 0;
+    int64_t total1 = 0;
+
+    ef_all_dequeues(ops_, &num1, &total1, &max1, &num_prophetic1, &total_prophetic1,
+        &max_prophetic1, &num_null1, &total_null1, &max_null1, &num_normal1, &total_normal1,
+        &max_normal1, lin_point_1, compare_ops_1);
+
+    int64_t num_prophetic2 = 0;
+    int64_t total_prophetic2 = 0;
+    int64_t max_prophetic2 = 0;
+
+    int64_t num_null2 = 0;
+    int64_t total_null2 = 0;
+    int64_t max_null2 = 0;
+
+    int64_t num_normal2 = 0;
+    int64_t total_normal2 = 0;
+    int64_t max_normal2 = 0;
+
+    int64_t num2 = 0;
+    int64_t max2 = 0;
+    int64_t total2 = 0;
+
+    ef_all_dequeues(ops_, &num2, &total2, &max2, &num_prophetic2, &total_prophetic2,
+        &max_prophetic2, &num_null2, &total_null2, &max_null2, &num_normal2, &total_normal2,
+        &max_normal2, lin_point_2, compare_ops_2);
+
+    int64_t num_prophetic = num_prophetic1;
+    int64_t total_prophetic = abs_diff(total_prophetic1, total_prophetic2);
+
+    int64_t num_null = num_null1;
+    int64_t total_null = abs_diff(total_null1, total_null2);
+
+    int64_t num_normal = num_normal1;
+    int64_t total_normal = abs_diff(total_normal1, total_normal2);
+
+    int64_t num = num1;
+    int64_t total = abs_diff(total1, total2);
+
+    double average_prophetic = total_prophetic;
+    if (num_prophetic != 0) {
+      average_prophetic /= num_prophetic;
+    }
+
+    double average_null = total_null;
+    if (num_null != 0) {
+      average_null /= num_null;
+    }
+
+    double average_normal = total_normal;
+    if (num_normal != 0) {
+      average_normal /= num_normal;
+    }
+
+    double average = total;
+    if (num != 0) {
+      average /= num;
+    }
+
+    printf(
+        "%lu %.3f %lu %.3f %lu %.3f %lu %.3f\n",
+        total, average, total_normal,
+        average_normal, total_null, average_null,
+        total_prophetic, average_prophetic);
+}
+
+void FifoExecuter::calculate_new_element_fairness(
+    uint64_t (*lin_point)(Operation* op),
+    int (*compare_ops)(const void* left, const void* right)) {
 
   int64_t num_prophetic = 0;
   int64_t total_prophetic = 0;
@@ -458,15 +597,12 @@ void FifoExecuter::calculate_new_element_fairness(
   int64_t total_normal = 0;
   int64_t max_normal = 0;
 
-  // 1.) Calculate element-fairness for all elements with prophetic dequeues.
-  ef_prophetic_dequeue(ops_->all_ops(), ops_->num_all_ops(), &num_prophetic,
-      &total_prophetic, &max_prophetic, lin_point);
-  // 2.) Calculate element-fairness for all null-returns
-  ef_null_returns(ops_->all_ops(), ops_->num_all_ops(), &num_null, &total_null,
-      &max_null, lin_point);
-  // 3.) Calculate element-fairness for all other elements
-  ef_normal_dequeues(ops_->insert_ops(), ops_->num_insert_ops(),
-      ops_->remove_ops(), ops_->num_remove_ops(), &num_normal, &total_normal,
+  int64_t num = 0;
+  int64_t max = 0;
+  int64_t total = 0;
+
+  ef_all_dequeues(ops_, &num, &total, &max, &num_prophetic, &total_prophetic,
+      &max_prophetic, &num_null, &total_null, &max_null, &num_normal, &total_normal,
       &max_normal, lin_point, compare_ops);
 
   double average_prophetic = total_prophetic;
@@ -483,13 +619,6 @@ void FifoExecuter::calculate_new_element_fairness(
   if (num_normal != 0) {
     average_normal /= num_normal;
   }
-
-  int64_t num = num_prophetic + num_null + num_normal;
-  int64_t max =
-      (max_prophetic > max_null) ?
-          ((max_prophetic > max_normal) ? max_prophetic : max_normal) :
-          ((max_null > max_normal) ? max_null : max_normal);
-  int64_t total = total_prophetic + total_null + total_normal;
 
   double average = total;
   if (num != 0) {
@@ -821,7 +950,7 @@ void FifoExecuter::calculate_performance_index() {
         j++) {
 
       overlaps[i]++;
- //     overlaps[j]++;
+      //     overlaps[j]++;
     }
   }
 

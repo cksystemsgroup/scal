@@ -19,6 +19,8 @@ class FifoExecuter : public Executer {
   void calculate_response_order();
   void calculate_element_fairness();
   void calculate_new_element_fairness(uint64_t (*lin_point)(Operation* op), int (*compare)(const void* left, const void* right));
+  void calculate_diff(uint64_t (*lin_point_1)(Operation* op), int (*compare_ops_1)(const void* left, const void* right),
+                      uint64_t (*lin_point_2)(Operation* op), int (*compare_ops_2)(const void* left, const void* right));
   void aggregate_semantical_error();
   void calculate_op_fairness();
   void calculate_op_fairness_typeless();
