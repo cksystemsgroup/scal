@@ -190,7 +190,8 @@ void FifoExecuter::calculate_upper_bounds(bool* ignore_flags,
   }
 }
 
-inline bool is_prophetic_insert(Operation* op, uint64_t (*lin_point)(Operation* op)) {
+inline bool is_prophetic_insert(Operation* op,
+    uint64_t (*lin_point)(Operation* op)) {
 
   // Remove operations cannot be prophetic inserts.
   if (op->type() == Operation::REMOVE) {
@@ -204,7 +205,8 @@ inline bool is_prophetic_insert(Operation* op, uint64_t (*lin_point)(Operation* 
   return (lin_point(op) > lin_point(op->matching_op()));
 }
 
-inline bool is_prophetic_remove(Operation* op, uint64_t (*lin_point)(Operation* op)) {
+inline bool is_prophetic_remove(Operation* op,
+    uint64_t (*lin_point)(Operation* op)) {
   if (op->type() == Operation::INSERT) {
     return false;
   }
@@ -225,8 +227,9 @@ inline bool is_prophetic_remove(Operation* op, uint64_t (*lin_point)(Operation* 
  * The operations of these elements are flagged such that they get ignored
  * in the calculation of the element-fairness of all other elements.
  */
-void ef_prophetic_dequeue(Operation** ops, int64_t num_ops, int64_t* num_prophetics,
-    int64_t* total, int64_t* max, uint64_t (*lin_point)(Operation* op)) {
+void ef_prophetic_dequeue(Operation** ops, int64_t num_ops,
+    int64_t* num_prophetics, int64_t* total, int64_t* max,
+    uint64_t (*lin_point)(Operation* op)) {
 
   *num_prophetics = 0;
   *total = 0;
@@ -323,8 +326,9 @@ void ef_null_returns(Operation** ops, int num_ops, int64_t* num_null_returns,
   }
 }
 
-void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
-    int64_t* num_normal, int64_t* total, int64_t* max, uint64_t (*lin_point)(Operation* op),
+void ef_normal_dequeues(Operation** insert_ops, int num_insert_ops,
+    Operation** remove_ops, int num_remove_ops, int64_t* num_normal,
+    int64_t* total, int64_t* max, uint64_t (*lin_point)(Operation* op),
     int (*compare_ops)(const void* left, const void* right)) {
   // 1.) Calculate upper bounds up to which it is possible to find other elements whose
   //     which get overtaken by the current operation.
@@ -335,54 +339,35 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
   *total = 0;
   *max = 0;
 
-  qsort(remove_ops, num_remove_ops, sizeof(Operation*),
-      compare_ops);
+  Operation head;
+  Operations::create_doubly_linked_list(&head, insert_ops, num_insert_ops);
 
-  // Step 1
-  Time* upper_bounds = (Time*) malloc(num_remove_ops * sizeof(Time));
-
-  Time earliestInsert =
-      lin_point(remove_ops[num_remove_ops - 1]->matching_op());
-
-  for (int i = num_remove_ops - 1; i >= 0; i--) {
-
-    if (remove_ops[i]->value() == -1) {
-      // Do nothing. Null returns already got handled.
-    } else if (is_prophetic_remove(remove_ops[i], lin_point)) {
-      // Do nothing. Prophetic dequeues already got handled.
-    } else {
-      if (lin_point(remove_ops[i]->matching_op()) < earliestInsert) {
-        earliestInsert = lin_point(remove_ops[i]->matching_op());
-      }
-    }
-    upper_bounds[i] = earliestInsert;
-  }
+  qsort(remove_ops, num_remove_ops, sizeof(Operation*), compare_ops);
 
   for (int i = 0; i < num_remove_ops; i++) {
 
     Operation* op = remove_ops[i];
 
-    if (op->value() == -1) {
-      // Do nothing for null returns, they have been handled already.
+    if (op->value() < 0) {
+      // Null return: do nothing.
     } else if (is_prophetic_remove(op, lin_point)) {
-      // Do nothing for prophetic removes, they have been handled already.
+      // Prophetic dequeue, do nothing.
     } else {
-      int counter = 0;
-      for (int j = i + 1;
-          j < num_remove_ops
-              && lin_point(op->matching_op()) > upper_bounds[j]; j++) {
 
-        if (remove_ops[j]->value() == -1) {
-          // Do nothing for null returns, they have been handled already.
-        } else if (is_prophetic_remove(remove_ops[j], lin_point)) {
-          // Do nothing for prophetic removes, they have been handled already.
+      Operations::Iterator iter(&head);
+      int counter = 0;
+      for (Operation* element = iter.get();
+          iter.valid() && element != op->matching_op(); element = iter.step()) {
+
+        if (is_prophetic_insert(element, lin_point)) {
+          element->remove();
+          // Do nothing, the element got dequeued already.
         } else {
-          if (lin_point(remove_ops[j]->matching_op())
-              < lin_point(op->matching_op())) {
-            counter++;
-          }
+          counter++;
         }
       }
+
+      op->matching_op()->remove();
 
       if (*max < counter) {
         *max = counter;
@@ -392,14 +377,74 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
       (*num_normal)++;
     }
   }
+
+//  qsort(remove_ops, num_remove_ops, sizeof(Operation*), compare_ops);
+//
+//  // Step 1
+//  Time* upper_bounds = (Time*) malloc(num_remove_ops * sizeof(Time));
+//
+//  Time earliestInsert = lin_point(
+//      remove_ops[num_remove_ops - 1]->matching_op());
+//
+//  for (int i = num_remove_ops - 1; i >= 0; i--) {
+//
+//    if (remove_ops[i]->value() == -1) {
+//      // Do nothing. Null returns already got handled.
+//    } else if (is_prophetic_remove(remove_ops[i], lin_point)) {
+//      // Do nothing. Prophetic dequeues already got handled.
+//    } else {
+//      if (lin_point(remove_ops[i]->matching_op()) < earliestInsert) {
+//        earliestInsert = lin_point(remove_ops[i]->matching_op());
+//      }
+//    }
+//    upper_bounds[i] = earliestInsert;
+//  }
+//
+//  for (int i = 0; i < num_remove_ops; i++) {
+//
+//    if (i % 10000 == 0) {
+//      printf("Progress: %d\n", i);
+//    }
+//
+//    Operation* op = remove_ops[i];
+//
+//    if (op->value() == -1) {
+//      // Do nothing for null returns, they have been handled already.
+//    } else if (is_prophetic_remove(op, lin_point)) {
+//      // Do nothing for prophetic removes, they have been handled already.
+//    } else {
+//      int counter = 0;
+//      for (int j = i + 1;
+//          j < num_remove_ops && lin_point(op->matching_op()) > upper_bounds[j];
+//          j++) {
+//
+//        if (remove_ops[j]->value() == -1) {
+//          // Do nothing for null returns, they have been handled already.
+//        } else if (is_prophetic_remove(remove_ops[j], lin_point)) {
+//          // Do nothing for prophetic removes, they have been handled already.
+//        } else {
+//          if (lin_point(remove_ops[j]->matching_op())
+//              < lin_point(op->matching_op())) {
+//            counter++;
+//          }
+//        }
+//      }
+//
+//      if (*max < counter) {
+//        *max = counter;
+//      }
+//      *total += counter;
+//      op->set_overtakes(counter);
+//      (*num_normal)++;
+//    }
+//  }
 }
 
 void FifoExecuter::calculate_new_element_fairness(
     uint64_t (*lin_point)(Operation* op),
     int (*compare_ops)(const void* left, const void* right)) {
 
-  qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*),
-      compare_ops);
+  qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*), compare_ops);
 
   int64_t num_prophetic = 0;
   int64_t total_prophetic = 0;
@@ -420,21 +465,22 @@ void FifoExecuter::calculate_new_element_fairness(
   ef_null_returns(ops_->all_ops(), ops_->num_all_ops(), &num_null, &total_null,
       &max_null, lin_point);
   // 3.) Calculate element-fairness for all other elements
-  ef_normal_dequeues(ops_->remove_ops(), ops_->num_remove_ops(), &num_normal,
-      &total_normal, &max_normal, lin_point, compare_ops);
+  ef_normal_dequeues(ops_->insert_ops(), ops_->num_insert_ops(),
+      ops_->remove_ops(), ops_->num_remove_ops(), &num_normal, &total_normal,
+      &max_normal, lin_point, compare_ops);
 
   double average_prophetic = total_prophetic;
-  if(num_prophetic != 0) {
+  if (num_prophetic != 0) {
     average_prophetic /= num_prophetic;
   }
 
   double average_null = total_null;
-  if(num_null != 0) {
+  if (num_null != 0) {
     average_null /= num_null;
   }
 
   double average_normal = total_normal;
-  if(num_normal != 0) {
+  if (num_normal != 0) {
     average_normal /= num_normal;
   }
 
@@ -446,14 +492,15 @@ void FifoExecuter::calculate_new_element_fairness(
   int64_t total = total_prophetic + total_null + total_normal;
 
   double average = total;
-  if(num != 0) {
+  if (num != 0) {
     average /= num;
   }
 
-printf("%lu %lu %lu %.3f %lu %lu %lu %.3f %lu %lu %lu %.3f %lu %lu %lu %.3f\n", num, max, total, average,
-                                                                    num_normal, max_normal, total_normal, average_normal,
-                                                                    num_null, max_null, total_null, average_null,
-                                                                    num_prophetic, max_prophetic, total_prophetic, average_prophetic);
+  printf(
+      "%lu %lu %lu %.3f %lu %lu %lu %.3f %lu %lu %lu %.3f %lu %lu %lu %.3f\n",
+      num, max, total, average, num_normal, max_normal, total_normal,
+      average_normal, num_null, max_null, total_null, average_null,
+      num_prophetic, max_prophetic, total_prophetic, average_prophetic);
 
 }
 
@@ -464,94 +511,94 @@ void FifoExecuter::calculate_element_fairness() {
 // 2.) Calculate upper bounds where we may find overlappings.
 // 3.) Calculate element fairness.
 
-qsort(ops_->remove_ops(), ops_->num_remove_ops(), sizeof(Operation*),
-    Operation::compare_operations_by_start_time);
+  qsort(ops_->remove_ops(), ops_->num_remove_ops(), sizeof(Operation*),
+      Operation::compare_operations_by_start_time);
 
-for (int i = 0; i < ops_->num_remove_ops(); i++) {
+  for (int i = 0; i < ops_->num_remove_ops(); i++) {
 
-  Operation* op = ops_->remove_ops()[i];
-  op->matching_op()->set_lin_order(i);
-}
-
-qsort(ops_->insert_ops(), ops_->num_insert_ops(), sizeof(Operation*),
-    Operation::compare_operations_by_start_time);
-
-Operation** upper_bounds = (Operation**) malloc(
-    ops_->num_insert_ops() * sizeof(Operation*));
-bool* ignore_flags = (bool*) malloc(ops_->num_remove_ops() * sizeof(bool));
-
-for (int i = 0; i < ops_->num_remove_ops(); i++) {
-  ignore_flags[i] = false;
-}
-
-calculate_upper_bounds(ignore_flags, upper_bounds);
-
-for (int i = 0; i < 0; i++) {
-  mark_long_ops(upper_bounds, ignore_flags);
-  calculate_upper_bounds(ignore_flags, upper_bounds);
-}
-
-int ignore_counter = 0;
-
-for (int i = ops_->num_insert_ops() - 1; i >= 0; i--) {
-
-  Operation* op = ops_->insert_ops()[i];
-
-  if (ignore_flags[op->lin_order()]) {
-    ignore_counter++;
+    Operation* op = ops_->remove_ops()[i];
+    op->matching_op()->set_lin_order(i);
   }
-}
 
-for (int i = 0; i < ops_->num_insert_ops(); i++) {
+  qsort(ops_->insert_ops(), ops_->num_insert_ops(), sizeof(Operation*),
+      Operation::compare_operations_by_start_time);
 
-  Operation* op = ops_->insert_ops()[i];
+  Operation** upper_bounds = (Operation**) malloc(
+      ops_->num_insert_ops() * sizeof(Operation*));
+  bool* ignore_flags = (bool*) malloc(ops_->num_remove_ops() * sizeof(bool));
 
-  if (!ignore_flags[op->lin_order()]) {
+  for (int i = 0; i < ops_->num_remove_ops(); i++) {
+    ignore_flags[i] = false;
+  }
 
-    for (int j = i + 1;
-        j < ops_->num_insert_ops()
-            && op->lin_order() > upper_bounds[j]->lin_order(); j++) {
+  calculate_upper_bounds(ignore_flags, upper_bounds);
 
-      Operation* inner_op = ops_->insert_ops()[j];
+  for (int i = 0; i < 0; i++) {
+    mark_long_ops(upper_bounds, ignore_flags);
+    calculate_upper_bounds(ignore_flags, upper_bounds);
+  }
 
-      if (inner_op->lin_order() < op->lin_order()) {
-        op->increment_lateness();
-        inner_op->increment_age();
+  int ignore_counter = 0;
+
+  for (int i = ops_->num_insert_ops() - 1; i >= 0; i--) {
+
+    Operation* op = ops_->insert_ops()[i];
+
+    if (ignore_flags[op->lin_order()]) {
+      ignore_counter++;
+    }
+  }
+
+  for (int i = 0; i < ops_->num_insert_ops(); i++) {
+
+    Operation* op = ops_->insert_ops()[i];
+
+    if (!ignore_flags[op->lin_order()]) {
+
+      for (int j = i + 1;
+          j < ops_->num_insert_ops()
+              && op->lin_order() > upper_bounds[j]->lin_order(); j++) {
+
+        Operation* inner_op = ops_->insert_ops()[j];
+
+        if (inner_op->lin_order() < op->lin_order()) {
+          op->increment_lateness();
+          inner_op->increment_age();
+        }
       }
     }
   }
-}
 
-int fairness = 0;
-int num_aged = 0;
-int num_late = 0;
-int max_age = 0;
-int max_lateness = 0;
+  int fairness = 0;
+  int num_aged = 0;
+  int num_late = 0;
+  int max_age = 0;
+  int max_lateness = 0;
 // Count fairness, age, and lateness of all elements.
-for (int i = 0; i < ops_->num_insert_ops(); i++) {
-  Operation* op = ops_->insert_ops()[i];
+  for (int i = 0; i < ops_->num_insert_ops(); i++) {
+    Operation* op = ops_->insert_ops()[i];
 
-  if (op->age() > 0) {
-    num_aged++;
-    if (max_age < op->age()) {
-      max_age = op->age();
+    if (op->age() > 0) {
+      num_aged++;
+      if (max_age < op->age()) {
+        max_age = op->age();
+      }
+      fairness += op->age();
     }
-    fairness += op->age();
+
+    if (op->lateness() > 0) {
+      num_late++;
+      if (max_lateness < op->lateness()) {
+        max_lateness = op->lateness();
+      }
+    }
   }
 
-  if (op->lateness() > 0) {
-    num_late++;
-    if (max_lateness < op->lateness()) {
-      max_lateness = op->lateness();
-    }
-  }
-}
+  double avg_fairness = fairness;
+  avg_fairness /= ops_->num_remove_ops();
 
-double avg_fairness = fairness;
-avg_fairness /= ops_->num_remove_ops();
-
-printf("%d %.3f %d %d %d %d \n", fairness, avg_fairness, num_aged, max_age,
-    num_late, max_lateness);
+  printf("%d %.3f %d %d %d %d \n", fairness, avg_fairness, num_aged, max_age,
+      num_late, max_lateness);
 }
 
 void FifoExecuter::aggregate_semantical_error() {
@@ -563,7 +610,7 @@ void FifoExecuter::aggregate_semantical_error() {
 
     total += op->error();
 
-    if(op->error() > max) {
+    if (op->error() > max) {
       max = op->error();
     }
   }
@@ -637,9 +684,9 @@ void FifoExecuter::calculate_op_fairness_typeless() {
   double avg_fairness = fairness;
   avg_fairness /= ops_->num_all_ops();
 
-  printf("%lu %.3f %lu %lu %lu %lu\n", fairness, avg_fairness, num_aged, max_age, num_late, max_lateness);
+  printf("%lu %.3f %lu %lu %lu %lu\n", fairness, avg_fairness, num_aged,
+      max_age, num_late, max_lateness);
 }
-
 
 void FifoExecuter::calculate_op_fairness() {
 
@@ -769,7 +816,9 @@ void FifoExecuter::calculate_performance_index() {
   for (int i = 0; i < ops_->num_all_ops(); i++) {
     Operation* op = ops_->all_ops()[i];
 
-    for (int j = i + 1; j < ops_->num_all_ops() && ops_->all_ops()[j]->start() <= op->end(); j++) {
+    for (int j = i + 1;
+        j < ops_->num_all_ops() && ops_->all_ops()[j]->start() <= op->end();
+        j++) {
 
       overlaps[i]++;
       overlaps[j]++;
