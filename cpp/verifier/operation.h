@@ -318,6 +318,7 @@ public:
       assert(!next_->deleted());
       return next_;
     }
+
     Operation* get() const {
       assert(!next_->deleted());
       return next_;
