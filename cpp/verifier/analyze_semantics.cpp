@@ -98,17 +98,22 @@ int main(int argc, char** argv) {
     Operations ops(filename, operations, false);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
-    executer->calculate_new_element_fairness();
-  } else if (strcmp(order, "perf") == 0) {
-    Operations ops(filename, operations, false);
-    FifoExecuter *executer;
-    executer = new FifoExecuterLowerBound(&ops);
-    executer->calculate_performance_index();
+    executer->calculate_new_element_fairness(Operation::lin_point_start_time, Operation::compare_operations_by_start_time);
+  } else if (strcmp(order, "ef_response") == 0) {
+      Operations ops(filename, operations, true);
+      FifoExecuter *executer;
+      executer = new FifoExecuterLowerBound(&ops);
+      executer->calculate_new_element_fairness(Operation::lin_point_end_time, Operation::compare_operations_by_end_time);
   } else if (strcmp(order, "new_sane") == 0) {
     Operations ops(filename, operations, true);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
-    executer->calculate_new_element_fairness();
+    executer->calculate_new_element_fairness(Operation::lin_point_start_time, Operation::compare_operations_by_start_time);
+  } else if (strcmp(order, "perf") == 0) {
+      Operations ops(filename, operations, false);
+      FifoExecuter *executer;
+      executer = new FifoExecuterLowerBound(&ops);
+      executer->calculate_performance_index();
   } else {
     printf("Invalid mode, use tool_op, tool, response, element, new, or new_sane, not %s\n", order);
     exit(-1);

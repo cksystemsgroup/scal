@@ -148,6 +148,14 @@ public:
   bool operator>(const Operation& op) const;
   bool operator>=(const Operation& op) const;
 
+  static uint64_t lin_point_start_time(Operation* op) {
+    return op->start();
+  }
+
+  static uint64_t lin_point_end_time(Operation* op) {
+      return op->end();
+    }
+
   static int compare_operations_by_start_time(const void* left,
       const void* right) {
     return (*(Operation**) left)->start() > (*(Operation**) right)->start();

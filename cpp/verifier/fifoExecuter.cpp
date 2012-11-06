@@ -190,7 +190,7 @@ void FifoExecuter::calculate_upper_bounds(bool* ignore_flags,
   }
 }
 
-inline bool is_prophetic_insert(Operation* op) {
+inline bool is_prophetic_insert(Operation* op, uint64_t (*lin_point)(Operation* op)) {
 
   // Remove operations cannot be prophetic inserts.
   if (op->type() == Operation::REMOVE) {
@@ -201,10 +201,10 @@ inline bool is_prophetic_insert(Operation* op) {
     return false;
   }
   // If the matching remove operation is prophetic, then this insert operation is prophetic.
-  return (op->start() > op->matching_op()->start());
+  return (lin_point(op) > lin_point(op->matching_op()));
 }
 
-inline bool is_prophetic_remove(Operation* op) {
+inline bool is_prophetic_remove(Operation* op, uint64_t (*lin_point)(Operation* op)) {
   if (op->type() == Operation::INSERT) {
     return false;
   }
@@ -217,7 +217,7 @@ inline bool is_prophetic_remove(Operation* op) {
   assert(op->matching_op() != NULL);
 
   // A remove operation is prophetic if it occurs before the matching insert operation.
-  return (op->start() < op->matching_op()->start());
+  return (lin_point(op) < lin_point(op->matching_op()));
 }
 
 /**
@@ -226,7 +226,7 @@ inline bool is_prophetic_remove(Operation* op) {
  * in the calculation of the element-fairness of all other elements.
  */
 void ef_prophetic_dequeue(Operation** ops, int64_t num_ops, int64_t* num_prophetics,
-    int64_t* total, int64_t* max) {
+    int64_t* total, int64_t* max, uint64_t (*lin_point)(Operation* op)) {
 
   *num_prophetics = 0;
   *total = 0;
@@ -239,14 +239,14 @@ void ef_prophetic_dequeue(Operation** ops, int64_t num_ops, int64_t* num_prophet
 
     if (op->type() == Operation::INSERT) {
 
-      if (is_prophetic_insert(op)) {
+      if (is_prophetic_insert(op, lin_point)) {
         // Do nothing. Prophetic dequeues do not change the state.
       } else {
         num_queue_elements++;
       }
     } else {
 
-      if (is_prophetic_remove(op)) {
+      if (is_prophetic_remove(op, lin_point)) {
 
         (*num_prophetics)++;
 
@@ -256,10 +256,10 @@ void ef_prophetic_dequeue(Operation** ops, int64_t num_ops, int64_t* num_prophet
         for (int j = i + 1; j < num_ops && ops[j] != op->matching_op(); j++) {
           if (ops[j]->type() == Operation::INSERT) {
             // Check if it is a prophetic insert.
-            if (is_prophetic_insert(ops[j])) {
+            if (is_prophetic_insert(ops[j], lin_point)) {
               // Prophetic inserts increase the counter only if the matching remove
               // operation succeeds op.
-              if (ops[j]->matching_op()->start() > op->start()) {
+              if (lin_point(ops[j]->matching_op()) > lin_point(op)) {
                 counter++;
               }
             } else {
@@ -290,7 +290,7 @@ void ef_prophetic_dequeue(Operation** ops, int64_t num_ops, int64_t* num_prophet
 }
 
 void ef_null_returns(Operation** ops, int num_ops, int64_t* num_null_returns,
-    int64_t* total, int64_t* max) {
+    int64_t* total, int64_t* max, uint64_t (*lin_point)(Operation* op)) {
 
   *num_null_returns = 0;
   *total = 0;
@@ -311,11 +311,11 @@ void ef_null_returns(Operation** ops, int num_ops, int64_t* num_null_returns,
         }
         *total += num_queue_elements;
         (*num_null_returns)++;
-      } else if (!is_prophetic_remove(op)) {
+      } else if (!is_prophetic_remove(op, lin_point)) {
         num_queue_elements--;
       }
     } else {
-      if (!is_prophetic_insert(op)) {
+      if (!is_prophetic_insert(op, lin_point)) {
         num_queue_elements++;
       }
     }
@@ -324,7 +324,8 @@ void ef_null_returns(Operation** ops, int num_ops, int64_t* num_null_returns,
 }
 
 void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
-    int64_t* num_normal, int64_t* total, int64_t* max) {
+    int64_t* num_normal, int64_t* total, int64_t* max, uint64_t (*lin_point)(Operation* op),
+    int (*compare_ops)(const void* left, const void* right)) {
   // 1.) Calculate upper bounds up to which it is possible to find other elements whose
   //     which get overtaken by the current operation.
   // 2.) Starting from a remove operation, count all other remove operations whose matching insert
@@ -335,23 +336,23 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
   *max = 0;
 
   qsort(remove_ops, num_remove_ops, sizeof(Operation*),
-      Operation::compare_operations_by_start_time);
+      compare_ops);
 
   // Step 1
   Time* upper_bounds = (Time*) malloc(num_remove_ops * sizeof(Time));
 
   Time earliestInsert =
-      remove_ops[num_remove_ops - 1]->matching_op()->start();
+      lin_point(remove_ops[num_remove_ops - 1]->matching_op());
 
   for (int i = num_remove_ops - 1; i >= 0; i--) {
 
     if (remove_ops[i]->value() == -1) {
       // Do nothing. Null returns already got handled.
-    } else if (is_prophetic_remove(remove_ops[i])) {
+    } else if (is_prophetic_remove(remove_ops[i], lin_point)) {
       // Do nothing. Prophetic dequeues already got handled.
     } else {
-      if (remove_ops[i]->matching_op()->start() < earliestInsert) {
-        earliestInsert = remove_ops[i]->matching_op()->start();
+      if (lin_point(remove_ops[i]->matching_op()) < earliestInsert) {
+        earliestInsert = lin_point(remove_ops[i]->matching_op());
       }
     }
     upper_bounds[i] = earliestInsert;
@@ -363,21 +364,21 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
 
     if (op->value() == -1) {
       // Do nothing for null returns, they have been handled already.
-    } else if (is_prophetic_remove(op)) {
+    } else if (is_prophetic_remove(op, lin_point)) {
       // Do nothing for prophetic removes, they have been handled already.
     } else {
       int counter = 0;
       for (int j = i + 1;
           j < num_remove_ops
-              && op->matching_op()->start() > upper_bounds[j]; j++) {
+              && lin_point(op->matching_op()) > upper_bounds[j]; j++) {
 
         if (remove_ops[j]->value() == -1) {
           // Do nothing for null returns, they have been handled already.
-        } else if (is_prophetic_remove(remove_ops[j])) {
+        } else if (is_prophetic_remove(remove_ops[j], lin_point)) {
           // Do nothing for prophetic removes, they have been handled already.
         } else {
-          if (remove_ops[j]->matching_op()->start()
-              < op->matching_op()->start()) {
+          if (lin_point(remove_ops[j]->matching_op())
+              < lin_point(op->matching_op())) {
             counter++;
           }
         }
@@ -393,10 +394,12 @@ void ef_normal_dequeues(Operation** remove_ops, int num_remove_ops,
   }
 }
 
-void FifoExecuter::calculate_new_element_fairness() {
+void FifoExecuter::calculate_new_element_fairness(
+    uint64_t (*lin_point)(Operation* op),
+    int (*compare_ops)(const void* left, const void* right)) {
 
   qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*),
-      Operation::compare_operations_by_start_time);
+      compare_ops);
 
   int64_t num_prophetic = 0;
   int64_t total_prophetic = 0;
@@ -412,13 +415,13 @@ void FifoExecuter::calculate_new_element_fairness() {
 
   // 1.) Calculate element-fairness for all elements with prophetic dequeues.
   ef_prophetic_dequeue(ops_->all_ops(), ops_->num_all_ops(), &num_prophetic,
-      &total_prophetic, &max_prophetic);
+      &total_prophetic, &max_prophetic, lin_point);
   // 2.) Calculate element-fairness for all null-returns
   ef_null_returns(ops_->all_ops(), ops_->num_all_ops(), &num_null, &total_null,
-      &max_null);
+      &max_null, lin_point);
   // 3.) Calculate element-fairness for all other elements
   ef_normal_dequeues(ops_->remove_ops(), ops_->num_remove_ops(), &num_normal,
-      &total_normal, &max_normal);
+      &total_normal, &max_normal, lin_point, compare_ops);
 
   double average_prophetic = total_prophetic;
   if(num_prophetic != 0) {
