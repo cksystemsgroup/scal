@@ -772,7 +772,7 @@ void FifoExecuter::calculate_performance_index() {
     for (int j = i + 1; j < ops_->num_all_ops() && ops_->all_ops()[j]->start() <= op->end(); j++) {
 
       overlaps[i]++;
-      overlaps[j]++;
+ //     overlaps[j]++;
     }
   }
 
