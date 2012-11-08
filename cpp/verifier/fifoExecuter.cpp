@@ -73,10 +73,17 @@ bool compare_by_order(Operation* left, Operation* right) {
   return left->order() < right->order();
 }
 
-void FifoExecuter::calculate_response_order() {
+void FifoExecuter::calculate_response_order(bool use_lin) {
 
-  qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*),
+  if (use_lin) {
+
+    qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*),
+      Operation::compare_operations_by_lin_time);
+  } else {
+
+    qsort(ops_->all_ops(), ops_->num_all_ops(), sizeof(Operation*),
       Operation::compare_operations_by_end_time);
+  }
 
   for (int i = 0; i < ops_->num_all_ops(); i++) {
     Operation* op = ops_->all_ops()[i];

@@ -16,7 +16,7 @@ class FifoExecuter : public Executer {
   int amountOfFinishedEnqueueOperations(Operation* removeOperation) const;
   int amountOfStartedEnqueueOperations(Operation* removeOperation) const;
   void calculate_order();
-  void calculate_response_order();
+  void calculate_response_order(bool use_lin);
   void calculate_element_fairness();
   void calculate_new_element_fairness(uint64_t (*lin_point)(Operation* op), int (*compare)(const void* left, const void* right));
   void calculate_diff(uint64_t (*lin_point_1)(Operation* op), int (*compare_ops_1)(const void* left, const void* right),

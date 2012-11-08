@@ -83,11 +83,17 @@ int main(int argc, char** argv) {
     Histogram histogram;
     executer->execute(&histogram);
     executer->aggregate_semantical_error();
+  } else if (strcmp(order, "op_lin") == 0) {
+    Operations ops(filename, operations, false);
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+    executer->calculate_response_order(true);
+    executer->calculate_op_fairness_typeless();
   } else if (strcmp(order, "response") == 0) {
     Operations ops(filename, operations, false);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
-    executer->calculate_response_order();
+    executer->calculate_response_order(false);
     executer->calculate_op_fairness_typeless();
   } else if (strcmp(order, "element") == 0) {
     Operations ops(filename, operations, false);
@@ -113,8 +119,7 @@ int main(int argc, char** argv) {
   Operations ops(filename, operations, false);
   FifoExecuter *executer;
   executer = new FifoExecuterLowerBound(&ops);
-  executer->calculate_diff(Operation::lin_point_start_time, Operation::compare_operations_by_start_time,
-                                           Operation::lin_point_end_time, Operation::compare_operations_by_end_time);
+  executer->calculate_diff(Operation::lin_point_start_time, Operation::compare_operations_by_start_time, Operation::lin_point_end_time, Operation::compare_operations_by_end_time);
 } else if (strcmp(order, "new_sane") == 0) {
     Operations ops(filename, operations, true);
     FifoExecuter *executer;

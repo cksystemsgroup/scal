@@ -256,6 +256,10 @@ Operations::Operations(char* filename, int num_ops, bool adjust_start_times) :
       op_value = -1;
     }
 
+    if (lin_time == 0) {
+      lin_time = op_end;
+    }
+
     ops[i] = new Operation(op_start, lin_time, op_end, op_type, op_value);
   }
   fclose(input);
