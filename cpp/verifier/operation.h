@@ -162,7 +162,7 @@ public:
   }
 
   static uint64_t lin_point_lin_time(Operation* op) {
-      return op->end();
+      return op->lin_time();
     }
 
   static int compare_operations_by_start_time(const void* left,

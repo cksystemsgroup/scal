@@ -83,11 +83,17 @@ int main(int argc, char** argv) {
     Histogram histogram;
     executer->execute(&histogram);
     executer->aggregate_semantical_error();
+  } else if (strcmp(order, "op_lin") == 0) {
+    Operations ops(filename, operations, false);
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+    executer->calculate_response_order(true);
+    executer->calculate_op_fairness_typeless();
   } else if (strcmp(order, "response") == 0) {
     Operations ops(filename, operations, false);
     FifoExecuter *executer;
     executer = new FifoExecuterLowerBound(&ops);
-    executer->calculate_response_order();
+    executer->calculate_response_order(false);
     executer->calculate_op_fairness_typeless();
   } else if (strcmp(order, "element") == 0) {
     Operations ops(filename, operations, false);
