@@ -81,10 +81,10 @@ prodcon_ms_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_ms_queue.cc
 
-#bin_PROGRAMS += prodcon-scal1random
-#prodcon_scal1random_SOURCES = \
-#        $(PRODCON_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_scal_1random.cc
+bin_PROGRAMS += prodcon-dq-1random
+prodcon_dq_1random_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_1random.cc
 
 #bin_PROGRAMS += prodcon-scalpartrr
 #prodcon_scalpartrr_SOURCES = \
