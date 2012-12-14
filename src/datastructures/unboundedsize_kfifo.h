@@ -17,7 +17,6 @@
 
 #include "util/atomic_value.h"
 #include "util/malloc.h"
-#include "util/operation_logger.h"
 #include "util/platform.h"
 #include "util/random.h"
 
