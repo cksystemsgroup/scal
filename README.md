@@ -13,6 +13,17 @@ Dependencies
 * pkg-config
 * gflags
 
+Building
+--------
+
+This is as easy as
+
+    ./configure
+    make
+
+See `./configure --help` for optional features, for instance compiling with
+debugging symbols.
+
 License
 -------
 
