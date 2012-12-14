@@ -24,6 +24,31 @@ This is as easy as
 See `./configure --help` for optional features, for instance compiling with
 debugging symbols.
 
+The format for the resulting binaries is `<benchmark>-<datastructure>`. Each
+binary supports the `--help` paramter to show a list of supported configuration
+flags.
+
+Examples
+--------
+
+### Producer/consumer
+
+The most common paramters are:
+* consumers: Number of consuming threads
+* producers: Number of producing threads
+* c: The computational workload to do between two data structure operations
+* operations: The number of put/enqueue operations the should be performed by a producer
+
+The following runs the Michael-Scott queue in a producer/consumer benchmark:
+
+    ./prodcon-ms -producers=15 -consumers=15 -operations=100000 -c=250
+
+And the same for the bounded-size k-FIFO queue:
+
+    ./prodcon-bskfifo -producers=15 -consumers=15 -operations=100000 -c=250
+
+Try `./prodcon-bskfifo --help` to see the full list of available paramters.
+
 License
 -------
 
