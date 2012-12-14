@@ -32,23 +32,15 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = graph-bskfifo$(EXEEXT) graph-ms$(EXEEXT) \
-	graph-scal1random$(EXEEXT) graph-scalpartrr$(EXEEXT) \
-	graph-uskfifo$(EXEEXT) mandel-bskfifo$(EXEEXT) \
-	mandel-ms$(EXEEXT) mandel-scal1random$(EXEEXT) \
-	mandel-scalpartrr$(EXEEXT) mandel-uskfifo$(EXEEXT) \
-	prodcon-bskfifo$(EXEEXT) prodcon-ms$(EXEEXT) \
-	prodcon-scal1random$(EXEEXT) prodcon-scalpartrr$(EXEEXT) \
-	prodcon-uskfifo$(EXEEXT) seqalt-bskfifo$(EXEEXT) \
-	seqalt-ms$(EXEEXT) seqalt-scal1random$(EXEEXT) \
-	seqalt-scalpartrr$(EXEEXT) seqalt-uskfifo$(EXEEXT)
+bin_PROGRAMS = prodcon-ms$(EXEEXT)
 noinst_PROGRAMS = $(am__EXEEXT_1)
 TESTS = atomic_value128_unittest$(EXEEXT) \
 	atomic_value64_unittest$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure AUTHORS depcomp install-sh missing
+	$(top_srcdir)/configure AUTHORS COPYING depcomp install-sh \
+	missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -74,169 +66,28 @@ am_atomic_value64_unittest_OBJECTS = src/test/atomic_value64_unittest-atomic_val
 atomic_value64_unittest_OBJECTS =  \
 	$(am_atomic_value64_unittest_OBJECTS)
 atomic_value64_unittest_DEPENDENCIES = external/gtest_main.a
-am__objects_1 = src/benchmark/graph_traversal/graph.$(OBJEXT) \
-	src/benchmark/graph_traversal/spanning_tree.$(OBJEXT) \
-	src/benchmark/graph_traversal/transitive_closure.$(OBJEXT) \
-	src/benchmark/graph_traversal/traverse_graphs.$(OBJEXT) \
-	src/util/malloc.$(OBJEXT) src/util/operation_logger.$(OBJEXT) \
-	src/util/profiler.$(OBJEXT) src/util/random.$(OBJEXT) \
-	src/util/threadlocals.$(OBJEXT)
-am_graph_bskfifo_OBJECTS = $(am__objects_1) \
-	src/benchmark/std_glue/glue_bskfifo.$(OBJEXT)
-graph_bskfifo_OBJECTS = $(am_graph_bskfifo_OBJECTS)
-graph_bskfifo_LDADD = $(LDADD)
-graph_bskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_graph_ms_OBJECTS = $(am__objects_1) \
-	src/benchmark/std_glue/glue_ms_queue.$(OBJEXT)
-graph_ms_OBJECTS = $(am_graph_ms_OBJECTS)
-graph_ms_LDADD = $(LDADD)
-graph_ms_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_graph_scal1random_OBJECTS = $(am__objects_1) \
-	src/benchmark/std_glue/glue_scal_1random.$(OBJEXT)
-graph_scal1random_OBJECTS = $(am_graph_scal1random_OBJECTS)
-graph_scal1random_LDADD = $(LDADD)
-graph_scal1random_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_graph_scalpartrr_OBJECTS = $(am__objects_1) \
-	src/benchmark/std_glue/glue_scal_partrr.$(OBJEXT)
-graph_scalpartrr_OBJECTS = $(am_graph_scalpartrr_OBJECTS)
-graph_scalpartrr_LDADD = $(LDADD)
-graph_scalpartrr_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_graph_uskfifo_OBJECTS = $(am__objects_1) \
-	src/benchmark/std_glue/glue_uskfifo.$(OBJEXT)
-graph_uskfifo_OBJECTS = $(am_graph_uskfifo_OBJECTS)
-graph_uskfifo_LDADD = $(LDADD)
-graph_uskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
-am__objects_2 = src/benchmark/common.$(OBJEXT) \
-	src/benchmark/mandelbrot/mandel.$(OBJEXT) \
-	src/benchmark/mandelbrot/bitmap.$(OBJEXT) \
-	src/util/histogram.$(OBJEXT) src/util/malloc.$(OBJEXT) \
-	src/util/operation_logger.$(OBJEXT) \
-	src/util/profiler.$(OBJEXT) src/util/random.$(OBJEXT) \
-	src/util/threadlocals.$(OBJEXT)
-am_mandel_bskfifo_OBJECTS = $(am__objects_2) \
-	src/benchmark/std_glue/glue_bskfifo.$(OBJEXT)
-mandel_bskfifo_OBJECTS = $(am_mandel_bskfifo_OBJECTS)
-mandel_bskfifo_LDADD = $(LDADD)
-mandel_bskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_mandel_ms_OBJECTS = $(am__objects_2) \
-	src/benchmark/std_glue/glue_ms_queue.$(OBJEXT)
-mandel_ms_OBJECTS = $(am_mandel_ms_OBJECTS)
-mandel_ms_LDADD = $(LDADD)
-mandel_ms_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_mandel_scal1random_OBJECTS = $(am__objects_2) \
-	src/benchmark/std_glue/glue_scal_1random.$(OBJEXT)
-mandel_scal1random_OBJECTS = $(am_mandel_scal1random_OBJECTS)
-mandel_scal1random_LDADD = $(LDADD)
-mandel_scal1random_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_mandel_scalpartrr_OBJECTS = $(am__objects_2) \
-	src/benchmark/std_glue/glue_scal_partrr.$(OBJEXT)
-mandel_scalpartrr_OBJECTS = $(am_mandel_scalpartrr_OBJECTS)
-mandel_scalpartrr_LDADD = $(LDADD)
-mandel_scalpartrr_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_mandel_uskfifo_OBJECTS = $(am__objects_2) \
-	src/benchmark/std_glue/glue_uskfifo.$(OBJEXT)
-mandel_uskfifo_OBJECTS = $(am_mandel_uskfifo_OBJECTS)
-mandel_uskfifo_LDADD = $(LDADD)
-mandel_uskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
-am__objects_3 = src/benchmark/common.$(OBJEXT) \
+am__objects_1 = src/benchmark/common.$(OBJEXT) \
 	src/benchmark/prodcon/prodcon.$(OBJEXT) \
-	src/util/histogram.$(OBJEXT) src/util/history.$(OBJEXT) \
-	src/util/malloc.$(OBJEXT) src/util/operation_logger.$(OBJEXT) \
-	src/util/profiler.$(OBJEXT) src/util/random.$(OBJEXT) \
+	src/util/malloc.$(OBJEXT) src/util/random.$(OBJEXT) \
 	src/util/threadlocals.$(OBJEXT) src/util/workloads.$(OBJEXT)
-am_prodcon_bskfifo_OBJECTS = $(am__objects_3) \
-	src/benchmark/std_glue/glue_bskfifo.$(OBJEXT)
-prodcon_bskfifo_OBJECTS = $(am_prodcon_bskfifo_OBJECTS)
-prodcon_bskfifo_LDADD = $(LDADD)
-prodcon_bskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_prodcon_ms_OBJECTS = $(am__objects_3) \
+am_prodcon_ms_OBJECTS = $(am__objects_1) \
 	src/benchmark/std_glue/glue_ms_queue.$(OBJEXT)
 prodcon_ms_OBJECTS = $(am_prodcon_ms_OBJECTS)
 prodcon_ms_LDADD = $(LDADD)
 prodcon_ms_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_prodcon_scal1random_OBJECTS = $(am__objects_3) \
-	src/benchmark/std_glue/glue_scal_1random.$(OBJEXT)
-prodcon_scal1random_OBJECTS = $(am_prodcon_scal1random_OBJECTS)
-prodcon_scal1random_LDADD = $(LDADD)
-prodcon_scal1random_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_prodcon_scalpartrr_OBJECTS = $(am__objects_3) \
-	src/benchmark/std_glue/glue_scal_partrr.$(OBJEXT)
-prodcon_scalpartrr_OBJECTS = $(am_prodcon_scalpartrr_OBJECTS)
-prodcon_scalpartrr_LDADD = $(LDADD)
-prodcon_scalpartrr_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_prodcon_uskfifo_OBJECTS = $(am__objects_3) \
-	src/benchmark/std_glue/glue_uskfifo.$(OBJEXT)
-prodcon_uskfifo_OBJECTS = $(am_prodcon_uskfifo_OBJECTS)
-prodcon_uskfifo_LDADD = $(LDADD)
-prodcon_uskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
-am__objects_4 = src/benchmark/common.$(OBJEXT) \
-	src/benchmark/seqalt/seqalt-old.$(OBJEXT) \
-	src/util/histogram.$(OBJEXT) src/util/history.$(OBJEXT) \
-	src/util/malloc.$(OBJEXT) src/util/operation_logger.$(OBJEXT) \
-	src/util/profiler.$(OBJEXT) src/util/random.$(OBJEXT) \
-	src/util/threadlocals.$(OBJEXT) src/util/workloads.$(OBJEXT)
-am_seqalt_bskfifo_OBJECTS = $(am__objects_4) \
-	src/benchmark/std_glue/glue_bskfifo.$(OBJEXT)
-seqalt_bskfifo_OBJECTS = $(am_seqalt_bskfifo_OBJECTS)
-seqalt_bskfifo_LDADD = $(LDADD)
-seqalt_bskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_seqalt_ms_OBJECTS = $(am__objects_4) \
-	src/benchmark/std_glue/glue_ms_queue.$(OBJEXT)
-seqalt_ms_OBJECTS = $(am_seqalt_ms_OBJECTS)
-seqalt_ms_LDADD = $(LDADD)
-seqalt_ms_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_seqalt_scal1random_OBJECTS = $(am__objects_4) \
-	src/benchmark/std_glue/glue_scal_1random.$(OBJEXT)
-seqalt_scal1random_OBJECTS = $(am_seqalt_scal1random_OBJECTS)
-seqalt_scal1random_LDADD = $(LDADD)
-seqalt_scal1random_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_seqalt_scalpartrr_OBJECTS = $(am__objects_4) \
-	src/benchmark/std_glue/glue_scal_partrr.$(OBJEXT)
-seqalt_scalpartrr_OBJECTS = $(am_seqalt_scalpartrr_OBJECTS)
-seqalt_scalpartrr_LDADD = $(LDADD)
-seqalt_scalpartrr_DEPENDENCIES = external/libtcmalloc_minimal.a
-am_seqalt_uskfifo_OBJECTS = $(am__objects_4) \
-	src/benchmark/std_glue/glue_uskfifo.$(OBJEXT)
-seqalt_uskfifo_OBJECTS = $(am_seqalt_uskfifo_OBJECTS)
-seqalt_uskfifo_LDADD = $(LDADD)
-seqalt_uskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 SOURCES = $(atomic_value128_unittest_SOURCES) \
-	$(atomic_value64_unittest_SOURCES) $(graph_bskfifo_SOURCES) \
-	$(graph_ms_SOURCES) $(graph_scal1random_SOURCES) \
-	$(graph_scalpartrr_SOURCES) $(graph_uskfifo_SOURCES) \
-	$(mandel_bskfifo_SOURCES) $(mandel_ms_SOURCES) \
-	$(mandel_scal1random_SOURCES) $(mandel_scalpartrr_SOURCES) \
-	$(mandel_uskfifo_SOURCES) $(prodcon_bskfifo_SOURCES) \
-	$(prodcon_ms_SOURCES) $(prodcon_scal1random_SOURCES) \
-	$(prodcon_scalpartrr_SOURCES) $(prodcon_uskfifo_SOURCES) \
-	$(seqalt_bskfifo_SOURCES) $(seqalt_ms_SOURCES) \
-	$(seqalt_scal1random_SOURCES) $(seqalt_scalpartrr_SOURCES) \
-	$(seqalt_uskfifo_SOURCES)
+	$(atomic_value64_unittest_SOURCES) $(prodcon_ms_SOURCES)
 DIST_SOURCES = $(atomic_value128_unittest_SOURCES) \
-	$(atomic_value64_unittest_SOURCES) $(graph_bskfifo_SOURCES) \
-	$(graph_ms_SOURCES) $(graph_scal1random_SOURCES) \
-	$(graph_scalpartrr_SOURCES) $(graph_uskfifo_SOURCES) \
-	$(mandel_bskfifo_SOURCES) $(mandel_ms_SOURCES) \
-	$(mandel_scal1random_SOURCES) $(mandel_scalpartrr_SOURCES) \
-	$(mandel_uskfifo_SOURCES) $(prodcon_bskfifo_SOURCES) \
-	$(prodcon_ms_SOURCES) $(prodcon_scal1random_SOURCES) \
-	$(prodcon_scalpartrr_SOURCES) $(prodcon_uskfifo_SOURCES) \
-	$(seqalt_bskfifo_SOURCES) $(seqalt_ms_SOURCES) \
-	$(seqalt_scal1random_SOURCES) $(seqalt_scalpartrr_SOURCES) \
-	$(seqalt_uskfifo_SOURCES)
+	$(atomic_value64_unittest_SOURCES) $(prodcon_ms_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -369,74 +220,44 @@ AM_LDFLAGS = -Wl,--as-needed
 LDADD = -lm @GFLAGS_LIBS@ -lrt external/libtcmalloc_minimal.a
 
 #
-# Graph traversal benchmark
-#
-GRAPH_BASE_OBJS = \
-        src/benchmark/graph_traversal/graph.cc \
-        src/benchmark/graph_traversal/spanning_tree.cc \
-        src/benchmark/graph_traversal/transitive_closure.cc \
-        src/benchmark/graph_traversal/traverse_graphs.cc \
-        src/util/malloc.cc \
-        src/util/operation_logger.cc \
-        src/util/profiler.cc \
-        src/util/random.cc \
-        src/util/threadlocals.cc
-
-graph_bskfifo_SOURCES = \
-        $(GRAPH_BASE_OBJS) \
-        src/benchmark/std_glue/glue_bskfifo.cc
-
-graph_ms_SOURCES = \
-        $(GRAPH_BASE_OBJS) \
-        src/benchmark/std_glue/glue_ms_queue.cc
-
-graph_scal1random_SOURCES = \
-        $(GRAPH_BASE_OBJS) \
-        src/benchmark/std_glue/glue_scal_1random.cc
-
-graph_scalpartrr_SOURCES = \
-        $(GRAPH_BASE_OBJS) \
-        src/benchmark/std_glue/glue_scal_partrr.cc
-
-graph_uskfifo_SOURCES = \
-        $(GRAPH_BASE_OBJS) \
-        src/benchmark/std_glue/glue_uskfifo.cc
-
-
-#
 # Mandelbrot calculation benchmark
 #
-MANDEL_BASE_OBJS = \
-        src/benchmark/common.cc \
-        src/benchmark/mandelbrot/mandel.cc \
-        src/benchmark/mandelbrot/bitmap.c \
-        src/util/histogram.cc \
-        src/util/malloc.cc \
-        src/util/operation_logger.cc \
-        src/util/profiler.cc \
-        src/util/random.cc \
-        src/util/threadlocals.cc 
 
-mandel_bskfifo_SOURCES = \
-        $(MANDEL_BASE_OBJS) \
-        src/benchmark/std_glue/glue_bskfifo.cc
-
-mandel_ms_SOURCES = \
-        $(MANDEL_BASE_OBJS) \
-        src/benchmark/std_glue/glue_ms_queue.cc
-
-mandel_scal1random_SOURCES = \
-        $(MANDEL_BASE_OBJS) \
-        src/benchmark/std_glue/glue_scal_1random.cc
-
-mandel_scalpartrr_SOURCES = \
-        $(MANDEL_BASE_OBJS) \
-        src/benchmark/std_glue/glue_scal_partrr.cc
-
-mandel_uskfifo_SOURCES = \
-        $(MANDEL_BASE_OBJS) \
-        src/benchmark/std_glue/glue_uskfifo.cc
-
+#MANDEL_BASE_OBJS = \
+#        src/benchmark/common.cc \
+#        src/benchmark/mandelbrot/mandel.cc \
+#        src/benchmark/mandelbrot/bitmap.c \
+#        src/util/histogram.cc \
+#        src/util/malloc.cc \
+#        src/util/operation_logger.cc \
+#        src/util/profiler.cc \
+#        src/util/random.cc \
+#        src/util/threadlocals.cc 
+#
+#bin_PROGRAMS += mandel-bskfifo
+#mandel_bskfifo_SOURCES = \
+#        $(MANDEL_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_bskfifo.cc
+#
+#bin_PROGRAMS += mandel-ms
+#mandel_ms_SOURCES = \
+#        $(MANDEL_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_ms_queue.cc
+#
+#bin_PROGRAMS += mandel-scal1random
+#mandel_scal1random_SOURCES = \
+#        $(MANDEL_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_scal_1random.cc
+#
+#bin_PROGRAMS += mandel-scalpartrr
+#mandel_scalpartrr_SOURCES = \
+#        $(MANDEL_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_scal_partrr.cc
+#
+#bin_PROGRAMS += mandel-uskfifo
+#mandel_uskfifo_SOURCES = \
+#        $(MANDEL_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_uskfifo.cc
 
 #
 # Producer/Consumer benchmark
@@ -444,70 +265,14 @@ mandel_uskfifo_SOURCES = \
 PRODCON_BASE_OBJS = \
         src/benchmark/common.cc \
         src/benchmark/prodcon/prodcon.cc \
-        src/util/histogram.cc \
-        src/util/history.cc \
         src/util/malloc.cc \
-        src/util/operation_logger.cc \
-        src/util/profiler.cc \
         src/util/random.cc \
         src/util/threadlocals.cc \
         src/util/workloads.cc
 
-prodcon_bskfifo_SOURCES = \
-        $(PRODCON_BASE_OBJS) \
-        src/benchmark/std_glue/glue_bskfifo.cc
-
 prodcon_ms_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_ms_queue.cc
-
-prodcon_scal1random_SOURCES = \
-        $(PRODCON_BASE_OBJS) \
-        src/benchmark/std_glue/glue_scal_1random.cc
-
-prodcon_scalpartrr_SOURCES = \
-        $(PRODCON_BASE_OBJS) \
-        src/benchmark/std_glue/glue_scal_partrr.cc
-
-prodcon_uskfifo_SOURCES = \
-        $(PRODCON_BASE_OBJS) \
-        src/benchmark/std_glue/glue_uskfifo.cc
-
-
-#
-# Sequential alternating benchmark
-#
-SEQALT_BASE_OBJS = \
-        src/benchmark/common.cc \
-        src/benchmark/seqalt/seqalt-old.cc \
-        src/util/histogram.cc \
-        src/util/history.cc \
-        src/util/malloc.cc \
-        src/util/operation_logger.cc \
-        src/util/profiler.cc \
-        src/util/random.cc \
-        src/util/threadlocals.cc \
-        src/util/workloads.cc 
-
-seqalt_bskfifo_SOURCES = \
-        $(SEQALT_BASE_OBJS) \
-        src/benchmark/std_glue/glue_bskfifo.cc
-
-seqalt_ms_SOURCES = \
-        $(SEQALT_BASE_OBJS) \
-        src/benchmark/std_glue/glue_ms_queue.cc
-
-seqalt_scal1random_SOURCES = \
-        $(SEQALT_BASE_OBJS) \
-        src/benchmark/std_glue/glue_scal_1random.cc
-
-seqalt_scalpartrr_SOURCES = \
-        $(SEQALT_BASE_OBJS) \
-        src/benchmark/std_glue/glue_scal_partrr.cc
-
-seqalt_uskfifo_SOURCES = \
-        $(SEQALT_BASE_OBJS) \
-        src/benchmark/std_glue/glue_uskfifo.cc
 
 atomic_value128_unittest_CPPFLAGS = \
         -Wall -mcx16 -m64  -std=c++0x \
@@ -539,7 +304,7 @@ all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .cc .o .obj
+.SUFFIXES: .cc .o .obj
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -655,70 +420,6 @@ src/util/atomic_value64_unittest-malloc.$(OBJEXT):  \
 atomic_value64_unittest$(EXEEXT): $(atomic_value64_unittest_OBJECTS) $(atomic_value64_unittest_DEPENDENCIES) $(EXTRA_atomic_value64_unittest_DEPENDENCIES) 
 	@rm -f atomic_value64_unittest$(EXEEXT)
 	$(CXXLINK) $(atomic_value64_unittest_OBJECTS) $(atomic_value64_unittest_LDADD) $(LIBS)
-src/benchmark/graph_traversal/$(am__dirstamp):
-	@$(MKDIR_P) src/benchmark/graph_traversal
-	@: > src/benchmark/graph_traversal/$(am__dirstamp)
-src/benchmark/graph_traversal/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/benchmark/graph_traversal/$(DEPDIR)
-	@: > src/benchmark/graph_traversal/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/graph_traversal/graph.$(OBJEXT):  \
-	src/benchmark/graph_traversal/$(am__dirstamp) \
-	src/benchmark/graph_traversal/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/graph_traversal/spanning_tree.$(OBJEXT):  \
-	src/benchmark/graph_traversal/$(am__dirstamp) \
-	src/benchmark/graph_traversal/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/graph_traversal/transitive_closure.$(OBJEXT):  \
-	src/benchmark/graph_traversal/$(am__dirstamp) \
-	src/benchmark/graph_traversal/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/graph_traversal/traverse_graphs.$(OBJEXT):  \
-	src/benchmark/graph_traversal/$(am__dirstamp) \
-	src/benchmark/graph_traversal/$(DEPDIR)/$(am__dirstamp)
-src/util/malloc.$(OBJEXT): src/util/$(am__dirstamp) \
-	src/util/$(DEPDIR)/$(am__dirstamp)
-src/util/operation_logger.$(OBJEXT): src/util/$(am__dirstamp) \
-	src/util/$(DEPDIR)/$(am__dirstamp)
-src/util/profiler.$(OBJEXT): src/util/$(am__dirstamp) \
-	src/util/$(DEPDIR)/$(am__dirstamp)
-src/util/random.$(OBJEXT): src/util/$(am__dirstamp) \
-	src/util/$(DEPDIR)/$(am__dirstamp)
-src/util/threadlocals.$(OBJEXT): src/util/$(am__dirstamp) \
-	src/util/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/std_glue/$(am__dirstamp):
-	@$(MKDIR_P) src/benchmark/std_glue
-	@: > src/benchmark/std_glue/$(am__dirstamp)
-src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/benchmark/std_glue/$(DEPDIR)
-	@: > src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/std_glue/glue_bskfifo.$(OBJEXT):  \
-	src/benchmark/std_glue/$(am__dirstamp) \
-	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
-graph-bskfifo$(EXEEXT): $(graph_bskfifo_OBJECTS) $(graph_bskfifo_DEPENDENCIES) $(EXTRA_graph_bskfifo_DEPENDENCIES) 
-	@rm -f graph-bskfifo$(EXEEXT)
-	$(CXXLINK) $(graph_bskfifo_OBJECTS) $(graph_bskfifo_LDADD) $(LIBS)
-src/benchmark/std_glue/glue_ms_queue.$(OBJEXT):  \
-	src/benchmark/std_glue/$(am__dirstamp) \
-	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
-graph-ms$(EXEEXT): $(graph_ms_OBJECTS) $(graph_ms_DEPENDENCIES) $(EXTRA_graph_ms_DEPENDENCIES) 
-	@rm -f graph-ms$(EXEEXT)
-	$(CXXLINK) $(graph_ms_OBJECTS) $(graph_ms_LDADD) $(LIBS)
-src/benchmark/std_glue/glue_scal_1random.$(OBJEXT):  \
-	src/benchmark/std_glue/$(am__dirstamp) \
-	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
-graph-scal1random$(EXEEXT): $(graph_scal1random_OBJECTS) $(graph_scal1random_DEPENDENCIES) $(EXTRA_graph_scal1random_DEPENDENCIES) 
-	@rm -f graph-scal1random$(EXEEXT)
-	$(CXXLINK) $(graph_scal1random_OBJECTS) $(graph_scal1random_LDADD) $(LIBS)
-src/benchmark/std_glue/glue_scal_partrr.$(OBJEXT):  \
-	src/benchmark/std_glue/$(am__dirstamp) \
-	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
-graph-scalpartrr$(EXEEXT): $(graph_scalpartrr_OBJECTS) $(graph_scalpartrr_DEPENDENCIES) $(EXTRA_graph_scalpartrr_DEPENDENCIES) 
-	@rm -f graph-scalpartrr$(EXEEXT)
-	$(CXXLINK) $(graph_scalpartrr_OBJECTS) $(graph_scalpartrr_LDADD) $(LIBS)
-src/benchmark/std_glue/glue_uskfifo.$(OBJEXT):  \
-	src/benchmark/std_glue/$(am__dirstamp) \
-	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
-graph-uskfifo$(EXEEXT): $(graph_uskfifo_OBJECTS) $(graph_uskfifo_DEPENDENCIES) $(EXTRA_graph_uskfifo_DEPENDENCIES) 
-	@rm -f graph-uskfifo$(EXEEXT)
-	$(CXXLINK) $(graph_uskfifo_OBJECTS) $(graph_uskfifo_LDADD) $(LIBS)
 src/benchmark/$(am__dirstamp):
 	@$(MKDIR_P) src/benchmark
 	@: > src/benchmark/$(am__dirstamp)
@@ -727,35 +428,6 @@ src/benchmark/$(DEPDIR)/$(am__dirstamp):
 	@: > src/benchmark/$(DEPDIR)/$(am__dirstamp)
 src/benchmark/common.$(OBJEXT): src/benchmark/$(am__dirstamp) \
 	src/benchmark/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/mandelbrot/$(am__dirstamp):
-	@$(MKDIR_P) src/benchmark/mandelbrot
-	@: > src/benchmark/mandelbrot/$(am__dirstamp)
-src/benchmark/mandelbrot/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/benchmark/mandelbrot/$(DEPDIR)
-	@: > src/benchmark/mandelbrot/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/mandelbrot/mandel.$(OBJEXT):  \
-	src/benchmark/mandelbrot/$(am__dirstamp) \
-	src/benchmark/mandelbrot/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/mandelbrot/bitmap.$(OBJEXT):  \
-	src/benchmark/mandelbrot/$(am__dirstamp) \
-	src/benchmark/mandelbrot/$(DEPDIR)/$(am__dirstamp)
-src/util/histogram.$(OBJEXT): src/util/$(am__dirstamp) \
-	src/util/$(DEPDIR)/$(am__dirstamp)
-mandel-bskfifo$(EXEEXT): $(mandel_bskfifo_OBJECTS) $(mandel_bskfifo_DEPENDENCIES) $(EXTRA_mandel_bskfifo_DEPENDENCIES) 
-	@rm -f mandel-bskfifo$(EXEEXT)
-	$(CXXLINK) $(mandel_bskfifo_OBJECTS) $(mandel_bskfifo_LDADD) $(LIBS)
-mandel-ms$(EXEEXT): $(mandel_ms_OBJECTS) $(mandel_ms_DEPENDENCIES) $(EXTRA_mandel_ms_DEPENDENCIES) 
-	@rm -f mandel-ms$(EXEEXT)
-	$(CXXLINK) $(mandel_ms_OBJECTS) $(mandel_ms_LDADD) $(LIBS)
-mandel-scal1random$(EXEEXT): $(mandel_scal1random_OBJECTS) $(mandel_scal1random_DEPENDENCIES) $(EXTRA_mandel_scal1random_DEPENDENCIES) 
-	@rm -f mandel-scal1random$(EXEEXT)
-	$(CXXLINK) $(mandel_scal1random_OBJECTS) $(mandel_scal1random_LDADD) $(LIBS)
-mandel-scalpartrr$(EXEEXT): $(mandel_scalpartrr_OBJECTS) $(mandel_scalpartrr_DEPENDENCIES) $(EXTRA_mandel_scalpartrr_DEPENDENCIES) 
-	@rm -f mandel-scalpartrr$(EXEEXT)
-	$(CXXLINK) $(mandel_scalpartrr_OBJECTS) $(mandel_scalpartrr_LDADD) $(LIBS)
-mandel-uskfifo$(EXEEXT): $(mandel_uskfifo_OBJECTS) $(mandel_uskfifo_DEPENDENCIES) $(EXTRA_mandel_uskfifo_DEPENDENCIES) 
-	@rm -f mandel-uskfifo$(EXEEXT)
-	$(CXXLINK) $(mandel_uskfifo_OBJECTS) $(mandel_uskfifo_LDADD) $(LIBS)
 src/benchmark/prodcon/$(am__dirstamp):
 	@$(MKDIR_P) src/benchmark/prodcon
 	@: > src/benchmark/prodcon/$(am__dirstamp)
@@ -765,75 +437,37 @@ src/benchmark/prodcon/$(DEPDIR)/$(am__dirstamp):
 src/benchmark/prodcon/prodcon.$(OBJEXT):  \
 	src/benchmark/prodcon/$(am__dirstamp) \
 	src/benchmark/prodcon/$(DEPDIR)/$(am__dirstamp)
-src/util/history.$(OBJEXT): src/util/$(am__dirstamp) \
+src/util/malloc.$(OBJEXT): src/util/$(am__dirstamp) \
+	src/util/$(DEPDIR)/$(am__dirstamp)
+src/util/random.$(OBJEXT): src/util/$(am__dirstamp) \
+	src/util/$(DEPDIR)/$(am__dirstamp)
+src/util/threadlocals.$(OBJEXT): src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/workloads.$(OBJEXT): src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
-prodcon-bskfifo$(EXEEXT): $(prodcon_bskfifo_OBJECTS) $(prodcon_bskfifo_DEPENDENCIES) $(EXTRA_prodcon_bskfifo_DEPENDENCIES) 
-	@rm -f prodcon-bskfifo$(EXEEXT)
-	$(CXXLINK) $(prodcon_bskfifo_OBJECTS) $(prodcon_bskfifo_LDADD) $(LIBS)
+src/benchmark/std_glue/$(am__dirstamp):
+	@$(MKDIR_P) src/benchmark/std_glue
+	@: > src/benchmark/std_glue/$(am__dirstamp)
+src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/benchmark/std_glue/$(DEPDIR)
+	@: > src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
+src/benchmark/std_glue/glue_ms_queue.$(OBJEXT):  \
+	src/benchmark/std_glue/$(am__dirstamp) \
+	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
 prodcon-ms$(EXEEXT): $(prodcon_ms_OBJECTS) $(prodcon_ms_DEPENDENCIES) $(EXTRA_prodcon_ms_DEPENDENCIES) 
 	@rm -f prodcon-ms$(EXEEXT)
 	$(CXXLINK) $(prodcon_ms_OBJECTS) $(prodcon_ms_LDADD) $(LIBS)
-prodcon-scal1random$(EXEEXT): $(prodcon_scal1random_OBJECTS) $(prodcon_scal1random_DEPENDENCIES) $(EXTRA_prodcon_scal1random_DEPENDENCIES) 
-	@rm -f prodcon-scal1random$(EXEEXT)
-	$(CXXLINK) $(prodcon_scal1random_OBJECTS) $(prodcon_scal1random_LDADD) $(LIBS)
-prodcon-scalpartrr$(EXEEXT): $(prodcon_scalpartrr_OBJECTS) $(prodcon_scalpartrr_DEPENDENCIES) $(EXTRA_prodcon_scalpartrr_DEPENDENCIES) 
-	@rm -f prodcon-scalpartrr$(EXEEXT)
-	$(CXXLINK) $(prodcon_scalpartrr_OBJECTS) $(prodcon_scalpartrr_LDADD) $(LIBS)
-prodcon-uskfifo$(EXEEXT): $(prodcon_uskfifo_OBJECTS) $(prodcon_uskfifo_DEPENDENCIES) $(EXTRA_prodcon_uskfifo_DEPENDENCIES) 
-	@rm -f prodcon-uskfifo$(EXEEXT)
-	$(CXXLINK) $(prodcon_uskfifo_OBJECTS) $(prodcon_uskfifo_LDADD) $(LIBS)
-src/benchmark/seqalt/$(am__dirstamp):
-	@$(MKDIR_P) src/benchmark/seqalt
-	@: > src/benchmark/seqalt/$(am__dirstamp)
-src/benchmark/seqalt/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/benchmark/seqalt/$(DEPDIR)
-	@: > src/benchmark/seqalt/$(DEPDIR)/$(am__dirstamp)
-src/benchmark/seqalt/seqalt-old.$(OBJEXT):  \
-	src/benchmark/seqalt/$(am__dirstamp) \
-	src/benchmark/seqalt/$(DEPDIR)/$(am__dirstamp)
-seqalt-bskfifo$(EXEEXT): $(seqalt_bskfifo_OBJECTS) $(seqalt_bskfifo_DEPENDENCIES) $(EXTRA_seqalt_bskfifo_DEPENDENCIES) 
-	@rm -f seqalt-bskfifo$(EXEEXT)
-	$(CXXLINK) $(seqalt_bskfifo_OBJECTS) $(seqalt_bskfifo_LDADD) $(LIBS)
-seqalt-ms$(EXEEXT): $(seqalt_ms_OBJECTS) $(seqalt_ms_DEPENDENCIES) $(EXTRA_seqalt_ms_DEPENDENCIES) 
-	@rm -f seqalt-ms$(EXEEXT)
-	$(CXXLINK) $(seqalt_ms_OBJECTS) $(seqalt_ms_LDADD) $(LIBS)
-seqalt-scal1random$(EXEEXT): $(seqalt_scal1random_OBJECTS) $(seqalt_scal1random_DEPENDENCIES) $(EXTRA_seqalt_scal1random_DEPENDENCIES) 
-	@rm -f seqalt-scal1random$(EXEEXT)
-	$(CXXLINK) $(seqalt_scal1random_OBJECTS) $(seqalt_scal1random_LDADD) $(LIBS)
-seqalt-scalpartrr$(EXEEXT): $(seqalt_scalpartrr_OBJECTS) $(seqalt_scalpartrr_DEPENDENCIES) $(EXTRA_seqalt_scalpartrr_DEPENDENCIES) 
-	@rm -f seqalt-scalpartrr$(EXEEXT)
-	$(CXXLINK) $(seqalt_scalpartrr_OBJECTS) $(seqalt_scalpartrr_LDADD) $(LIBS)
-seqalt-uskfifo$(EXEEXT): $(seqalt_uskfifo_OBJECTS) $(seqalt_uskfifo_DEPENDENCIES) $(EXTRA_seqalt_uskfifo_DEPENDENCIES) 
-	@rm -f seqalt-uskfifo$(EXEEXT)
-	$(CXXLINK) $(seqalt_uskfifo_OBJECTS) $(seqalt_uskfifo_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f src/benchmark/common.$(OBJEXT)
-	-rm -f src/benchmark/graph_traversal/graph.$(OBJEXT)
-	-rm -f src/benchmark/graph_traversal/spanning_tree.$(OBJEXT)
-	-rm -f src/benchmark/graph_traversal/transitive_closure.$(OBJEXT)
-	-rm -f src/benchmark/graph_traversal/traverse_graphs.$(OBJEXT)
-	-rm -f src/benchmark/mandelbrot/bitmap.$(OBJEXT)
-	-rm -f src/benchmark/mandelbrot/mandel.$(OBJEXT)
 	-rm -f src/benchmark/prodcon/prodcon.$(OBJEXT)
-	-rm -f src/benchmark/seqalt/seqalt-old.$(OBJEXT)
-	-rm -f src/benchmark/std_glue/glue_bskfifo.$(OBJEXT)
 	-rm -f src/benchmark/std_glue/glue_ms_queue.$(OBJEXT)
-	-rm -f src/benchmark/std_glue/glue_scal_1random.$(OBJEXT)
-	-rm -f src/benchmark/std_glue/glue_scal_partrr.$(OBJEXT)
-	-rm -f src/benchmark/std_glue/glue_uskfifo.$(OBJEXT)
 	-rm -f src/test/atomic_value128_unittest-atomic_value128_unittest.$(OBJEXT)
 	-rm -f src/test/atomic_value64_unittest-atomic_value64_unittest.$(OBJEXT)
 	-rm -f src/util/atomic_value128_unittest-malloc.$(OBJEXT)
 	-rm -f src/util/atomic_value64_unittest-malloc.$(OBJEXT)
-	-rm -f src/util/histogram.$(OBJEXT)
-	-rm -f src/util/history.$(OBJEXT)
 	-rm -f src/util/malloc.$(OBJEXT)
-	-rm -f src/util/operation_logger.$(OBJEXT)
-	-rm -f src/util/profiler.$(OBJEXT)
 	-rm -f src/util/random.$(OBJEXT)
 	-rm -f src/util/threadlocals.$(OBJEXT)
 	-rm -f src/util/workloads.$(OBJEXT)
@@ -842,47 +476,16 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/$(DEPDIR)/common.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/graph_traversal/$(DEPDIR)/graph.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/graph_traversal/$(DEPDIR)/spanning_tree.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/graph_traversal/$(DEPDIR)/transitive_closure.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/graph_traversal/$(DEPDIR)/traverse_graphs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/mandelbrot/$(DEPDIR)/bitmap.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/mandelbrot/$(DEPDIR)/mandel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/prodcon/$(DEPDIR)/prodcon.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/seqalt/$(DEPDIR)/seqalt-old.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_bskfifo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_ms_queue.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_scal_1random.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_scal_partrr.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_uskfifo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/atomic_value128_unittest-atomic_value128_unittest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/atomic_value64_unittest-atomic_value64_unittest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/atomic_value128_unittest-malloc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/atomic_value64_unittest-malloc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/histogram.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/history.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/malloc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/operation_logger.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/profiler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/threadlocals.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/workloads.Po@am__quote@
-
-.c.o:
-@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c -o $@ $<
-
-.c.obj:
-@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cc.o:
 @am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1299,14 +902,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f src/benchmark/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/benchmark/$(am__dirstamp)
-	-rm -f src/benchmark/graph_traversal/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/benchmark/graph_traversal/$(am__dirstamp)
-	-rm -f src/benchmark/mandelbrot/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/benchmark/mandelbrot/$(am__dirstamp)
 	-rm -f src/benchmark/prodcon/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/benchmark/prodcon/$(am__dirstamp)
-	-rm -f src/benchmark/seqalt/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/benchmark/seqalt/$(am__dirstamp)
 	-rm -f src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/benchmark/std_glue/$(am__dirstamp)
 	-rm -f src/test/$(DEPDIR)/$(am__dirstamp)
@@ -1324,7 +921,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-noinstPROGRAMS \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/benchmark/$(DEPDIR) src/benchmark/graph_traversal/$(DEPDIR) src/benchmark/mandelbrot/$(DEPDIR) src/benchmark/prodcon/$(DEPDIR) src/benchmark/seqalt/$(DEPDIR) src/benchmark/std_glue/$(DEPDIR) src/test/$(DEPDIR) src/util/$(DEPDIR)
+	-rm -rf src/benchmark/$(DEPDIR) src/benchmark/prodcon/$(DEPDIR) src/benchmark/std_glue/$(DEPDIR) src/test/$(DEPDIR) src/util/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -1372,7 +969,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/benchmark/$(DEPDIR) src/benchmark/graph_traversal/$(DEPDIR) src/benchmark/mandelbrot/$(DEPDIR) src/benchmark/prodcon/$(DEPDIR) src/benchmark/seqalt/$(DEPDIR) src/benchmark/std_glue/$(DEPDIR) src/test/$(DEPDIR) src/util/$(DEPDIR)
+	-rm -rf src/benchmark/$(DEPDIR) src/benchmark/prodcon/$(DEPDIR) src/benchmark/std_glue/$(DEPDIR) src/test/$(DEPDIR) src/util/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
