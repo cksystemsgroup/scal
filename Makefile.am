@@ -71,10 +71,10 @@ PRODCON_BASE_OBJS = \
         src/util/threadlocals.cc \
         src/util/workloads.cc
 
-#bin_PROGRAMS += prodcon-bskfifo
-#prodcon_bskfifo_SOURCES = \
-#        $(PRODCON_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_bskfifo.cc
+bin_PROGRAMS += prodcon-bskfifo
+prodcon_bskfifo_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_bskfifo.cc
 
 bin_PROGRAMS += prodcon-ms
 prodcon_ms_SOURCES = \
@@ -91,10 +91,10 @@ prodcon_ms_SOURCES = \
 #        $(PRODCON_BASE_OBJS) \
 #        src/benchmark/std_glue/glue_scal_partrr.cc
 
-#bin_PROGRAMS += prodcon-uskfifo
-#prodcon_uskfifo_SOURCES = \
-#        $(PRODCON_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_uskfifo.cc
+bin_PROGRAMS += prodcon-uskfifo
+prodcon_uskfifo_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_uskfifo.cc
 
 #
 # Sequential alternating benchmark
