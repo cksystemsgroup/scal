@@ -7,6 +7,12 @@ semantics and scalablity.
 
 Homepage: http://scal.cs.uni-salzburg.at
 
+Dependencies
+------------
+
+* pkg-config
+* gflags
+
 License
 -------
 
