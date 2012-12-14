@@ -12,6 +12,7 @@ Dependencies
 
 * pkg-config
 * gflags
+* g++ with support for template aliasing (>= 4.7)
 
 Building
 --------
