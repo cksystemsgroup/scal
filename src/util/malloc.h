@@ -73,7 +73,7 @@ template<typename T>
 T* tlget_aligned(uint64_t alignment) {
   void *mem;
   if (alignment == 0) {  // no alignment
-    mem = tlcalloc(1, sizeof(T));  
+    mem = tlcalloc(1, sizeof(T));
   } else {
     mem = tlcalloc_aligned(1, sizeof(T), alignment);
   }

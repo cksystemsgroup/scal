@@ -24,7 +24,7 @@
 //
 // * Memory may be inconsistent when using assignment operator in a
 //   concurrent workload.
-// 
+//
 // AtomicValue128 internal layout:
 // 64bit value | 64 bt ABA
 // |high--------------low|
@@ -65,7 +65,7 @@ class AtomicValue128 {
     memory_ = const_cast<AtomicValue128<T>&>(cpy).raw();
   }
 
-  inline AtomicValue128(const volatile AtomicValue128<T> &cpy) {
+  explicit inline AtomicValue128(const volatile AtomicValue128<T> &cpy) {
     memory_ = const_cast<AtomicValue128<T>&>(cpy).raw();
   }
 
@@ -75,7 +75,8 @@ class AtomicValue128 {
     return const_cast<AtomicValue128<T>&>(*this);
   }
 
-  inline AtomicValue128<T>& operator=(const volatile AtomicValue128<T> &rhs) volatile {
+  inline AtomicValue128<T>& operator=(
+      const volatile AtomicValue128<T> &rhs) volatile {
     // Race in writing data.
     memory_ = const_cast<AtomicValue128<T>&>(rhs).raw();
     return const_cast<AtomicValue128<T>&>(*this);
@@ -93,7 +94,7 @@ class AtomicValue128 {
     uint128_t old;
     do {
       old = memory_;
-    } while(memory_ != old);
+    } while (memory_ != old);
     return old;
   }
 
@@ -111,13 +112,16 @@ class AtomicValue128 {
 
   inline void weak_set_value(T value) volatile {
     // Both, the read and the write operation, contain data races.
-    uint128_t new_memory = memory_ & UINT128_C(UINT64_MAX);  // Delete old value, but keep ABA.
+    uint128_t new_memory =
+        memory_ & UINT128_C(UINT64_MAX);  // Delete old value, but keep ABA.
     memory_ = new_memory | (((uint128_t)value) << 64);
   }
 
   inline void weak_set_aba(uint64_t aba) volatile {
     // Both, the read and the write operation, contain data races.
-    uint128_t new_memory = memory_ & (UINT128_C(UINT64_MAX) << 64);  // Delete ABA, but keep old value.
+    uint128_t new_memory =
+        memory_ & (UINT128_C(UINT64_MAX) << 64);  // Delete ABA,
+                                                  // but keep old value.
     memory_ = new_memory | aba;
   }
 
@@ -133,7 +137,7 @@ class AtomicValue128 {
       old_memory = raw();
       new_memory = old_memory & UINT128_C(UINT64_MAX);
       new_memory |= (((uint128_t)value) << 64);
-    } while(!__sync_bool_compare_and_swap(&memory_, old_memory, new_memory));
+    } while (!__sync_bool_compare_and_swap(&memory_, old_memory, new_memory));
   }
 
   inline void set_aba(uint64_t aba) volatile {
@@ -143,21 +147,24 @@ class AtomicValue128 {
       old_memory = raw();
       new_memory = old_memory & (UINT128_C(UINT64_MAX) << 64);
       new_memory |= aba;
-    } while(!__sync_bool_compare_and_swap(&memory_, old_memory, new_memory));
+    } while (!__sync_bool_compare_and_swap(&memory_, old_memory, new_memory));
   }
 
   inline void set_raw(uint128_t new_raw) volatile {
     uint128_t old;
     do {
       old = raw();
-    } while(!__sync_bool_compare_and_swap(&memory_, old, new_raw));
+    } while (!__sync_bool_compare_and_swap(&memory_, old, new_raw));
   }
 
-  inline bool cas(AtomicValue128<T> &expected, AtomicValue128<T> &newcp) volatile {
+  inline bool cas(AtomicValue128<T> &expected,
+                  AtomicValue128<T> &newcp) volatile {
     if (memory_ == expected.memory_ &&  // Filter out obvious fails.
-        __sync_bool_compare_and_swap(&memory_, expected.memory_, newcp.memory_)) {
+        __sync_bool_compare_and_swap(&memory_,
+                                     expected.memory_,
+                                     newcp.memory_)) {
       return true;
-    } 
+    }
     return false;
   }
 
@@ -165,7 +172,7 @@ class AtomicValue128 {
   volatile uint128_t memory_;
 
   inline void init(T value, uint64_t aba) {
-    if(sizeof(T) > 8) {
+    if (sizeof(T) > 8) {
       fprintf(stderr , "%s: type T must be 8 bytes (64 bit) max!\n", __func__);
       abort();
     }

@@ -1,3 +1,7 @@
+// Copyright (c) 2012, the Scal project authors.  Please see the AUTHORS file
+// for details. All rights reserved. Use of this source code is governed by a
+// BSD-style license that can be found in the LICENSE file.
+
 #ifndef SCAL_UTIL_ATOMIC_VALUE64_OFFSET_H_
 #define SCAL_UTIL_ATOMIC_VALUE64_OFFSET_H_
 
@@ -30,18 +34,24 @@ class AtomicValue64Offset : public AtomicValue64Base<T> {
   }
 
   inline AtomicValue64Offset(T value, AtomicAba aba) {
-    init(value, aba);    
+    init(value, aba);
   }
 
-  inline AtomicValue64Offset(const AtomicValue64Offset<T> &cpy) : AtomicValue64Base<T>(cpy) {}
-  inline AtomicValue64Offset(const volatile AtomicValue64Offset<T> &cpy) : AtomicValue64Base<T>(cpy) {}
+  inline AtomicValue64Offset(const AtomicValue64Offset<T> &cpy)
+      : AtomicValue64Base<T>(cpy) {}
 
-  inline AtomicValue64Offset<T>& operator=(const AtomicValue64Offset<T> &rhs) volatile {
+  explicit inline AtomicValue64Offset(
+      const volatile AtomicValue64Offset<T> &cpy)
+      : AtomicValue64Base<T>(cpy) {}
+
+  inline AtomicValue64Offset<T>& operator=(
+      const AtomicValue64Offset<T> &rhs) volatile {
     this->memory_ = const_cast<AtomicValue64Offset<T>&>(rhs).raw();
     return const_cast<AtomicValue64Offset<T>&>(*this);
   }
 
-  inline AtomicValue64Offset<T>& operator=(const volatile AtomicValue64Offset<T> &rhs) volatile {
+  inline AtomicValue64Offset<T>& operator=(
+      const volatile AtomicValue64Offset<T> &rhs) volatile {
     this->memory_ = const_cast<AtomicValue64Offset<T>&>(rhs).raw();
     return const_cast<AtomicValue64Offset<T>&>(*this);
   }

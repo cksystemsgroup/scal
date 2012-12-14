@@ -16,7 +16,7 @@ const uint32_t kM = 2147483647;
 const uint32_t kQ = 127773;
 const uint32_t kR = 2836;
 
-}  // namespace 
+}  // namespace
 
 uint64_t pseudorand(void) {
   threadlocals_t *data = threadlocals_get();
@@ -29,10 +29,6 @@ uint64_t pseudorand(void) {
   } else {
     data->random_seed = test + kM;
   }
-#ifdef DEBUG_RANDOM
-  printf("%s: tls: %p; thread_id: %lu; random_nr (new seed): %lu\n",
-         __func__, data, data->thread_id, data->random_seed);
-#endif  // DEBUG_RANDOM
   return data->random_seed;
 }
 
@@ -44,8 +40,5 @@ static inline uint64_t rdtsc(void) {
 
 uint64_t hwrand(void) {
   uint64_t rnd = (rdtsc() >> 6);
-#ifdef DEBUG_RANDOM
-  printf("%s: random_nr: %lu\n", __func__, rnd);
-#endif  // DEBUG_RANDOM
   return rnd;
 }

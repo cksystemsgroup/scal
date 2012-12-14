@@ -7,13 +7,10 @@
 
 #include <inttypes.h>
 
-#include "util/hash_map.h"
-
 struct threadlocals_t {
   uint64_t thread_id;
   unsigned int random_seed;
   void *data;
-  StringHashmap<void*> *map;
 };
 
 void threadlocals_init(void);

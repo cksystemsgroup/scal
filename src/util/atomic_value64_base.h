@@ -31,16 +31,18 @@ class AtomicValue64Base {
     memory_ = const_cast<AtomicValue64Base<T>&>(cpy).raw();
   }
 
-  inline AtomicValue64Base(const volatile AtomicValue64Base<T> &cpy) {
+  explicit inline AtomicValue64Base(const volatile AtomicValue64Base<T> &cpy) {
     memory_ = const_cast<AtomicValue64Base<T>&>(cpy).raw();
   }
 
-  inline AtomicValue64Base<T>& operator=(const AtomicValue64Base<T> &rhs) volatile {
+  inline AtomicValue64Base<T>& operator=(
+      const AtomicValue64Base<T> &rhs) volatile {
     memory_ = const_cast<AtomicValue64Base<T>&>(rhs).raw();
     return const_cast<AtomicValue64Base<T>&>(*this);
   }
 
-  inline AtomicValue64Base<T>& operator=(const volatile AtomicValue64Base<T> &rhs) volatile {
+  inline AtomicValue64Base<T>& operator=(
+      const volatile AtomicValue64Base<T> &rhs) volatile {
     memory_ = const_cast<AtomicValue64Base<T>&>(rhs).raw();
     return const_cast<AtomicValue64Base<T>&>(*this);
   }
@@ -55,7 +57,7 @@ class AtomicValue64Base {
 
   inline void set_aba(AtomicAba aba) volatile {
     uint64_t new_memory = memory_;
-    new_memory &= (UINT64_MAX - kAbaMax); // Clear out ABA
+    new_memory &= (UINT64_MAX - kAbaMax);  // Clear out ABA
     new_memory |= (aba & kAbaMax);  // Add the new (masked) ABA
     memory_ = new_memory;
   }
@@ -72,11 +74,14 @@ class AtomicValue64Base {
     set_aba(aba);
   }
 
-  inline bool cas(AtomicValue64Base<T> &expected, AtomicValue64Base<T> &newcp) volatile {
+  inline bool cas(AtomicValue64Base<T> &expected,
+                  AtomicValue64Base<T> &newcp) volatile {
     if (memory_ == expected.memory_ &&  // Filter out obvious fails.
-        __sync_bool_compare_and_swap(&memory_, expected.memory_, newcp.memory_)) {
+        __sync_bool_compare_and_swap(&memory_,
+                                     expected.memory_,
+                                     newcp.memory_)) {
       return true;
-    } 
+    }
     return false;
   }
 
