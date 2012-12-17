@@ -19,6 +19,8 @@ LDADD = -lm @GFLAGS_LIBS@ -lrt
 # tcmalloc stuff
 LDADD += external/libtcmalloc_minimal.a
 
+GTEST_DIR = external/googletest
+
 #
 # Mandelbrot calculation benchmark
 #
@@ -140,29 +142,52 @@ prodcon_uskfifo_SOURCES = \
 #
 # Tests -- currenctly only the atomic containers
 #
+#
+external/libgtest_main.a:
+	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest_main.cc -o external/gtest_main.o
+	$(AR) -rv external/libgtest_main.a external/gtest_main.o
+
+external/libgtest.a:
+	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc -o external/gtest-all.o
+	$(AR) -rv external/libgtest.a external/gtest-all.o
+
+gtest-clean:
+	rm -f external/gtest-all.o external/gtest_main.o
+	rm -f external/libgtest.a external/libgtest_main.a
+
+GTEST_LIBS = external/libgtest.a external/libgtest_main.a
+
+TEST_CPPFLAGS = -Wall -mcx16 -m64 -std=c++0x
 
 TESTS += atomic_value128_unittest
 atomic_value128_unittest_CPPFLAGS = \
-        -Wall -mcx16 -m64  -std=c++0x \
+	$(TEST_CPPFLAGS) \
         -I./src \
-        -I./external/gtest-1.6.0/include
+        -I$(GTEST_DIR)/include
 atomic_value128_unittest_LDADD = \
         @GFLAGS_LIBS@ \
-        external/gtest_main.a 
+        $(GTEST_LIBS) 
 atomic_value128_unittest_SOURCES = \
         src/test/atomic_value128_unittest.cc \
         src/util/malloc.cc
 
 TESTS += atomic_value64_unittest
 atomic_value64_unittest_CPPFLAGS = \
-        -Wall -m64  -std=c++0x \
+	$(TEST_CPPFLAGS) \
         -I./src \
-        -I./external/gtest-1.6.0/include
+        -I$(GTEST_DIR)/include
 atomic_value64_unittest_LDADD = \
         @GFLAGS_LIBS@ \
-        external/gtest_main.a 
+        $(GTEST_LIBS) 
 atomic_value64_unittest_SOURCES = \
         src/test/atomic_value64_unittest.cc \
         src/util/malloc.cc
 
 noinst_PROGRAMS += $(TESTS)
+
+#
+# Extend the standard Makefile rules
+#
+
+clean-local: gtest-clean
+

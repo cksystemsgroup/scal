@@ -61,12 +61,12 @@ am_atomic_value128_unittest_OBJECTS = src/test/atomic_value128_unittest-atomic_v
 	src/util/atomic_value128_unittest-malloc.$(OBJEXT)
 atomic_value128_unittest_OBJECTS =  \
 	$(am_atomic_value128_unittest_OBJECTS)
-atomic_value128_unittest_DEPENDENCIES = external/gtest_main.a
+atomic_value128_unittest_DEPENDENCIES = $(GTEST_LIBS)
 am_atomic_value64_unittest_OBJECTS = src/test/atomic_value64_unittest-atomic_value64_unittest.$(OBJEXT) \
 	src/util/atomic_value64_unittest-malloc.$(OBJEXT)
 atomic_value64_unittest_OBJECTS =  \
 	$(am_atomic_value64_unittest_OBJECTS)
-atomic_value64_unittest_DEPENDENCIES = external/gtest_main.a
+atomic_value64_unittest_DEPENDENCIES = $(GTEST_LIBS)
 am__objects_1 = src/benchmark/common.$(OBJEXT) \
 	src/benchmark/prodcon/prodcon.$(OBJEXT) \
 	src/util/malloc.$(OBJEXT) src/util/random.$(OBJEXT) \
@@ -238,6 +238,7 @@ AM_LDFLAGS = -Wl,--as-needed
 
 # tcmalloc stuff
 LDADD = -lm @GFLAGS_LIBS@ -lrt external/libtcmalloc_minimal.a
+GTEST_DIR = external/googletest
 
 #
 # Mandelbrot calculation benchmark
@@ -306,27 +307,29 @@ prodcon_uskfifo_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_uskfifo.cc
 
+GTEST_LIBS = external/libgtest.a external/libgtest_main.a
+TEST_CPPFLAGS = -Wall -mcx16 -m64 -std=c++0x
 atomic_value128_unittest_CPPFLAGS = \
-        -Wall -mcx16 -m64  -std=c++0x \
+	$(TEST_CPPFLAGS) \
         -I./src \
-        -I./external/gtest-1.6.0/include
+        -I$(GTEST_DIR)/include
 
 atomic_value128_unittest_LDADD = \
         @GFLAGS_LIBS@ \
-        external/gtest_main.a 
+        $(GTEST_LIBS) 
 
 atomic_value128_unittest_SOURCES = \
         src/test/atomic_value128_unittest.cc \
         src/util/malloc.cc
 
 atomic_value64_unittest_CPPFLAGS = \
-        -Wall -m64  -std=c++0x \
+	$(TEST_CPPFLAGS) \
         -I./src \
-        -I./external/gtest-1.6.0/include
+        -I$(GTEST_DIR)/include
 
 atomic_value64_unittest_LDADD = \
         @GFLAGS_LIBS@ \
-        external/gtest_main.a 
+        $(GTEST_LIBS) 
 
 atomic_value64_unittest_SOURCES = \
         src/test/atomic_value64_unittest.cc \
@@ -972,8 +975,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-noinstPROGRAMS \
-	mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-local \
+	clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1046,21 +1049,85 @@ uninstall-am: uninstall-binPROGRAMS
 .MAKE: all check-am install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-TESTS check-am \
-	clean clean-binPROGRAMS clean-generic clean-noinstPROGRAMS \
-	ctags dist dist-all dist-bzip2 dist-gzip dist-lzip dist-lzma \
-	dist-shar dist-tarZ dist-xz dist-zip distcheck distclean \
-	distclean-compile distclean-generic distclean-hdr \
-	distclean-tags distcleancheck distdir distuninstallcheck dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS
+	clean clean-binPROGRAMS clean-generic clean-local \
+	clean-noinstPROGRAMS ctags dist dist-all dist-bzip2 dist-gzip \
+	dist-lzip dist-lzma dist-shar dist-tarZ dist-xz dist-zip \
+	distcheck distclean distclean-compile distclean-generic \
+	distclean-hdr distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-binPROGRAMS
 
+
+#
+# Sequential alternating benchmark
+#
+
+#SEQALT_BASE_OBJS = \
+#        src/benchmark/common.cc \
+#        src/benchmark/seqalt/seqalt-old.cc \
+#        src/util/histogram.cc \
+#        src/util/history.cc \
+#        src/util/malloc.cc \
+#        src/util/operation_logger.cc \
+#        src/util/profiler.cc \
+#        src/util/random.cc \
+#        src/util/threadlocals.cc \
+#        src/util/workloads.cc 
+#
+#bin_PROGRAMS += seqalt-bskfifo
+#seqalt_bskfifo_SOURCES = \
+#        $(SEQALT_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_bskfifo.cc
+#
+#bin_PROGRAMS += seqalt-ms
+#seqalt_ms_SOURCES = \
+#        $(SEQALT_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_ms_queue.cc
+#
+#bin_PROGRAMS += seqalt-scal1random
+#seqalt_scal1random_SOURCES = \
+#        $(SEQALT_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_scal_1random.cc
+#
+#bin_PROGRAMS += seqalt-scalpartrr
+#seqalt_scalpartrr_SOURCES = \
+#        $(SEQALT_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_scal_partrr.cc
+#
+#bin_PROGRAMS += seqalt-uskfifo
+#seqalt_uskfifo_SOURCES = \
+#        $(SEQALT_BASE_OBJS) \
+#        src/benchmark/std_glue/glue_uskfifo.cc
+
+#
+# Tests -- currenctly only the atomic containers
+#
+#
+external/libgtest_main.a:
+	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest_main.cc -o external/gtest_main.o
+	$(AR) -rv external/libgtest_main.a external/gtest_main.o
+
+external/libgtest.a:
+	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc -o external/gtest-all.o
+	$(AR) -rv external/libgtest.a external/gtest-all.o
+
+gtest-clean:
+	rm -f external/gtest-all.o external/gtest_main.o
+	rm -f external/libgtest.a external/libgtest_main.a
+
+#
+# Extend the standard Makefile rules
+#
+
+clean-local: gtest-clean
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
