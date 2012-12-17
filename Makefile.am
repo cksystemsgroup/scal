@@ -142,7 +142,7 @@ prodcon_uskfifo_SOURCES = \
 #
 # Tests -- currenctly only the atomic containers
 #
-#
+
 external/libgtest_main.a:
 	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest_main.cc -o external/gtest_main.o
 	$(AR) -rv external/libgtest_main.a external/gtest_main.o
