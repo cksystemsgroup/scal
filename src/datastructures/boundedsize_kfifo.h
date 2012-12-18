@@ -65,7 +65,6 @@ class BoundedSizeKFifo {
 
 template<typename T>
 BoundedSizeKFifo<T>::BoundedSizeKFifo(uint64_t k, uint64_t num_segments) {
-  using scal::malloc_aligned;
   k_ = k;
   queue_size_ = k * num_segments;
   queue_ = static_cast<AtomicValue<T>**>(calloc(
@@ -100,16 +99,14 @@ void BoundedSizeKFifo<T>::find_index(uint64_t start_index,
 
 template<typename T>
 bool BoundedSizeKFifo<T>::advance_head(AtomicValue<uint64_t> head_old) {
-    AtomicValue<uint64_t> newcp(head_old.value() + k_,
-                                      head_old.aba() + 1);
-    return head_->cas(head_old, newcp);
+  AtomicValue<uint64_t> newcp(head_old.value() + k_, head_old.aba() + 1);
+  return head_->cas(head_old, newcp);
 }
 
 template<typename T>
 bool BoundedSizeKFifo<T>::advance_tail(AtomicValue<uint64_t> tail_old) {
-    AtomicValue<uint64_t> newcp(tail_old.value() + k_,
-                                      tail_old.aba() + 1);
-    return tail_->cas(tail_old, newcp);
+  AtomicValue<uint64_t> newcp(tail_old.value() + k_, tail_old.aba() + 1);
+  return tail_->cas(tail_old, newcp);
 }
 
 template<typename T>
