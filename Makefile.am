@@ -11,13 +11,12 @@ AM_CPPFLAGS = -Wall -mcx16 -m64  -std=c++0x \
         -fno-builtin-calloc \
         -fno-builtin-realloc \
         -fno-builtin-free \
-        -fno-omit-frame-pointer
+        -fno-omit-frame-pointer \
+	@GFLAGS_CFLAGS@ \
+	@TCMALLOC_CFLAGS@
 
 AM_LDFLAGS = -Wl,--as-needed 
-LDADD = -lm @GFLAGS_LIBS@ -lrt
-
-# tcmalloc stuff
-LDADD += external/libtcmalloc_minimal.a
+LDADD = -lm @GFLAGS_LIBS@ -lrt @TCMALLOC_LIBS@
 
 GTEST_DIR = external/googletest
 

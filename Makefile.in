@@ -75,22 +75,22 @@ am_prodcon_bskfifo_OBJECTS = $(am__objects_1) \
 	src/benchmark/std_glue/glue_bskfifo.$(OBJEXT)
 prodcon_bskfifo_OBJECTS = $(am_prodcon_bskfifo_OBJECTS)
 prodcon_bskfifo_LDADD = $(LDADD)
-prodcon_bskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
+prodcon_bskfifo_DEPENDENCIES =
 am_prodcon_dq_1random_OBJECTS = $(am__objects_1) \
 	src/benchmark/std_glue/glue_dq_1random.$(OBJEXT)
 prodcon_dq_1random_OBJECTS = $(am_prodcon_dq_1random_OBJECTS)
 prodcon_dq_1random_LDADD = $(LDADD)
-prodcon_dq_1random_DEPENDENCIES = external/libtcmalloc_minimal.a
+prodcon_dq_1random_DEPENDENCIES =
 am_prodcon_ms_OBJECTS = $(am__objects_1) \
 	src/benchmark/std_glue/glue_ms_queue.$(OBJEXT)
 prodcon_ms_OBJECTS = $(am_prodcon_ms_OBJECTS)
 prodcon_ms_LDADD = $(LDADD)
-prodcon_ms_DEPENDENCIES = external/libtcmalloc_minimal.a
+prodcon_ms_DEPENDENCIES =
 am_prodcon_uskfifo_OBJECTS = $(am__objects_1) \
 	src/benchmark/std_glue/glue_uskfifo.$(OBJEXT)
 prodcon_uskfifo_OBJECTS = $(am_prodcon_uskfifo_OBJECTS)
 prodcon_uskfifo_LDADD = $(LDADD)
-prodcon_uskfifo_DEPENDENCIES = external/libtcmalloc_minimal.a
+prodcon_uskfifo_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -179,6 +179,8 @@ PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TCMALLOC_CFLAGS = @TCMALLOC_CFLAGS@
+TCMALLOC_LIBS = @TCMALLOC_LIBS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -232,12 +234,12 @@ AM_CPPFLAGS = -Wall -mcx16 -m64  -std=c++0x \
         -fno-builtin-calloc \
         -fno-builtin-realloc \
         -fno-builtin-free \
-        -fno-omit-frame-pointer
+        -fno-omit-frame-pointer \
+	@GFLAGS_CFLAGS@ \
+	@TCMALLOC_CFLAGS@
 
 AM_LDFLAGS = -Wl,--as-needed 
-
-# tcmalloc stuff
-LDADD = -lm @GFLAGS_LIBS@ -lrt external/libtcmalloc_minimal.a
+LDADD = -lm @GFLAGS_LIBS@ -lrt @TCMALLOC_LIBS@
 GTEST_DIR = external/googletest
 
 #

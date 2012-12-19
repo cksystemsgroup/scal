@@ -69,6 +69,11 @@ PKG_CHECK_MODULES([GFLAGS], [libgflags])
 AC_SUBST([GFLAGS_CFLAGS])
 AC_SUBST([GFLAGS_LIBS])
 
+dnl tcmalloc_minimal in google-perftools
+PKG_CHECK_MODULES([TCMALLOC], [libtcmalloc_minimal])
+AC_SUBST([TCMALLOC_CFLAGS])
+AC_SUBST([TCMALLOC_LIBS])
+
 AC_CONFIG_FILES(Makefile)
 
 AC_OUTPUT
