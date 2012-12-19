@@ -703,6 +703,7 @@ ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
 enable_debug
+enable_cas128
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1342,6 +1343,8 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-debug          Include debugging symbols
+  --disable-cas128        Disable usage of 128bit CAS (and use 64bit CAS
+                          instead)
 
 Some influential environment variables:
   CC          C compiler command
@@ -4018,6 +4021,19 @@ if test "x$enable_debug" = "xyes"; then :
 
 fi
 
+
+# Check whether --enable-cas128 was given.
+if test "${enable_cas128+set}" = set; then :
+  enableval=$enable_cas128;
+fi
+
+if test "x$enable_cas128" != "xno"; then :
+
+
+$as_echo "#define USE_CAS128 1" >>confdefs.h
+
+
+fi
 
 
 ac_ext=cpp

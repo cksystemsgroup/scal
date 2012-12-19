@@ -54,5 +54,8 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
+/* Use 128 bit CAS operations */
+#undef USE_CAS128
+
 /* Version number of package */
 #undef VERSION

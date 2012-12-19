@@ -21,6 +21,14 @@ AS_IF([test "x$enable_debug" = "xyes"], [
 ])
 AC_SUBST([CC_OPTIMIZATION])
 
+dnl double width CAS
+AC_ARG_ENABLE([cas128],
+    AS_HELP_STRING([--disable-cas128], [Disable usage of 128bit CAS (and
+                    use 64bit CAS instead)]))
+AS_IF([test "x$enable_cas128" != "xno"], [
+  AC_DEFINE([USE_CAS128], [1], [Use 128 bit CAS operations])
+])
+
 dnl uintxx_t types
 AC_CHECK_HEADERS([stdint.h inttypes.h sys/types.h],
     [scal_found_int_headers=yes; break;])
