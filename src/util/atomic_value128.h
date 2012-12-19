@@ -65,7 +65,7 @@ class AtomicValue128 {
     memory_ = const_cast<AtomicValue128<T>&>(cpy).raw();
   }
 
-  explicit inline AtomicValue128(const volatile AtomicValue128<T> &cpy) {
+  inline AtomicValue128(const volatile AtomicValue128<T> &cpy) {
     memory_ = const_cast<AtomicValue128<T>&>(cpy).raw();
   }
 
