@@ -31,7 +31,7 @@ class AtomicValue64Base {
     memory_ = const_cast<AtomicValue64Base<T>&>(cpy).raw();
   }
 
-  explicit inline AtomicValue64Base(const volatile AtomicValue64Base<T> &cpy) {
+  inline AtomicValue64Base(const volatile AtomicValue64Base<T> &cpy) {
     memory_ = const_cast<AtomicValue64Base<T>&>(cpy).raw();
   }
 

@@ -40,8 +40,7 @@ class AtomicValue64NoOffset : public AtomicValue64Base<T> {
   inline AtomicValue64NoOffset(const AtomicValue64NoOffset<T> &cpy)
       : AtomicValue64Base<T>(cpy) {}
 
-  explicit inline AtomicValue64NoOffset(
-      const volatile AtomicValue64NoOffset<T> &cpy)
+  inline AtomicValue64NoOffset(const volatile AtomicValue64NoOffset<T> &cpy)
       : AtomicValue64Base<T>(cpy) {}
 
   inline AtomicValue64NoOffset<T>& operator=(
