@@ -97,6 +97,11 @@ prodcon_uskfifo_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_uskfifo.cc
 
+bin_PROGRAMS += prodcon-wf
+prodcon_wf_SOURCES = \
+	$(PRODCON_BASE_OBJS) \
+	src/benchmark/std_glue/glue_wf.cc
+
 #
 # Sequential alternating benchmark
 #

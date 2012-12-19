@@ -33,7 +33,8 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 bin_PROGRAMS = prodcon-bskfifo$(EXEEXT) prodcon-ms$(EXEEXT) \
-	prodcon-dq-1random$(EXEEXT) prodcon-uskfifo$(EXEEXT)
+	prodcon-dq-1random$(EXEEXT) prodcon-uskfifo$(EXEEXT) \
+	prodcon-wf$(EXEEXT)
 noinst_PROGRAMS = $(am__EXEEXT_1)
 TESTS = atomic_value128_unittest$(EXEEXT) \
 	atomic_value64_unittest$(EXEEXT)
@@ -91,6 +92,11 @@ am_prodcon_uskfifo_OBJECTS = $(am__objects_1) \
 prodcon_uskfifo_OBJECTS = $(am_prodcon_uskfifo_OBJECTS)
 prodcon_uskfifo_LDADD = $(LDADD)
 prodcon_uskfifo_DEPENDENCIES =
+am_prodcon_wf_OBJECTS = $(am__objects_1) \
+	src/benchmark/std_glue/glue_wf.$(OBJEXT)
+prodcon_wf_OBJECTS = $(am_prodcon_wf_OBJECTS)
+prodcon_wf_LDADD = $(LDADD)
+prodcon_wf_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -103,11 +109,11 @@ CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 SOURCES = $(atomic_value128_unittest_SOURCES) \
 	$(atomic_value64_unittest_SOURCES) $(prodcon_bskfifo_SOURCES) \
 	$(prodcon_dq_1random_SOURCES) $(prodcon_ms_SOURCES) \
-	$(prodcon_uskfifo_SOURCES)
+	$(prodcon_uskfifo_SOURCES) $(prodcon_wf_SOURCES)
 DIST_SOURCES = $(atomic_value128_unittest_SOURCES) \
 	$(atomic_value64_unittest_SOURCES) $(prodcon_bskfifo_SOURCES) \
 	$(prodcon_dq_1random_SOURCES) $(prodcon_ms_SOURCES) \
-	$(prodcon_uskfifo_SOURCES)
+	$(prodcon_uskfifo_SOURCES) $(prodcon_wf_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -308,6 +314,10 @@ prodcon_dq_1random_SOURCES = \
 prodcon_uskfifo_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_uskfifo.cc
+
+prodcon_wf_SOURCES = \
+	$(PRODCON_BASE_OBJS) \
+	src/benchmark/std_glue/glue_wf.cc
 
 GTEST_LIBS = external/libgtest.a external/libgtest_main.a
 TEST_CPPFLAGS = -Wall -mcx16 -m64 -std=c++0x
@@ -512,6 +522,12 @@ src/benchmark/std_glue/glue_uskfifo.$(OBJEXT):  \
 prodcon-uskfifo$(EXEEXT): $(prodcon_uskfifo_OBJECTS) $(prodcon_uskfifo_DEPENDENCIES) $(EXTRA_prodcon_uskfifo_DEPENDENCIES) 
 	@rm -f prodcon-uskfifo$(EXEEXT)
 	$(CXXLINK) $(prodcon_uskfifo_OBJECTS) $(prodcon_uskfifo_LDADD) $(LIBS)
+src/benchmark/std_glue/glue_wf.$(OBJEXT):  \
+	src/benchmark/std_glue/$(am__dirstamp) \
+	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
+prodcon-wf$(EXEEXT): $(prodcon_wf_OBJECTS) $(prodcon_wf_DEPENDENCIES) $(EXTRA_prodcon_wf_DEPENDENCIES) 
+	@rm -f prodcon-wf$(EXEEXT)
+	$(CXXLINK) $(prodcon_wf_OBJECTS) $(prodcon_wf_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -521,6 +537,7 @@ mostlyclean-compile:
 	-rm -f src/benchmark/std_glue/glue_dq_1random.$(OBJEXT)
 	-rm -f src/benchmark/std_glue/glue_ms_queue.$(OBJEXT)
 	-rm -f src/benchmark/std_glue/glue_uskfifo.$(OBJEXT)
+	-rm -f src/benchmark/std_glue/glue_wf.$(OBJEXT)
 	-rm -f src/test/atomic_value128_unittest-atomic_value128_unittest.$(OBJEXT)
 	-rm -f src/test/atomic_value64_unittest-atomic_value64_unittest.$(OBJEXT)
 	-rm -f src/util/atomic_value128_unittest-malloc.$(OBJEXT)
@@ -539,6 +556,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_dq_1random.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_ms_queue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_uskfifo.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_wf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/atomic_value128_unittest-atomic_value128_unittest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/test/$(DEPDIR)/atomic_value64_unittest-atomic_value64_unittest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/atomic_value128_unittest-malloc.Po@am__quote@
