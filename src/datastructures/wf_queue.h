@@ -13,7 +13,7 @@
 #define SCAL_DATASTRUCTURES_WF_QUEUE_H_
 
 #include <assert.h>
-#include <stdint.h>  // UINT64_MAX
+#include <stdint.h> 
 
 #include "util/atomic_value.h"
 #include "util/malloc.h"
@@ -26,7 +26,7 @@ namespace wf_details {
 template<typename T>
 struct Node {
   // Marks a node as free for other threads.
-  static const uint64_t kTidNotSet = AtomicValue<uint64_t>::kValueMax;
+  static const uint64_t kTidNotSet = AtomicValue<uint64_t>::kValueMax-1;
 
   Node() {
     init((T)NULL, kTidNotSet);
@@ -43,7 +43,7 @@ struct Node {
   }
 
   T data;
-  AtomicValue<Node<T>*> next;
+  AtomicPointer<Node<T>*> next;
   uint64_t enq_tid;
   AtomicValue<uint64_t> deq_tid;
 };
@@ -103,7 +103,7 @@ class WaitfreeQueue {
   uint64_t num_threads_;
   volatile AtomicPointer<Node*> *head_;
   volatile AtomicPointer<Node*> *tail_;
-  volatile AtomicValue<OperationDescriptor*> **state_;
+  volatile AtomicPointer<OperationDescriptor*> **state_;
 };
 
 template<typename T>
@@ -193,13 +193,13 @@ void WaitfreeQueue<T>::help_enqueue(uint64_t thread_id, int64_t phase) {
   AtomicPointer<Node*> next;
   while (is_still_pending(thread_id, phase)) {
     tail_old = *tail_;
-    next = tail_old.weak_value()->next;
+    next = tail_old.value()->next;
     if (tail_old.raw() == tail_->raw()) {
-      if (next.weak_value() == NULL) {
+      if (next.value() == NULL) {
         if (is_still_pending(thread_id, phase)) {
           AtomicPointer<Node*> new_next(state_[thread_id]->value()->node,
-                                        next.weak_aba() + 1);
-          if (tail_old.weak_value()->next.cas(next, new_next)) {
+                                        next.aba() + 1);
+          if (tail_old.value()->next.cas(next, new_next)) {
             help_finish_enqueue();
             return;
           }
@@ -214,20 +214,20 @@ void WaitfreeQueue<T>::help_enqueue(uint64_t thread_id, int64_t phase) {
 template<typename T>
 void WaitfreeQueue<T>::help_finish_enqueue(void) {
   AtomicPointer<Node*> tail_old = *tail_;
-  AtomicPointer<Node*> next = tail_old.weak_value()->next;
-  if (next.weak_value() != NULL) {
-    uint64_t thread_id = next.weak_value()->enq_tid;
+  AtomicPointer<Node*> next = tail_old.value()->next;
+  if (next.value() != NULL) {
+    uint64_t thread_id = next.value()->enq_tid;
     AtomicPointer<OperationDescriptor*> cur_state = *state_[thread_id];
     if ((tail_old.raw() == tail_->raw())
-        && ((state_[thread_id]->value())->node == next.weak_value())) {
+        && ((state_[thread_id]->value())->node == next.value())) {
       OperationDescriptor *new_desc =
           scal::tlget<OperationDescriptor>(kPtrAlignment);
       new_desc->init(state_[thread_id]->value()->phase, false,
-                     OperationDescriptor::Type::kEnqueue, next.weak_value());
+                     OperationDescriptor::Type::kEnqueue, next.value());
       AtomicPointer<OperationDescriptor*> new_state(new_desc,
-                                                    cur_state.weak_aba() + 1);
+                                                    cur_state.aba() + 1);
       state_[thread_id]->cas(cur_state, new_state);
-      AtomicPointer<Node*> new_tail(next.weak_value(), tail_old.weak_aba() + 1);
+      AtomicPointer<Node*> new_tail(next.value(), tail_old.aba() + 1);
       tail_->cas(tail_old, new_tail);
     }
   }
@@ -248,7 +248,7 @@ bool WaitfreeQueue<T>::dequeue(T *item) {
   if (node == NULL) {
     return false;
   }
-  *item = node->next.weak_value()->data;
+  *item = node->next.value()->data;
   return true;
 }
 
@@ -260,12 +260,12 @@ void WaitfreeQueue<T>::help_dequeue(uint64_t thread_id, int64_t phase) {
   while (is_still_pending(thread_id, phase)) {
     head_old = *head_;
     tail_old = *tail_;
-    next = head_old.weak_value()->next;
+    next = head_old.value()->next;
     if (head_->raw() == head_old.raw()) {
-      if (head_old.weak_value() == tail_old.weak_value()) {
-        if (next.weak_value() == NULL) {  // Queue is empty.
+      if (head_old.value() == tail_old.value()) {
+        if (next.value() == NULL) {  // Queue is empty.
           AtomicPointer<OperationDescriptor*> cur_state = *state_[thread_id];
-          if (tail_old.weak_value() == tail_->weak_value()
+          if (tail_old.value() == tail_->value()
               && is_still_pending(thread_id, phase)) {
             OperationDescriptor *new_desc =
                 scal::tlget<OperationDescriptor>(kPtrAlignment);
@@ -273,8 +273,8 @@ void WaitfreeQueue<T>::help_dequeue(uint64_t thread_id, int64_t phase) {
                            false,
                            OperationDescriptor::Type::kDequeue,
                            NULL);
-            AtomicValue<OperationDescriptor*> new_state(new_desc,
-                cur_state.weak_aba() + 1);
+            AtomicPointer<OperationDescriptor*> new_state(new_desc,
+                                                        cur_state.aba() + 1);
             // If the next CAS fails, another thread changed the state, which
             // is also ok since the descriptor will not indicate pending in the
             // next try.
@@ -284,21 +284,21 @@ void WaitfreeQueue<T>::help_dequeue(uint64_t thread_id, int64_t phase) {
           help_finish_enqueue();
         }
       } else {  // Queue is not empty.
-        AtomicValue<OperationDescriptor*> cur_state = *state_[thread_id];
-        OperationDescriptor *cur_desc = cur_state.weak_value();
+        AtomicPointer<OperationDescriptor*> cur_state = *state_[thread_id];
+        OperationDescriptor *cur_desc = cur_state.value();
         Node *node = cur_desc->node;
         if (!is_still_pending(thread_id, phase)) {
           break;
         }
         if (head_->raw() == head_old.raw()
-            && node != head_old.weak_value()) {
+            && node != head_old.value()) {
           OperationDescriptor *new_desc =
               scal::tlget<OperationDescriptor>(kPtrAlignment);
           new_desc->init(state_[thread_id]->value()->phase, true,
                          OperationDescriptor::Type::kDequeue,
-                         head_old.weak_value());
+                         head_old.value());
           AtomicPointer<OperationDescriptor*> new_state(new_desc,
-              cur_state.weak_aba() + 1);
+              cur_state.aba() + 1);
           if (!state_[thread_id]->cas(cur_state, new_state)) {
             continue;
           }
@@ -306,7 +306,7 @@ void WaitfreeQueue<T>::help_dequeue(uint64_t thread_id, int64_t phase) {
         // We ignore ABA counter on this one.
         AtomicValue<uint64_t> old_deq_tid(Node::kTidNotSet, 0);
         AtomicValue<uint64_t> new_deq_tid(thread_id, 0);
-        head_old.weak_value()->deq_tid.cas(old_deq_tid, new_deq_tid);
+        head_old.value()->deq_tid.cas(old_deq_tid, new_deq_tid);
         help_finish_dequeue();
       }
     }
@@ -316,12 +316,12 @@ void WaitfreeQueue<T>::help_dequeue(uint64_t thread_id, int64_t phase) {
 template<typename T>
 void WaitfreeQueue<T>::help_finish_dequeue(void) {
   AtomicPointer<Node*> head_old = *head_;
-  AtomicPointer<Node*> next = head_old.weak_value()->next;
-  uint64_t thread_id = head_old.weak_value()->deq_tid.weak_value();
+  AtomicPointer<Node*> next = head_old.value()->next;
+  uint64_t thread_id = head_old.value()->deq_tid.value();
   if (thread_id != Node::kTidNotSet) {
     AtomicPointer<OperationDescriptor*> cur_state = *state_[thread_id];
     if (head_old.raw() == head_->raw()
-        && next.weak_value() != NULL) {
+        && next.value() != NULL) {
       OperationDescriptor *new_desc =
           scal::tlget<OperationDescriptor>(kPtrAlignment);
       new_desc->init(state_[thread_id]->value()->phase,
@@ -329,9 +329,9 @@ void WaitfreeQueue<T>::help_finish_dequeue(void) {
                      OperationDescriptor::Type::kDequeue,
                      state_[thread_id]->value()->node);
       AtomicPointer<OperationDescriptor*> new_state(new_desc,
-                                                    cur_state.weak_aba() + 1);
+                                                    cur_state.aba() + 1);
       state_[thread_id]->cas(cur_state, new_state);
-      AtomicPointer<Node*> head_new(next.weak_value(), head_old.weak_aba() + 1);
+      AtomicPointer<Node*> head_new(next.value(), head_old.aba() + 1);
       head_->cas(head_old, head_new);
     }
   }
