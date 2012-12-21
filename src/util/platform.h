@@ -5,6 +5,8 @@
 #ifndef SCAL_UTIL_PLATFORM_H_
 #define SCAL_UTIL_PLATFORM_H_
 
+#include <stdint.h>
+
 namespace scal {
 
 const uint64_t kPageSize = 4096;
