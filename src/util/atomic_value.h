@@ -8,7 +8,7 @@
 
 // If we don't have a config.h file, just use the 128bit CAS (default).
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "./config.h"
 #else
 #define USE_CAS128
 #endif  //  HAVE_CONFIG_H
