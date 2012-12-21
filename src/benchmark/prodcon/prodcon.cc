@@ -15,6 +15,7 @@
 #include "benchmark/common.h"
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "util/malloc.h"
+#include "util/operation_logger.h"
 #include "util/random.h"
 #include "util/sched.h"
 #include "util/threadlocals.h"
@@ -27,6 +28,7 @@ DEFINE_uint64(consumers, 1, "number of consumers");
 DEFINE_uint64(operations, 1000, "number of operations per producer");
 DEFINE_uint64(c, 5000, "computational workload");
 DEFINE_bool(print_summary, true, "print execution summary");
+DEFINE_bool(log_operations, false, "log invocation/response/linearization of all operations");
 
 using scal::Benchmark;
 
@@ -65,6 +67,11 @@ int main(int argc, const char **argv) {
   threadlocals_init();
   g_num_threads = FLAGS_producers + FLAGS_consumers;
 
+  if (FLAGS_log_operations) {
+    scal::StdOperationLogger::prepare(g_num_threads + 1,
+                                      FLAGS_operations +100000);
+  }
+
   void *ds = ds_new();
 
   ProdConBench *benchmark = new ProdConBench(
@@ -73,6 +80,10 @@ int main(int argc, const char **argv) {
       FLAGS_operations * (g_num_threads + 1),
       ds);
   benchmark->run();
+
+  if (FLAGS_log_operations) {
+    scal::StdOperationLogger::print_summary();
+  }
 
   if (FLAGS_print_summary) {
     uint64_t exec_time = benchmark->execution_time();
@@ -111,11 +122,13 @@ void ProdConBench::producer(void) {
   // support it.
   for (uint64_t i = 1; i <= FLAGS_operations; i++) {
     item = thread_id * FLAGS_operations + i;
+    scal::StdOperationLogger::get().invoke(1);
     if (!ds_put(ds, item)) {
       // We should always be able to insert an item.
       fprintf(stderr, "%s: error: put operation failed.\n", __func__);
       abort();
     }
+    scal::StdOperationLogger::get().response(true, item);
     calculate_pi(FLAGS_c);
   }
 }
@@ -133,9 +146,10 @@ void ProdConBench::consumer(void) {
   uint64_t j = 0;
   uint64_t ret;
   bool ok;
-  uint64_t empty_cnt = 0;
   while (j < operations) {
+    scal::StdOperationLogger::get().invoke(0);
     ok = ds_get(ds, &ret);
+    scal::StdOperationLogger::get().response(ok, ret);
     calculate_pi(FLAGS_c);
     if (!ok) {
       continue;
