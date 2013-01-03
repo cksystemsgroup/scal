@@ -17,6 +17,7 @@
 
 #include "util/atomic_value.h"
 #include "util/malloc.h"
+#include "util/operation_logger.h"
 #include "util/platform.h"
 #include "util/threadlocals.h"
 
@@ -101,6 +102,7 @@ bool MSQueue<T>::enqueue(T item) {
       if (next.value() == NULL) {
         AtomicPointer<Node*> new_next(node, next.aba() + 1);
         if (tail_old.value()->next.cas(next, new_next)) {
+          scal::StdOperationLogger::get().linearization();
           break;
         }
       } else {
@@ -126,6 +128,7 @@ bool MSQueue<T>::dequeue(T *item) {
     if (head_->raw() == head_old.raw()) {
       if (head_old.value() == tail_old.value()) {
         if (next.value() == NULL) {
+          scal::StdOperationLogger::get().linearization();
           return false;
         }
         AtomicPointer<Node*> tail_new(next.value(), tail_old.aba() + 1);
@@ -134,6 +137,7 @@ bool MSQueue<T>::dequeue(T *item) {
         *item = next.value()->value;
         AtomicPointer<Node*> head_new(next.value(), head_old.aba() + 1);
         if (head_->cas(head_old, head_new)) {
+          scal::StdOperationLogger::get().linearization();
           break;
         }
       }
@@ -154,6 +158,7 @@ bool MSQueue<T>::dequeue_return_tail(T *item, AtomicRaw *tail_raw) {
     if (head_->raw() == head_old.raw()) {
       if (head_old.value() == tail_old.value()) {
         if (next.value() == NULL) {
+          scal::StdOperationLogger::get().linearization();
           *tail_raw = tail_old.raw();
           return false;
         }
@@ -163,6 +168,7 @@ bool MSQueue<T>::dequeue_return_tail(T *item, AtomicRaw *tail_raw) {
         *item = next.value()->value;
         AtomicPointer<Node*> head_new(next.value(), head_old.aba() + 1);
         if (head_->cas(head_old, head_new)) {
+          scal::StdOperationLogger::get().linearization();
           *tail_raw = tail_old.raw();
           break;
         }
@@ -181,6 +187,7 @@ bool MSQueue<T>::try_enqueue(
       Node *node = node_new(item);
       AtomicPointer<Node*> new_next(node, next.aba() + 1);
       if (tail_old.value()->next.cas(next, new_next)) {
+        scal::StdOperationLogger::get().linearization();
         AtomicPointer<Node*> tail_new(node, tail_old.aba() + 1);
         tail_->cas(tail_old, tail_new);
         return true;
@@ -201,6 +208,7 @@ uint8_t MSQueue<T>::try_dequeue(
   if (head_->raw() == head_old.raw()) {
     if (head_old.value() == tail_old.value()) {
       if (next.value() == NULL) {
+        scal::StdOperationLogger::get().linearization();
         *tail_raw = tail_old.aba();
         return 1;  // empty
       }
@@ -211,12 +219,14 @@ uint8_t MSQueue<T>::try_dequeue(
       *item = next.value()->value;
       AtomicPointer<Node*> head_new(next.value(), head_old.aba() + 1);
       if (head_->cas(head_old, head_new)) {
+        scal::StdOperationLogger::get().linearization();
         *tail_raw = tail_old.aba();
         return 0;  // ok
       }
       *tail_raw = tail_old.aba();
     }
   }
+  scal::StdOperationLogger::get().linearization();
   return 2;  // failed
 }
 
