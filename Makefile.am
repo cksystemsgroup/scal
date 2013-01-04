@@ -42,6 +42,11 @@ prodcon_fc_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_fc_queue.cc
 
+bin_PROGRAMS += prodcon-lb
+prodcon_lb_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_lb_queue.cc
+
 bin_PROGRAMS += prodcon-ms
 prodcon_ms_SOURCES = \
         $(PRODCON_BASE_OBJS) \
