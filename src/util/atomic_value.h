@@ -14,23 +14,14 @@
 #endif  //  HAVE_CONFIG_H
 
 #ifdef USE_CAS128
-
 #include "util/atomic_value128.h"
-template<typename T>
-using AtomicPointer = AtomicValue128<T>;
-template<typename T>
-
-using AtomicValue = AtomicValue128<T>;
-
-#else  // no USE_CAS128
-
+template<typename T> using AtomicPointer = AtomicValue128<T>;
+template<typename T> using AtomicValue = AtomicValue128<T>;
+#else
 #include "util/atomic_value64_offset.h"
 #include "util/atomic_value64_no_offset.h"
-template<typename T>
-using AtomicPointer = AtomicValue64Offset<T>;
-template<typename T>
-using AtomicValue = AtomicValue64NoOffset<T>;
-
+template<typename T> using AtomicPointer = AtomicValue64Offset<T>;
+template<typename T> using AtomicValue = AtomicValue64NoOffset<T>;
 #endif  // USE_CAS128
 
 #endif  // SCAL_UTIL_ATOMIC_VALUE_H_
