@@ -59,7 +59,7 @@ bool SingleList<T>::enqueue(T item) {
 template<typename T>
 bool SingleList<T>::dequeue(T *item) {
   if (head_ == tail_) {
-    *item = NULL;
+    *item = (T)NULL;
     return false;
   } else {
     *item = head_->next->value;
