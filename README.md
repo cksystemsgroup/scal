@@ -1,9 +1,9 @@
 Scal
 ====
 
-The Scal framework provides implementantions and benchmarks for concurrent
+The Scal framework provides implementations and benchmarks for concurrent
 objects.  The benchmarks show the trade-off between concurrent data structure
-semantics and scalablity.
+semantics and scalability.
 
 Homepage: http://scal.cs.uni-salzburg.at
 
@@ -29,7 +29,7 @@ See `./configure --help` for optional features, for instance compiling with
 debugging symbols.
 
 The format for the resulting binaries is `<benchmark>-<datastructure>`. Each
-binary supports the `--help` paramter to show a list of supported configuration
+binary supports the `--help` parameter to show a list of supported configuration
 flags.
 
 Examples
@@ -37,7 +37,7 @@ Examples
 
 ### Producer/consumer
 
-The most common paramters are:
+The most common parameter are:
 * consumers: Number of consuming threads
 * producers: Number of producing threads
 * c: The computational workload to do between two data structure operations
@@ -56,7 +56,7 @@ And for Distributed Queue with a 1-random balancer:
     ./prodcon-dq-1random -producers=15 -consumers=15 -operations=100000 -c=250
 
 
-Try `./prodcon-<data_structure> --help` to see the full list of available paramters.
+Try `./prodcon-<data_structure> --help` to see the full list of available parameters.
 
 License
 -------
