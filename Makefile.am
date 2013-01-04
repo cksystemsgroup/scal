@@ -21,46 +21,6 @@ LDADD = -lm @GFLAGS_LIBS@ -lrt @TCMALLOC_LIBS@
 GTEST_DIR = external/googletest
 
 #
-# Mandelbrot calculation benchmark
-#
-
-#MANDEL_BASE_OBJS = \
-#        src/benchmark/common.cc \
-#        src/benchmark/mandelbrot/mandel.cc \
-#        src/benchmark/mandelbrot/bitmap.c \
-#        src/util/histogram.cc \
-#        src/util/malloc.cc \
-#        src/util/operation_logger.cc \
-#        src/util/profiler.cc \
-#        src/util/random.cc \
-#        src/util/threadlocals.cc 
-#
-#bin_PROGRAMS += mandel-bskfifo
-#mandel_bskfifo_SOURCES = \
-#        $(MANDEL_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_bskfifo.cc
-#
-#bin_PROGRAMS += mandel-ms
-#mandel_ms_SOURCES = \
-#        $(MANDEL_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_ms_queue.cc
-#
-#bin_PROGRAMS += mandel-scal1random
-#mandel_scal1random_SOURCES = \
-#        $(MANDEL_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_scal_1random.cc
-#
-#bin_PROGRAMS += mandel-scalpartrr
-#mandel_scalpartrr_SOURCES = \
-#        $(MANDEL_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_scal_partrr.cc
-#
-#bin_PROGRAMS += mandel-uskfifo
-#mandel_uskfifo_SOURCES = \
-#        $(MANDEL_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_uskfifo.cc
-
-#
 # Producer/Consumer benchmark
 #
 
@@ -76,6 +36,11 @@ bin_PROGRAMS += prodcon-bskfifo
 prodcon_bskfifo_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_bskfifo.cc
+
+bin_PROGRAMS += prodcon-fc
+prodcon_fc_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_fc_queue.cc
 
 bin_PROGRAMS += prodcon-ms
 prodcon_ms_SOURCES = \
@@ -101,47 +66,6 @@ bin_PROGRAMS += prodcon-wf
 prodcon_wf_SOURCES = \
 	$(PRODCON_BASE_OBJS) \
 	src/benchmark/std_glue/glue_wf.cc
-
-#
-# Sequential alternating benchmark
-#
-
-#SEQALT_BASE_OBJS = \
-#        src/benchmark/common.cc \
-#        src/benchmark/seqalt/seqalt-old.cc \
-#        src/util/histogram.cc \
-#        src/util/history.cc \
-#        src/util/malloc.cc \
-#        src/util/operation_logger.cc \
-#        src/util/profiler.cc \
-#        src/util/random.cc \
-#        src/util/threadlocals.cc \
-#        src/util/workloads.cc 
-#
-#bin_PROGRAMS += seqalt-bskfifo
-#seqalt_bskfifo_SOURCES = \
-#        $(SEQALT_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_bskfifo.cc
-#
-#bin_PROGRAMS += seqalt-ms
-#seqalt_ms_SOURCES = \
-#        $(SEQALT_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_ms_queue.cc
-#
-#bin_PROGRAMS += seqalt-scal1random
-#seqalt_scal1random_SOURCES = \
-#        $(SEQALT_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_scal_1random.cc
-#
-#bin_PROGRAMS += seqalt-scalpartrr
-#seqalt_scalpartrr_SOURCES = \
-#        $(SEQALT_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_scal_partrr.cc
-#
-#bin_PROGRAMS += seqalt-uskfifo
-#seqalt_uskfifo_SOURCES = \
-#        $(SEQALT_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_uskfifo.cc
 
 #
 # Tests -- currenctly only the atomic containers
