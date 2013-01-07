@@ -57,10 +57,10 @@ prodcon_dq_1random_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_dq_1random.cc
 
-#bin_PROGRAMS += prodcon-scalpartrr
-#prodcon_scalpartrr_SOURCES = \
-#        $(PRODCON_BASE_OBJS) \
-#        src/benchmark/std_glue/glue_scal_partrr.cc
+bin_PROGRAMS += prodcon-dq-partrr
+prodcon_dq_partrr_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_partrr.cc
 
 bin_PROGRAMS += prodcon-uskfifo
 prodcon_uskfifo_SOURCES = \
