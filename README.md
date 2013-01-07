@@ -32,6 +32,11 @@ The format for the resulting binaries is `<benchmark>-<datastructure>`. Each
 binary supports the `--help` parameter to show a list of supported configuration
 flags.
 
+The Scal framework should work on any recent x86 platform. However, various
+tests can be performed after building the framework.
+
+    make check
+
 Examples
 --------
 
