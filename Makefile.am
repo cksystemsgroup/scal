@@ -72,6 +72,11 @@ prodcon_wf_ppopp11_SOURCES = \
 	$(PRODCON_BASE_OBJS) \
 	src/benchmark/std_glue/glue_wf_ppopp11.cc
 
+bin_PROGRAMS += prodcon-wf-ppopp12
+prodcon_wf_ppopp12_SOURCES = \
+	$(PRODCON_BASE_OBJS) \
+	src/benchmark/std_glue/glue_wf_ppopp12.cc
+
 #
 # Tests -- currenctly only the atomic containers
 #
