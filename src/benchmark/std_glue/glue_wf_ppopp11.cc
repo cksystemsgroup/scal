@@ -5,7 +5,7 @@
 #include <gflags/gflags.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
-#include "datastructures/wf_queue.h"
+#include "datastructures/wf_queue_ppopp11.h"
 
 void* ds_new(void) {
   // Main thread may also need the queue.

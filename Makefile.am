@@ -67,10 +67,10 @@ prodcon_uskfifo_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_uskfifo.cc
 
-bin_PROGRAMS += prodcon-wf
-prodcon_wf_SOURCES = \
+bin_PROGRAMS += prodcon-wf-ppopp11
+prodcon_wf_ppopp11_SOURCES = \
 	$(PRODCON_BASE_OBJS) \
-	src/benchmark/std_glue/glue_wf.cc
+	src/benchmark/std_glue/glue_wf_ppopp11.cc
 
 #
 # Tests -- currenctly only the atomic containers
