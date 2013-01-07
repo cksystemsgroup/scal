@@ -9,8 +9,8 @@
 // practice of parallel programming, PPoPP ’11, pages 223–234, New York, NY,
 // USA, 2011. ACM.
 
-#ifndef SCAL_DATASTRUCTURES_WF_QUEUE_H_
-#define SCAL_DATASTRUCTURES_WF_QUEUE_H_
+#ifndef SCAL_DATASTRUCTURES_WF_QUEUE_PPOPP11_H_
+#define SCAL_DATASTRUCTURES_WF_QUEUE_PPOPP11_H_
 
 #include <assert.h>
 #include <stdint.h> 
@@ -337,4 +337,4 @@ void WaitfreeQueue<T>::help_finish_dequeue(void) {
   }
 }
 
-#endif  // SCAL_DATASTRUCTURES_WF_QUEUE_H_
+#endif  // SCAL_DATASTRUCTURES_WF_QUEUE_PPOPP11_H_
