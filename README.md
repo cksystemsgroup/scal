@@ -45,8 +45,10 @@ Examples
 The most common parameter are:
 * consumers: Number of consuming threads
 * producers: Number of producing threads
-* c: The computational workload to do between two data structure operations
-* operations: The number of put/enqueue operations the should be performed by a producer
+* c: The computational workload (iterative pi calculation) between two data
+  structure operations
+* operations: The number of put/enqueue operations the should be performed by a
+  producer
 
 The following runs the Michael-Scott queue in a producer/consumer benchmark:
 
