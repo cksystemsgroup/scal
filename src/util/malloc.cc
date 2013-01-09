@@ -126,6 +126,12 @@ void* malloc_aligned(size_t size, size_t alignment) {
   return mem;
 }
 
+void* calloc_aligned(size_t num, size_t size, size_t alignment) {
+  void *mem = malloc_aligned(num * size, alignment);
+  memset(object, 0, align_size(num * size, alignment));
+  return mem;
+}
+
 void tlalloc_init(uint64_t num_tlabs, bool touch_pages) {
   if (FLAGS_disable_tl_allocator) {
     return;

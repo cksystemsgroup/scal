@@ -23,6 +23,7 @@ uint64_t human_size_to_pages(const char *hsize, size_t len);
 
 // convenience methods
 void* malloc_aligned(size_t size, size_t alignment);
+void* calloc_aligned(size_t num, size_t size, size_t alignment);
 
 inline void posix_memalign_err(int err, const char *caller) {
   if (err == EINVAL) {
