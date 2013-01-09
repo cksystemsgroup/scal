@@ -8,14 +8,13 @@
 #ifndef SCAL_UTIL_MALLOC_H_
 #define SCAL_UTIL_MALLOC_H_
 
-#include <assert.h>
 #include <errno.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <new>
+#include <new>  // placement new()
 
 namespace scal {
 

@@ -131,7 +131,7 @@ void* malloc_aligned(size_t size, size_t alignment) {
 
 void* calloc_aligned(size_t num, size_t size, size_t alignment) {
   void *mem = malloc_aligned(num * size, alignment);
-  memset(object, 0, align_size(num * size, alignment));
+  memset(mem, 0, align_size(num * size, alignment));
   return mem;
 }
 
