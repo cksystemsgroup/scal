@@ -5,8 +5,8 @@
 #ifndef SCAL_BENCHMARK_COMMON_H_
 #define SCAL_BENCHMARK_COMMON_H_
 
-#include <inttypes.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 

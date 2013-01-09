@@ -5,8 +5,8 @@
 #define __STDC_FORMAT_MACROS 1  // we want PRIu64 and friends
 
 #include <gflags/gflags.h>
-#include <inttypes.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +28,8 @@ DEFINE_uint64(consumers, 1, "number of consumers");
 DEFINE_uint64(operations, 1000, "number of operations per producer");
 DEFINE_uint64(c, 5000, "computational workload");
 DEFINE_bool(print_summary, true, "print execution summary");
-DEFINE_bool(log_operations, false, "log invocation/response/linearization of all operations");
+DEFINE_bool(log_operations, false, "log invocation/response/linearization "
+                                   "of all operations");
 
 using scal::Benchmark;
 

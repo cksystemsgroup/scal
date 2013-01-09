@@ -5,7 +5,7 @@
 #ifndef SCAL_BENCHMARK_STD_PIPE_API_H_
 #define SCAL_BENCHMARK_STD_PIPE_API_H_
 
-#include <inttypes.h>
+#include <stdint.h>
 
 extern uint64_t g_num_threads;
 

@@ -6,11 +6,11 @@
 
 #include <errno.h>
 #include <gflags/gflags.h>
-#include <inttypes.h>
 #include <malloc.h>
 #include <math.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 

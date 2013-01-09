@@ -4,7 +4,7 @@
 
 #include "util/workloads.h"
 
-#include <inttypes.h>
+#include <stdint.h>
 
 // iteratively compute pi
 // the greater n, the better the approximation

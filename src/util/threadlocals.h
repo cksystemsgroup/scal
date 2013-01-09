@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_THREADLOCALS_H_
 #define SCAL_UTIL_THREADLOCALS_H_
 
-#include <inttypes.h>
+#include <stdint.h>
 
 struct threadlocals_t {
   uint64_t thread_id;

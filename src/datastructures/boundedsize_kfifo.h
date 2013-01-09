@@ -11,7 +11,7 @@
 #ifndef SCAL_DATASTRUCTURES_BOUNDEDSIZE_KFIFO_H_
 #define SCAL_DATASTRUCTURES_BOUNDEDSIZE_KFIFO_H_
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -246,7 +246,8 @@ bool BoundedSizeKFifo<T>::enqueue(T item) {
         }
       } else {
         if (queue_full(head_old.value(), tail_old.value())) {
-          if (segment_not_empty(head_old.value()) && head_old.value() == head_->value()) {
+          if (segment_not_empty(head_old.value()) &&
+              head_old.value() == head_->value()) {
             return false;
           }
           advance_head(head_old);

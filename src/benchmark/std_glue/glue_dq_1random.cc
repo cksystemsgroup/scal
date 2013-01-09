@@ -5,7 +5,7 @@
 #define __STDC_FORMAT_MACROS 1  // we want PRIu64 and friends
 
 #include <gflags/gflags.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
@@ -13,7 +13,8 @@
 #include "datastructures/distributed_queue.h"
 
 DEFINE_uint64(p, 80, "number of partial queues");
-DEFINE_bool(hw_random, false, "use hardware random generator instead of pseudo");
+DEFINE_bool(hw_random, false, "use hardware random generator instead "
+                              "of pseudo");
 
 void* ds_new(void) {
   Balancer1Random *balancer = new Balancer1Random(FLAGS_hw_random);
@@ -43,6 +44,7 @@ char* ds_get_stats(void) {
     fprintf(stderr, "%s: error creating stats string\n", __func__);
     abort();
   }
-  char *newbuf = static_cast<char*>(calloc(strlen(buffer) + 1, sizeof(char)));
+  char *newbuf = static_cast<char*>(calloc(
+      strlen(buffer) + 1, sizeof(*newbuf)));
   return strncpy(newbuf, buffer, strlen(buffer));
 }

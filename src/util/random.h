@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_RANDOM_H_
 #define SCAL_UTIL_RANDOM_H_
 
-#include <inttypes.h>
+#include <stdint.h>
 
 uint64_t pseudorand(void);
 uint64_t hwrand(void);
