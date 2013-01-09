@@ -15,7 +15,8 @@
 #include <string.h>
 
 DEFINE_bool(reuse_memory, true, "reuse memory, no matter what");
-DEFINE_bool(disable_tl_allocator, false, "all thread local calls are somehow mapped to malloc");
+DEFINE_bool(disable_tl_allocator, false, "all thread local calls are mapped"
+                                         " to malloc");
 
 namespace {
 
@@ -80,7 +81,7 @@ uint64_t human_size_to_pages(const char *hsize, size_t len) {
     abort();
   } 
   uint64_t multiplier;
-  switch(hsize[len-1]) {
+  switch (hsize[len-1]) {
   case 'k':
   case 'K':
     multiplier = 1024;
@@ -96,11 +97,12 @@ uint64_t human_size_to_pages(const char *hsize, size_t len) {
   default:
     multiplier = 1;
   }
-  char *newstr = static_cast<char*>(calloc(len, sizeof(char)));
+  char *newstr = static_cast<char*>(calloc(len, sizeof(*newstr)));
   strncpy(newstr, hsize, len - 1);
-  unsigned long val = strtol(newstr, NULL, 10);
+  uint64_t val = strtol(newstr, NULL, 10);
   if (val == 0) {
-    fprintf(stderr, "%s: strtol() returned 0; do not try to set the prealloc_size to 0\n", __func__);
+    fprintf(stderr, "%s: strtol() returned 0; do not try to set the "
+                    "prealloc_size to 0\n", __func__);
     abort();
   }
   uint64_t bytes = (uint64_t)val * multiplier;
@@ -120,7 +122,8 @@ void* malloc_aligned(size_t size, size_t alignment) {
         "sizeof(void *).\n", __func__);
     abort();
   } else if (err == ENOMEM) {
-    fprintf(stderr, "%s: posix_memalign failed: Insufficient memory.\n", __func__);
+    fprintf(stderr, "%s: posix_memalign failed: Insufficient memory.\n",
+        __func__);
     abort();
   }
   return mem;
