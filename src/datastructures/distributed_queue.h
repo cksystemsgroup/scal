@@ -39,7 +39,7 @@ DistributedQueue<T>::DistributedQueue(
   for (uint64_t i = 0; i < num_queues_; i++) {
     queues_[i] = scal::get<MSQueue<T>>(kPtrAlignment);
   }
-  tails_ = static_cast<AtomicRaw**>(calloc(num_threads, sizeof(AtomicRaw*)));
+  tails_ = static_cast<AtomicRaw**>(calloc(num_threads, sizeof(*tails_)));
   for (uint64_t i = 0; i < num_threads; i++) {
     tails_[i] = static_cast<AtomicRaw*>(scal::tlcalloc_aligned(
         num_queues_, sizeof(AtomicRaw), kPtrAlignment));
@@ -55,7 +55,6 @@ bool DistributedQueue<T>::put(T item) {
 
 template<typename T>
 bool DistributedQueue<T>::get(T *item) {
-  using scal::tlcalloc_aligned;
   size_t i;
   uint64_t thread_id = threadlocals_get()->thread_id;
   uint64_t start = balancer_->get(num_queues_, queues_, false);
