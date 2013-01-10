@@ -78,7 +78,10 @@ AC_SUBST([GFLAGS_CFLAGS])
 AC_SUBST([GFLAGS_LIBS])
 
 dnl tcmalloc_minimal in google-perftools
-PKG_CHECK_MODULES([TCMALLOC], [libtcmalloc_minimal])
+dnl fix this check
+#PKG_CHECK_MODULES([TCMALLOC], [libtcmalloc_minimal])
+TCMALLOC_CFLAGS=
+TCMALLOC_LIBS=-ltcmalloc_minimal
 AC_SUBST([TCMALLOC_CFLAGS])
 AC_SUBST([TCMALLOC_LIBS])
 
