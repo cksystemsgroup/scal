@@ -77,13 +77,11 @@ PKG_CHECK_MODULES([GFLAGS], [libgflags])
 AC_SUBST([GFLAGS_CFLAGS])
 AC_SUBST([GFLAGS_LIBS])
 
-dnl tcmalloc_minimal in google-perftools
-dnl fix this check
-#PKG_CHECK_MODULES([TCMALLOC], [libtcmalloc_minimal])
-TCMALLOC_CFLAGS=
-TCMALLOC_LIBS=-ltcmalloc_minimal
-AC_SUBST([TCMALLOC_CFLAGS])
-AC_SUBST([TCMALLOC_LIBS])
+dnl tcmalloc in google-perftools
+tclibs="tcmalloc_minimal tcmalloc"
+AC_SEARCH_LIBS([tc_cfree], [$tclibs], [], [
+  AC_MSG_ERROR([unable to find tc_cfree() function of tcmalloc])
+])
 
 AC_CONFIG_FILES(Makefile)
 

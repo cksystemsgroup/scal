@@ -12,11 +12,10 @@ AM_CPPFLAGS = -Wall -mcx16 -m64  -std=c++0x \
         -fno-builtin-realloc \
         -fno-builtin-free \
         -fno-omit-frame-pointer \
-	@GFLAGS_CFLAGS@ \
-	@TCMALLOC_CFLAGS@
+	@GFLAGS_CFLAGS@
 
 AM_LDFLAGS = -Wl,--as-needed 
-LDADD = -lm @GFLAGS_LIBS@ -lrt @TCMALLOC_LIBS@
+LDADD = -lm @GFLAGS_LIBS@ -lrt
 
 GTEST_DIR = external/googletest
 
