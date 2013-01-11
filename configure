@@ -4598,7 +4598,6 @@ fi
 
 
 
-
 if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
 	if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
@@ -4804,6 +4803,130 @@ $as_echo "yes" >&6; }
 
 fi
 
+
+
+rtlibs="rt posix4"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing sched_setscheduler" >&5
+$as_echo_n "checking for library containing sched_setscheduler... " >&6; }
+if ${ac_cv_search_sched_setscheduler+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sched_setscheduler ();
+int
+main ()
+{
+return sched_setscheduler ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' $rtlibs; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_search_sched_setscheduler=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_sched_setscheduler+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_sched_setscheduler+:} false; then :
+
+else
+  ac_cv_search_sched_setscheduler=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_sched_setscheduler" >&5
+$as_echo "$ac_cv_search_sched_setscheduler" >&6; }
+ac_res=$ac_cv_search_sched_setscheduler
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+
+  as_fn_error $? "unable to find sched_setscheduler() function of realtime
+                extensions" "$LINENO" 5
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fabs" >&5
+$as_echo_n "checking for library containing fabs... " >&6; }
+if ${ac_cv_search_fabs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fabs ();
+int
+main ()
+{
+return fabs ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' m; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_search_fabs=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fabs+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fabs+:} false; then :
+
+else
+  ac_cv_search_fabs=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fabs" >&5
+$as_echo "$ac_cv_search_fabs" >&6; }
+ac_res=$ac_cv_search_fabs
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+
+  as_fn_error $? "unable to find fabs() function of the math library" "$LINENO" 5
+
+fi
 
 
 tclibs="tcmalloc_minimal tcmalloc"

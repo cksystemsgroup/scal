@@ -71,11 +71,22 @@ CXXFLAGS="$OLD_CXXFLAGS"
 AS_IF([test "x$compiler_supports_template_alias" != "xyes"], 
   [AC_MSG_ERROR([need compiler support for template aliasing])])
 
-    
 dnl gflags
 PKG_CHECK_MODULES([GFLAGS], [libgflags])
 AC_SUBST([GFLAGS_CFLAGS])
 AC_SUBST([GFLAGS_LIBS])
+
+dnl sched_setscheduler
+rtlibs="rt posix4"
+AC_SEARCH_LIBS([sched_setscheduler], [$rtlibs], [], [
+  AC_MSG_ERROR([unable to find sched_setscheduler() function of realtime
+                extensions])
+])
+
+dnl math stuff
+AC_SEARCH_LIBS([fabs], [m], [], [
+  AC_MSG_ERROR([unable to find fabs() function of the math library])
+])
 
 dnl tcmalloc in google-perftools
 tclibs="tcmalloc_minimal tcmalloc"

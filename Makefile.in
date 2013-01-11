@@ -274,7 +274,7 @@ AM_CPPFLAGS = -Wall -mcx16 -m64  -std=c++0x \
 	@GFLAGS_CFLAGS@
 
 AM_LDFLAGS = -Wl,--as-needed 
-LDADD = -lm @GFLAGS_LIBS@ -lrt
+LDADD = @GFLAGS_LIBS@
 GTEST_DIR = external/googletest
 
 #
