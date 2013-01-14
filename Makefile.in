@@ -33,10 +33,11 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 bin_PROGRAMS = prodcon-bskfifo$(EXEEXT) prodcon-fc$(EXEEXT) \
-	prodcon-lb$(EXEEXT) prodcon-ms$(EXEEXT) \
-	prodcon-dq-1random$(EXEEXT) prodcon-dq-partrr$(EXEEXT) \
-	prodcon-rd$(EXEEXT) prodcon-uskfifo$(EXEEXT) \
-	prodcon-wf-ppopp11$(EXEEXT) prodcon-wf-ppopp12$(EXEEXT)
+	prodcon-lb$(EXEEXT) prodcon-kstack$(EXEEXT) \
+	prodcon-ms$(EXEEXT) prodcon-dq-1random$(EXEEXT) \
+	prodcon-dq-partrr$(EXEEXT) prodcon-rd$(EXEEXT) \
+	prodcon-uskfifo$(EXEEXT) prodcon-wf-ppopp11$(EXEEXT) \
+	prodcon-wf-ppopp12$(EXEEXT)
 noinst_PROGRAMS = $(am__EXEEXT_1)
 TESTS = atomic_value128_unittest$(EXEEXT) \
 	atomic_value64_unittest$(EXEEXT)
@@ -93,6 +94,11 @@ am_prodcon_fc_OBJECTS = $(am__objects_1) \
 prodcon_fc_OBJECTS = $(am_prodcon_fc_OBJECTS)
 prodcon_fc_LDADD = $(LDADD)
 prodcon_fc_DEPENDENCIES =
+am_prodcon_kstack_OBJECTS = $(am__objects_1) \
+	src/benchmark/std_glue/glue_kstack.$(OBJEXT)
+prodcon_kstack_OBJECTS = $(am_prodcon_kstack_OBJECTS)
+prodcon_kstack_LDADD = $(LDADD)
+prodcon_kstack_DEPENDENCIES =
 am_prodcon_lb_OBJECTS = $(am__objects_1) \
 	src/benchmark/std_glue/glue_lb_queue.$(OBJEXT)
 prodcon_lb_OBJECTS = $(am_prodcon_lb_OBJECTS)
@@ -135,17 +141,17 @@ CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 SOURCES = $(atomic_value128_unittest_SOURCES) \
 	$(atomic_value64_unittest_SOURCES) $(prodcon_bskfifo_SOURCES) \
 	$(prodcon_dq_1random_SOURCES) $(prodcon_dq_partrr_SOURCES) \
-	$(prodcon_fc_SOURCES) $(prodcon_lb_SOURCES) \
-	$(prodcon_ms_SOURCES) $(prodcon_rd_SOURCES) \
-	$(prodcon_uskfifo_SOURCES) $(prodcon_wf_ppopp11_SOURCES) \
-	$(prodcon_wf_ppopp12_SOURCES)
+	$(prodcon_fc_SOURCES) $(prodcon_kstack_SOURCES) \
+	$(prodcon_lb_SOURCES) $(prodcon_ms_SOURCES) \
+	$(prodcon_rd_SOURCES) $(prodcon_uskfifo_SOURCES) \
+	$(prodcon_wf_ppopp11_SOURCES) $(prodcon_wf_ppopp12_SOURCES)
 DIST_SOURCES = $(atomic_value128_unittest_SOURCES) \
 	$(atomic_value64_unittest_SOURCES) $(prodcon_bskfifo_SOURCES) \
 	$(prodcon_dq_1random_SOURCES) $(prodcon_dq_partrr_SOURCES) \
-	$(prodcon_fc_SOURCES) $(prodcon_lb_SOURCES) \
-	$(prodcon_ms_SOURCES) $(prodcon_rd_SOURCES) \
-	$(prodcon_uskfifo_SOURCES) $(prodcon_wf_ppopp11_SOURCES) \
-	$(prodcon_wf_ppopp12_SOURCES)
+	$(prodcon_fc_SOURCES) $(prodcon_kstack_SOURCES) \
+	$(prodcon_lb_SOURCES) $(prodcon_ms_SOURCES) \
+	$(prodcon_rd_SOURCES) $(prodcon_uskfifo_SOURCES) \
+	$(prodcon_wf_ppopp11_SOURCES) $(prodcon_wf_ppopp12_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -299,6 +305,10 @@ prodcon_fc_SOURCES = \
 prodcon_lb_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_lb_queue.cc
+
+prodcon_kstack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_kstack.cc
 
 prodcon_ms_SOURCES = \
         $(PRODCON_BASE_OBJS) \
@@ -531,6 +541,12 @@ src/benchmark/std_glue/glue_fc_queue.$(OBJEXT):  \
 prodcon-fc$(EXEEXT): $(prodcon_fc_OBJECTS) $(prodcon_fc_DEPENDENCIES) $(EXTRA_prodcon_fc_DEPENDENCIES) 
 	@rm -f prodcon-fc$(EXEEXT)
 	$(CXXLINK) $(prodcon_fc_OBJECTS) $(prodcon_fc_LDADD) $(LIBS)
+src/benchmark/std_glue/glue_kstack.$(OBJEXT):  \
+	src/benchmark/std_glue/$(am__dirstamp) \
+	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
+prodcon-kstack$(EXEEXT): $(prodcon_kstack_OBJECTS) $(prodcon_kstack_DEPENDENCIES) $(EXTRA_prodcon_kstack_DEPENDENCIES) 
+	@rm -f prodcon-kstack$(EXEEXT)
+	$(CXXLINK) $(prodcon_kstack_OBJECTS) $(prodcon_kstack_LDADD) $(LIBS)
 src/benchmark/std_glue/glue_lb_queue.$(OBJEXT):  \
 	src/benchmark/std_glue/$(am__dirstamp) \
 	src/benchmark/std_glue/$(DEPDIR)/$(am__dirstamp)
@@ -576,6 +592,7 @@ mostlyclean-compile:
 	-rm -f src/benchmark/std_glue/glue_dq_1random.$(OBJEXT)
 	-rm -f src/benchmark/std_glue/glue_dq_partrr.$(OBJEXT)
 	-rm -f src/benchmark/std_glue/glue_fc_queue.$(OBJEXT)
+	-rm -f src/benchmark/std_glue/glue_kstack.$(OBJEXT)
 	-rm -f src/benchmark/std_glue/glue_lb_queue.$(OBJEXT)
 	-rm -f src/benchmark/std_glue/glue_ms_queue.$(OBJEXT)
 	-rm -f src/benchmark/std_glue/glue_rd_queue.$(OBJEXT)
@@ -600,6 +617,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_dq_1random.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_dq_partrr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_fc_queue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_kstack.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_lb_queue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_ms_queue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/benchmark/std_glue/$(DEPDIR)/glue_rd_queue.Po@am__quote@
