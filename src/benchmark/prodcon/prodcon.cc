@@ -17,7 +17,6 @@
 #include "util/malloc.h"
 #include "util/operation_logger.h"
 #include "util/random.h"
-#include "util/sched.h"
 #include "util/threadlocals.h"
 #include "util/time.h"
 #include "util/workloads.h"
@@ -58,7 +57,6 @@ int main(int argc, const char **argv) {
   google::SetUsageMessage(usage);
   google::ParseCommandLineFlags(&argc, const_cast<char***>(&argv), true);
 
-  try_set_program_prio(40);
   uint64_t tlsize = scal::human_size_to_pages(FLAGS_prealloc_size.c_str(),
                                               FLAGS_prealloc_size.size());
 
