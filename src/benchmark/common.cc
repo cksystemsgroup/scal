@@ -12,9 +12,8 @@
 #include "util/time.h"
 #include "util/threadlocals.h"
 
-// TODO(mlippautz): cmdline flag will replace the old one from util/sched.h
-//DEFINE_bool(set_rt_priority, true,
-//            "try to set the program to RT priority (needs root)");
+DEFINE_bool(set_rt_priority, true,
+            "try to set the program to RT priority (needs root)");
 
 namespace scal {
 
@@ -41,7 +40,7 @@ void Benchmark::run(void) {
   pthread_attr_t attr;
   pthread_attr_t *pattr;
 
-  if (can_modify_sched()) {
+  if (FLAGS_set_rt_priority && can_modify_sched()) {
     setup_pthread_attr(&attr);
     pattr = &attr;
   } else {
