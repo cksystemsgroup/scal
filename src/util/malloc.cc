@@ -225,7 +225,7 @@ void* tlmalloc_aligned(size_t size, size_t alignment) {
       buffer->memory = buffer->start;
       buffer->pointer = buffer->memory;
       buffer->wrap_around_cnt++;
-      fprintf(stderr, "warning: overflowing\n");
+      //fprintf(stderr, "warning: overflowing\n");
     } else {
       fprintf(stderr, "warning: tlalloc is dynamically allocating memory\n");
       buffer->mem_size = kTLABSize;
