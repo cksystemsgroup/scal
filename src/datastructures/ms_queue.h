@@ -83,8 +83,8 @@ class MSQueue {
 
 template<typename T>
 MSQueue<T>::MSQueue(void) {
-  head_ = scal::get_aligned<AtomicPointer<Node*>>(128);
-  tail_ = scal::get_aligned<AtomicPointer<Node*>>(128);
+  head_ = scal::get_aligned<AtomicPointer<Node*>>(4 * 128);
+  tail_ = scal::get_aligned<AtomicPointer<Node*>>(4 * 128);
   Node *node = node_new((T)NULL);
   head_->weak_set_value(node);
   tail_->weak_set_value(node);
