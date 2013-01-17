@@ -4,6 +4,7 @@
 
 #include "benchmark/common.h"
 
+#include <gflags/gflags.h>
 #include <pthread.h>
 #include <sched.h>
 
@@ -121,16 +122,15 @@ void Benchmark::set_core_affinity() {
   if (cores == num_threads_) {
     id = thread_id - 1;
   } else {
-    double mult = ((double)cores) / num_threads_;
-    id = (long)(thread_id * mult) - (long)mult;
+    double mult = (static_cast<double>(cores)) / num_threads_;
+    id = (uint64_t)(thread_id * mult) - (uint64_t)mult;
   }
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
-  CPU_SET((long)id, &cpuset);
+  CPU_SET((uint64_t)id, &cpuset);
   if (pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &cpuset) != 0) {
-    fprintf(stderr, "warning: could not set thread cpu affinity\n", __func__);
+    fprintf(stderr, "warning: could not set thread cpu affinity\n");
   }
-
 }
 
 void Benchmark::startup_thread() {
