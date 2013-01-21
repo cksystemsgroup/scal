@@ -20,6 +20,18 @@ LDADD = @GFLAGS_LIBS@
 GTEST_DIR = external/googletest
 
 #
+# BFS graph benchmark
+#
+
+bin_PROGRAMS += bfs-single
+bfs_single_SOURCES = \
+        src/benchmark/bfs/bfs_single.cc \
+        src/benchmark/bfs/graph.cc \
+        src/util/malloc.cc \
+        src/util/random.cc \
+        src/util/threadlocals.cc
+
+#
 # Producer/Consumer benchmark
 #
 
