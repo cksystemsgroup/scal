@@ -15,9 +15,10 @@ class SpinningBarrier {
 
   inline bool wait() {
     uint64_t old = __sync_fetch_and_add(cnt_, 1);
-    uint64_t next = (old / num_) * num_ + num_;
+    // Do not simplfy num_ into the multiplication.
+    uint64_t next = (old / num_) * num_ + num_;  
     while (*cnt_ < next);
-    if (old == (next -1)) {
+    if (old == (next - 1)) {
       return true;
     }
     return false;
