@@ -71,7 +71,7 @@ Graph* Graph::from_graph_file(const char* graph_file) {
       g->vertices_ = new Vertex*[tokens[0]];
       g->num_vertices_ = tokens[0];
       for (uint64_t i = 0; i < tokens[0]; i++) {
-        g->vertices_[i] = scal::get<Vertex>(128);
+        g->vertices_[i] = scal::get<Vertex>(4 * 128);
         g->vertices_[i]->distance = Vertex::distance_not_set;
       }
       continue;
