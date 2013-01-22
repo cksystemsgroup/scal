@@ -451,7 +451,7 @@ void ef_normal_dequeues(Operation** insert_ops, int num_insert_ops,
 //  }
 }
 
-void ef_all_dequeues(Operations* ops, int64_t* num, int64_t* total,
+void FifoExecuter::ef_all_dequeues(Operations* ops, int64_t* num, int64_t* total,
     int64_t* max,
 
     int64_t* num_prophetic, int64_t* total_prophetic, int64_t* max_prophetic,
@@ -737,7 +737,7 @@ void FifoExecuter::calculate_element_fairness() {
       num_late, max_lateness);
 }
 
-void FifoExecuter::aggregate_semantical_error() {
+int64_t FifoExecuter::aggregate_semantical_error() {
 
   int64_t total = 0;
   int64_t max = 0;
@@ -755,6 +755,7 @@ void FifoExecuter::aggregate_semantical_error() {
   avg /= ops_->num_remove_ops();
 
   printf("%lu %.3f %lu\n", total, avg, max);
+  return total;
 }
 
 void FifoExecuter::calculate_op_fairness_typeless() {
@@ -823,6 +824,8 @@ void FifoExecuter::calculate_op_fairness_typeless() {
   printf("%lu %.3f %lu %lu %lu %lu\n", fairness, avg_fairness, num_aged,
       max_age, num_late, max_lateness);
 }
+
+
 
 void FifoExecuter::calculate_op_fairness() {
 
@@ -977,3 +980,4 @@ void FifoExecuter::calculate_performance_index() {
   printf("%lu %lu %.3f\n", max, total, avg);
   free(overlaps);
 }
+

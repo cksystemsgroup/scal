@@ -30,6 +30,48 @@ void disable_frequency_scaling() {
   }
 }
 
+void calculate_pr_graph(Operations* operations) {
+
+  int64_t num = 0;
+//  int64_t total = 0;
+//  int64_t max = 0;
+//  int64_t tmp = 0;
+
+
+  int64_t performance_index = 0;
+  do {
+    Operation** history = operations->create_history_with_performance_index(performance_index);
+
+    Operations ops;
+    ops.Initialize(history, operations->num_all_ops(), false);
+    ops.CalculateOverlaps();
+    FifoExecuter *executer;
+    executer = new FifoExecuterLowerBound(&ops);
+
+    Histogram histogram;
+//    executer->calculate_new_element_fairness(Operation::lin_point_start_time, Operation::compare_operations_by_start_time);
+    executer->execute(&histogram);
+    executer->calculate_order();
+    num = executer->aggregate_semantical_error();
+
+//    executer->ef_all_dequeues(operations, &num, &total, &max, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, &tmp, Operation::lin_point_lin_order, Operation::compare_operations_by_lin_order);
+
+//    double average = total;
+//    average /= num;
+
+//    printf("%lu %.3f %lu\n", performance_index, average, max);
+
+    for (int i = 0; i < operations->num_all_ops(); i++) {
+      delete history[i];
+    }
+    delete[] history;
+
+    delete executer;
+
+    performance_index++;
+  } while (num > 0);
+}
+
 int main(int argc, char** argv) {
   if (argc < 4) {
     fprintf(stderr, "usage: ./analyzer <logfilename> <operations> <mode>\n");
@@ -106,7 +148,7 @@ int main(int argc, char** argv) {
     executer = new FifoExecuterLowerBound(&ops);
     executer->calculate_new_element_fairness(Operation::lin_point_start_time, Operation::compare_operations_by_start_time);
   } else if (strcmp(order, "ef_response") == 0) {
-      Operations ops(filename, operations, false);
+      Operations ops(filename, operations, true);
       FifoExecuter *executer;
       executer = new FifoExecuterLowerBound(&ops);
       executer->calculate_new_element_fairness(Operation::lin_point_end_time, Operation::compare_operations_by_end_time);
@@ -130,6 +172,9 @@ int main(int argc, char** argv) {
       FifoExecuter *executer;
       executer = new FifoExecuterLowerBound(&ops);
       executer->calculate_performance_index();
+  } else if (strcmp(order, "prgraph") == 0) {
+    Operations ops(filename, operations, true);
+    calculate_pr_graph(&ops);
   } else {
     printf("Invalid mode, use tool_op, tool, response, element, new, or new_sane, not %s\n", order);
     exit(-1);
@@ -153,3 +198,5 @@ int main(int argc, char** argv) {
 //  enable_frequency_scaling();
   return 0;
 }
+
+

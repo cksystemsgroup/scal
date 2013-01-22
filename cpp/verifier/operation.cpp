@@ -244,8 +244,10 @@ Operations::Operations(char* filename, int num_ops, bool adjust_start_times) :
       exit(2);
     }
     if (type == 0) {
+      // if (type == 0) {// this one is the correct one.
       op_type = Operation::INSERT;
     } else if (type == 1) {
+//    } else if (type == 1) {// this one is the correct one.
       op_type = Operation::REMOVE;
     } else {
       fprintf(stderr, "FATAL7: Invalid operation type: %d\n", type);
@@ -264,6 +266,20 @@ Operations::Operations(char* filename, int num_ops, bool adjust_start_times) :
   }
   fclose(input);
   Initialize(ops, num_ops, adjust_start_times);
+}
+
+Operation** Operations::create_history_with_performance_index(uint64_t index) {
+
+  qsort(all_ops(), num_all_ops(), sizeof(Operation*),
+        Operation::compare_operations_by_start_time_and_type);
+
+  Operation** result = new Operation*[num_all_ops()];
+
+  for(int i = 0; i < num_all_ops(); i++) {
+    result[i] = new Operation(i * 2, 0, i * 2 + 2 * index + 1, all_ops()[i]->type(), all_ops()[i]->value());
+  }
+
+  return result;
 }
 
 bool Operations::OverlapIterator::has_next() const {

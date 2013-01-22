@@ -37,6 +37,8 @@ int FifoExecuterLowerBound::semanticalError(const Operation* removeOperation,
   return -1;
 }
 
+
+
 void FifoExecuterLowerBound::executeOperationWithOverlaps(Operation* element,
     Histogram* histogram) {
   int error;
@@ -49,8 +51,18 @@ void FifoExecuterLowerBound::executeOperationWithOverlaps(Operation* element,
     // operations without matching remove operation before the current remove
     // operation.
     error = amountOfFinishedEnqueueOperations(element);
+    if (error == -1) {
+                fprintf(stderr, "FATAL9: errorDistance -1, element->value %d\n",
+                    element->value());
+                exit(-1);
+              }
   } else {
     error = semanticalError(element, &matchingInsertOperation);
+    if (error == -1) {
+                fprintf(stderr, "FATAL17: errorDistance -1, element->value %d\n",
+                    element->value());
+                exit(-1);
+              }
   }
 
   while (error > 0) {
@@ -91,8 +103,18 @@ void FifoExecuterLowerBound::executeOperationWithOverlaps(Operation* element,
     }
     if (null_return) {
       error = amountOfFinishedEnqueueOperations(element);
+      if (error == -1) {
+            fprintf(stderr, "FATAL7: errorDistance -1, element->value %d\n",
+                element->value());
+            exit(-1);
+          }
     } else {
       error = semanticalError(element, &matchingInsertOperation);
+      if (error == -1) {
+            fprintf(stderr, "FATAL8: errorDistance -1, element->value %d\n",
+                element->value());
+            exit(-1);
+          }
     }
     if (error == -1) {
       fprintf(stderr, "FATAL1: errorDistance -1, element->value %d\n",

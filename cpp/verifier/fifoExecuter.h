@@ -6,7 +6,7 @@
 
 class Histogram;
 
-class FifoExecuter : public Executer {
+ class FifoExecuter : public Executer {
  public:
   FifoExecuter(Operations* ops) : ops_(ops) {}
   virtual void execute(Histogram* histgram);
@@ -21,11 +21,21 @@ class FifoExecuter : public Executer {
   void calculate_new_element_fairness(uint64_t (*lin_point)(Operation* op), int (*compare)(const void* left, const void* right));
   void calculate_diff(uint64_t (*lin_point_1)(Operation* op), int (*compare_ops_1)(const void* left, const void* right),
                       uint64_t (*lin_point_2)(Operation* op), int (*compare_ops_2)(const void* left, const void* right));
-  void aggregate_semantical_error();
+  int64_t aggregate_semantical_error();
   void calculate_op_fairness();
   void calculate_op_fairness_typeless();
   void calculate_performance_index();
+  void ef_all_dequeues(Operations* ops, int64_t* num, int64_t* total,
+      int64_t* max,
 
+      int64_t* num_prophetic, int64_t* total_prophetic, int64_t* max_prophetic,
+
+      int64_t* num_null, int64_t* total_null, int64_t* max_null,
+
+      int64_t* num_normal, int64_t* total_normal, int64_t* max_normal,
+
+      uint64_t (*lin_point)(Operation* op),
+      int (*compare_ops)(const void* left, const void* right));
 
  protected:
   virtual void executeOperationWithOverlaps(Operation* element, Histogram* histogram) = 0;

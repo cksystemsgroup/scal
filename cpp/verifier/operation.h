@@ -165,8 +165,25 @@ public:
       return op->lin_time();
     }
 
+  static uint64_t lin_point_lin_order(Operation* op) {
+      return op->lin_order();
+    }
+
   static int compare_operations_by_start_time(const void* left,
       const void* right) {
+    return (*(Operation**) left)->start() > (*(Operation**) right)->start();
+  }
+
+  static int compare_operations_by_start_time_and_type(const void* left,
+      const void* right) {
+    if((*(Operation**) left)->start() == (*(Operation**) right)->start()) {
+      if((*(Operation**) left)->type() < (*(Operation**) right)->type()) {
+        return false;
+      } else {
+        return true;
+      }
+
+    }
     return (*(Operation**) left)->start() > (*(Operation**) right)->start();
   }
 
@@ -174,6 +191,11 @@ public:
       const void* right) {
     return (*(Operation**) left)->lin_time() > (*(Operation**) right)->lin_time();
   }
+
+  static int compare_operations_by_lin_order(const void* left,
+        const void* right) {
+      return (*(Operation**) left)->lin_order() > (*(Operation**) right)->lin_order();
+    }
 
   static int compare_operations_by_end_time(const void* left,
       const void* right) {
@@ -236,6 +258,7 @@ public:
   }
   Operations(char* filename, int num_ops, bool adjust_start_times);
   void Initialize(Operation** ops, int num_ops, bool adjust_start_times);
+  Operation** create_history_with_performance_index(uint64_t index);
   const Operation** operator[](int i) const;
   Operation** operator[](int i);
   bool is_consistent();
