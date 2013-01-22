@@ -136,7 +136,7 @@ void Benchmark::set_core_affinity() {
 void Benchmark::startup_thread() {
   scal::tlalloc_init(thread_prealloc_size_, true /* touch pages */);
   threadlocals_init();
-  set_core_affinity();
+  //set_core_affinity();
   uint64_t thread_id = threadlocals_get()->thread_id;
   if (thread_id == 0) {
     fprintf(stderr, "%s: error: thread_id should be main thread. "

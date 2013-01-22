@@ -33,6 +33,10 @@ class Benchmark {
   virtual void bench_func(void) = 0;
   uint64_t thread_id(void);
 
+  inline uint64_t num_threads() {
+    return num_threads_;
+  }
+
  private:
   static void* pthread_start_helper(void *thiz) {
     reinterpret_cast<Benchmark*>(thiz)->startup_thread();
