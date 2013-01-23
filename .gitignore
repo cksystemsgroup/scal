@@ -11,6 +11,7 @@ Makefile.in
 /aclocal.m4
 /compile
 /configure
+/config.h.in
 /depcomp
 /install-sh
 /missing
