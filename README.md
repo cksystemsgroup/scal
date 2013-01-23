@@ -21,7 +21,7 @@ Building
 This is as easy as
 
     git submodule init
-    git submodule update
+    git submodule update external/googletest
     ./autogen.sh
     ./configure
     make
@@ -37,6 +37,12 @@ The Scal framework should work on any recent x86 platform. However, various
 tests can be performed after building the framework.
 
     make check
+
+Additional data files, such as graph files, are available as submodule
+
+    git submodule update data
+
+The resulting files reside in `data/`.
 
 Examples
 --------
