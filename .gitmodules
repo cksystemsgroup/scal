@@ -1,3 +1,6 @@
 [submodule "external/googletest"]
 	path = external/googletest
 	url = https://chromium.googlesource.com/external/googletest.git
+[submodule "data"]
+	path = data
+	url = https://github.com/zoidrr/scal-data.git
