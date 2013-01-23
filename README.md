@@ -22,6 +22,7 @@ This is as easy as
 
     git submodule init
     git submodule update
+    ./autogen.sh
     ./configure
     make
 
