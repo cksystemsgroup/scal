@@ -22,4 +22,4 @@ inline long number_of_cores() {
 
 }  // namespace scal
 
-#endif
+#endif  // SCAL_UTIL_PLATFORM_H_
