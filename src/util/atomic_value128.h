@@ -5,11 +5,11 @@
 #ifndef SCAL_UTIL_ATOMIC_VALUE128_H_
 #define SCAL_UTIL_ATOMIC_VALUE128_H_
 
-#define __STDC_LIMIT_MACROS
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <limits>
 
 #include "util/malloc.h"
 
@@ -47,7 +47,7 @@ class AtomicValue128 {
   }
 
   static const uint64_t kAbaMin = 0;
-  static const uint64_t kAbaMax = UINT64_MAX;
+  static const uint64_t kAbaMax = std::numeric_limits<uint64_t>::max();
   static const uint8_t  kAbaBits = 64;
   static const T        kValueMin;
   static const T        kValueMax;
@@ -83,7 +83,7 @@ class AtomicValue128 {
   }
 
   inline AtomicAba aba(void) const volatile {
-    return raw() & UINT128_C(UINT64_MAX);
+    return raw() & UINT128_C(std::numeric_limits<uint64_t>::max());
   }
 
   inline T value(void) const volatile {
@@ -99,7 +99,7 @@ class AtomicValue128 {
   }
 
   inline uint64_t weak_aba(void) const volatile {
-    return memory_ & UINT128_C(UINT64_MAX);
+    return memory_ & UINT128_C(std::numeric_limits<uint64_t>::max());
   }
 
   inline T weak_value(void) const volatile {
@@ -112,16 +112,17 @@ class AtomicValue128 {
 
   inline void weak_set_value(T value) volatile {
     // Both, the read and the write operation, contain data races.
-    uint128_t new_memory =
-        memory_ & UINT128_C(UINT64_MAX);  // Delete old value, but keep ABA.
+    // Delete old value, but keep ABA.
+    uint128_t new_memory = 
+        memory_ & UINT128_C(std::numeric_limits<uint64_t>::max());  
     memory_ = new_memory | (((uint128_t)value) << 64);
   }
 
   inline void weak_set_aba(uint64_t aba) volatile {
     // Both, the read and the write operation, contain data races.
+    // Delete ABA, but keep old value.
     uint128_t new_memory =
-        memory_ & (UINT128_C(UINT64_MAX) << 64);  // Delete ABA,
-                                                  // but keep old value.
+        memory_ & (UINT128_C(std::numeric_limits<uint64_t>::max()) << 64);
     memory_ = new_memory | aba;
   }
 
@@ -135,7 +136,7 @@ class AtomicValue128 {
     uint128_t new_memory;
     do {
       old_memory = raw();
-      new_memory = old_memory & UINT128_C(UINT64_MAX);
+      new_memory = old_memory & UINT128_C(std::numeric_limits<uint64_t>::max());
       new_memory |= (((uint128_t)value) << 64);
     } while (!__sync_bool_compare_and_swap(&memory_, old_memory, new_memory));
   }
@@ -145,7 +146,8 @@ class AtomicValue128 {
     uint128_t new_memory;
     do {
       old_memory = raw();
-      new_memory = old_memory & (UINT128_C(UINT64_MAX) << 64);
+      new_memory =
+          old_memory & (UINT128_C(std::numeric_limits<uint64_t>::max()) << 64);
       new_memory |= aba;
     } while (!__sync_bool_compare_and_swap(&memory_, old_memory, new_memory));
   }
@@ -157,8 +159,8 @@ class AtomicValue128 {
     } while (!__sync_bool_compare_and_swap(&memory_, old, new_raw));
   }
 
-  inline bool cas(AtomicValue128<T> &expected,
-                  AtomicValue128<T> &newcp) volatile {
+  inline bool cas(const AtomicValue128<T> &expected,
+                  const AtomicValue128<T> &newcp) volatile {
     if (memory_ == expected.memory_ &&  // Filter out obvious fails.
         __sync_bool_compare_and_swap(&memory_,
                                      expected.memory_,
@@ -186,6 +188,6 @@ template <typename T>
 const T AtomicValue128<T>::kValueMin = (T)1;
 
 template <typename T>
-const T AtomicValue128<T>::kValueMax = (T)UINT64_MAX;
+const T AtomicValue128<T>::kValueMax = (T)std::numeric_limits<uint64_t>::max();
 
 #endif  // SCAL_UTIL_ATOMIC_VALUE128_H_
