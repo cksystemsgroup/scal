@@ -89,17 +89,19 @@ bool TreiberStack<T>::pop(T *item) {
 template<typename T>
 inline bool TreiberStack<T>::get_return_empty_state(T *item, AtomicRaw *state) {
   AtomicPointer<Node*> top_old;
-  top_old = *top_;
+  AtomicPointer<Node*> top_new;
+  do {
+    top_old = *top_;
+    if (top_old.value() == NULL) {
+      *state = top_old.raw();
+      return false;
+    }
+    top_new.weak_set_value(top_old.value()->next.value());
+    top_new.weak_set_aba(top_old.aba() + 1);
+  } while (!top_->cas(top_old, top_new));
+  *item = top_old.value()->data;
   *state = top_old.raw();
-  if (top_old.value() == NULL) {
-    return false;
-  }
-  AtomicPointer<Node*> top_new(top_old.value()->next.value(), top_old.aba() + 1);
-  if(top_->cas(top_old, top_new)) {
-    *item = top_old.value()->data;
-    return true; 
-  }
-  return false;
+  return true;
 }
 
 #endif  // SCAL_DATASTRUCTURES_TREIBER_STACK_H_
