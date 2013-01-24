@@ -71,6 +71,11 @@ prodcon_rd_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_rd_queue.cc
 
+bin_PROGRAMS += prodcon-tstack
+prodcon_tstack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_treiber_stack.cc
+
 bin_PROGRAMS += prodcon-uskfifo
 prodcon_uskfifo_SOURCES = \
         $(PRODCON_BASE_OBJS) \
