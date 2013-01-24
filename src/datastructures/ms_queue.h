@@ -15,6 +15,7 @@
 
 #include <new>
 
+#include "datastructures/distributed_queue_interface.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/operation_logger.h"
@@ -32,7 +33,7 @@ struct Node {
 }  // namespace ms_details
 
 template<typename T>
-class MSQueue {
+class MSQueue : public DistributedQueueInterface<T> {
  public:
   /*
    * Correct size would need to check consistency of state and fix tail ptr.
@@ -65,6 +66,20 @@ class MSQueue {
   uint8_t try_dequeue(T *item,
                       AtomicPointer<ms_details::Node<T>*> head_old,
                       uint64_t *tail_raw);
+
+  // Satisfy the DistributedQueueInterface
+
+  inline bool put(T item) {
+    return enqueue(item);
+  }
+
+  inline AtomicRaw empty_state() {
+    return tail_->raw();
+  }
+
+  inline bool get_return_empty_state(T *item, AtomicRaw *state) {
+    return dequeue_return_tail(item, state);
+  }
 
  private:
   typedef ms_details::Node<T> Node;

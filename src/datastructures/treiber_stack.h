@@ -10,6 +10,7 @@
 #ifndef SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 #define SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 
+#include "datastructures/distributed_queue_interface.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
@@ -30,6 +31,18 @@ class TreiberStack {
   TreiberStack();
   bool push(T item);
   bool pop(T *item);
+
+  // Satisfy the DistributedQueueInterface
+
+  inline bool put(T item) {
+    return push(item);
+  }
+
+  inline AtomicRaw empty_state() {
+    return top_->raw();
+  }
+
+  inline bool get_return_empty_state(T *item, AtomicRaw *state);
 
  private:
   typedef ts_internal::Node<T> Node;
@@ -71,6 +84,22 @@ bool TreiberStack<T>::pop(T *item) {
   } while (!top_->cas(top_old, top_new));
   *item = top_old.value()->data;
   return true;
+}
+
+template<typename T>
+inline bool TreiberStack<T>::get_return_empty_state(T *item, AtomicRaw *state) {
+  AtomicPointer<Node*> top_old;
+  top_old = *top_;
+  *state = top_old.raw();
+  if (top_old.value() == NULL) {
+    return false;
+  }
+  AtomicPointer<Node*> top_new(top_old.value()->next.value(), top_old.aba() + 1);
+  if(top_->cas(top_old, top_new)) {
+    *item = top_old.value()->data;
+    return true; 
+  }
+  return false;
 }
 
 #endif  // SCAL_DATASTRUCTURES_TREIBER_STACK_H_
