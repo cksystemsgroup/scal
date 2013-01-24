@@ -11,6 +11,7 @@
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "datastructures/balancer_partrr.h"
 #include "datastructures/distributed_queue.h"
+#include "datastructures/ms_queue.h"
 
 DEFINE_uint64(p, 80, "number of partial queues");
 DEFINE_uint64(partitions, 1, "number of round robin partitions");
@@ -18,18 +19,18 @@ DEFINE_uint64(partitions, 1, "number of round robin partitions");
 void* ds_new(void) {
   BalancerPartitionedRoundRobin *balancer =
       new BalancerPartitionedRoundRobin(FLAGS_partitions, FLAGS_p);
-  DistributedQueue<uint64_t> *sp =
-      new DistributedQueue<uint64_t>(FLAGS_p, g_num_threads + 1, balancer);
+  DistributedQueue<uint64_t, MSQueue<uint64_t> > *sp =
+      new DistributedQueue<uint64_t, MSQueue<uint64_t> >(FLAGS_p, g_num_threads + 1, balancer);
   return static_cast<void*>(sp);
 }
 
 bool ds_put(void *ds, uint64_t item) {
-  DistributedQueue<uint64_t> *sp = static_cast<DistributedQueue<uint64_t>*>(ds);
+  DistributedQueue<uint64_t, MSQueue<uint64_t> > *sp = static_cast<DistributedQueue<uint64_t, MSQueue<uint64_t> >*>(ds);
   return sp->put(item);
 }
 
 bool ds_get(void *ds, uint64_t *item) {
-  DistributedQueue<uint64_t> *sp = static_cast<DistributedQueue<uint64_t>*>(ds);
+  DistributedQueue<uint64_t, MSQueue<uint64_t> > *sp = static_cast<DistributedQueue<uint64_t, MSQueue<uint64_t> >*>(ds);
   return sp->get(item);
 }
 
