@@ -2,7 +2,10 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
+#define __STDC_FORMAT_MACROS
+
 #include <gflags/gflags.h>
+#include <stdint.h>
 
 #include "benchmark/bfs/graph.h"
 #include "datastructures/single_list.h"
@@ -11,9 +14,15 @@
 #include "util/threadlocals.h"
 #include "util/time.h"
 
+DEFINE_string(graph_file, "data/cage15.graph", "graph file for BFS");
 DEFINE_string(prealloc_size, "1g", "tread local space that is initialized");
-DEFINE_string(graph_file, "data/graph-test.graph", "graph file for BFS");
-DEFINE_bool(debug_graph, false, "show debugging information about the graph");
+DEFINE_int64(root, -1, "root for BFS; -1: pseudorandom");
+
+namespace {
+
+const size_t kMaxDebugLevels = 256;
+
+}  // namespace
 
 int main(int argc, char **argv) {
   std::string usage("BFS graph benchmark.");
@@ -27,47 +36,34 @@ int main(int argc, char **argv) {
 
   SingleList<uint64_t> *q = new SingleList<uint64_t>();
   Graph *g = Graph::from_graph_file(FLAGS_graph_file.c_str());
-  uint64_t vertex_index;
-  Vertex *cur_vertex;
+
+  uint64_t root_index;
+  if (FLAGS_root == -1) {
+    root_index = pseudorand() % g->size();
+  } else {
+    root_index = static_cast<uint64_t>(FLAGS_root);
+  }
+
   Vertex *neighbor;
-
-  uint64_t max_dist = 0;
-  uint64_t vertex_cnt =  0;
-  uint64_t old_dist = 0;
-  
-
-  //vertex_index = pseudorand() % g->num_vertices();
-  vertex_index= 2567890;
-  cur_vertex = g->get(vertex_index);
+  Vertex *cur_vertex = g->get(root_index);
   cur_vertex->distance = 0;
-  q->enqueue(vertex_index);
-  vertex_cnt++;
-  printf("level 0: 1 vertices\n");
-  vertex_cnt = 0;
+  q->enqueue(root_index);
+
   uint64_t start_time = get_utime();
+  uint64_t vertex_index;
   while (q->dequeue(&vertex_index)) {
     cur_vertex = g->get(vertex_index);  
-    if (cur_vertex->distance > old_dist) {
-      old_dist = cur_vertex->distance;
-      printf("level %lu: %lu vertices\n", old_dist, vertex_cnt);
-      vertex_cnt = 0;
-    } 
     for (uint64_t i = 0; i < cur_vertex->len_neighbors; i++) {
       neighbor = g->get(cur_vertex->neighbors[i]);
-      if (neighbor->distance == Vertex::distance_not_set) {
+      if (neighbor->distance == Vertex::no_distance) {
         neighbor->distance = cur_vertex->distance + 1;
-        if (neighbor->distance > max_dist) {
-          max_dist = neighbor->distance;
-        }
         q->enqueue(cur_vertex->neighbors[i]);
-        vertex_cnt++;
       }
     }
   }
   uint64_t execution_time = get_utime() - start_time;
-  printf("%lu %lu\n", g->num_vertices(), execution_time);
-  printf("max : %lu\n", max_dist + 1);
-
+  printf("%" PRIu64 " %" PRIu64 " %" PRIu64  "\n",
+      g->size(), root_index, execution_time);
 
   return EXIT_SUCCESS;
 }
