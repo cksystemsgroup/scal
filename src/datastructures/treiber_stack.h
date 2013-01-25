@@ -11,6 +11,7 @@
 #define SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 
 #include "datastructures/distributed_queue_interface.h"
+#include "datastructures/stack.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
@@ -26,7 +27,7 @@ struct Node {
 }  // namespace ts_internal
 
 template<typename T>
-class TreiberStack {
+class TreiberStack : public Stack<T> {
  public:
   TreiberStack();
   bool push(T item);

@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stdint.h> 
 
+#include "datastructures/queue.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
@@ -140,7 +141,7 @@ volatile AtomicPointer<OperationDescriptor<T>*>** HelpRecord<T>::State = NULL;
 }  // namespace wf_ppopp12_details
 
 template<typename T>
-class WaitfreeQueue {
+class WaitfreeQueue : public Queue<T> {
  public:
   WaitfreeQueue(uint64_t num_threads,
                 uint64_t max_retries,

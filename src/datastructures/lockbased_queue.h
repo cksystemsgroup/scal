@@ -14,6 +14,7 @@
 #include <string.h>     // strerror_r
 #include <sys/time.h>   // gettimeofday
 
+#include "datastructures/queue.h"
 #include "util/malloc.h"
 #include "util/platform.h"
 #include "util/threadlocals.h"
@@ -29,13 +30,23 @@ struct Node {
 }  // namespace lb_details
 
 template<typename T>
-class LockBasedQueue {
+class LockBasedQueue : Queue<T> {
  public:
-  LockBasedQueue();
+  LockBasedQueue(uint64_t dequeue_mode, uint64_t dequeue_timeout);
   bool enqueue(T item);
-  bool dequeue(T *item);
-  bool dequeue_blocking(T *item);
-  bool dequeue_timeout(T *item, uint64_t timeout_ms);
+
+  inline bool dequeue(T *item) {
+    switch (dequeue_mode_) {
+    case 0:
+      return dequeue_default(item);
+    case 1:
+      return dequeue_blocking(item);
+    case 2:
+      return dequeue_timeout(item, dequeue_timeout_);
+    default:
+      return dequeue_default(item);
+    }
+  }
 
  private:
   typedef lb_details::Node<T> Node;
@@ -46,6 +57,8 @@ class LockBasedQueue {
   Node *tail_;
   pthread_mutex_t *global_lock_;
   pthread_cond_t *enqueue_cond_;
+  uint64_t dequeue_mode_;
+  uint64_t dequeue_timeout_;
 
   inline void check_error(const char *std, int rc) {
     if (rc != 0) {
@@ -55,10 +68,14 @@ class LockBasedQueue {
       abort();
     }
   }
+
+  bool dequeue_default(T *item);
+  bool dequeue_blocking(T *item);
+  bool dequeue_timeout(T *item, uint64_t timeout_ms);
 };
 
 template<typename T>
-LockBasedQueue<T>::LockBasedQueue() {
+LockBasedQueue<T>::LockBasedQueue(uint64_t dequeue_mode, uint64_t dequeue_timeout) {
   global_lock_ = scal::get<pthread_mutex_t>(kPtrAlignment);
   int rc = pthread_mutex_init(global_lock_, NULL);
   check_error("pthread_mutex_init", rc);
@@ -68,6 +85,8 @@ LockBasedQueue<T>::LockBasedQueue() {
   Node *node = scal::get<Node>(kPtrAlignment);
   head_ = node;
   tail_ = node;
+  dequeue_mode_ = dequeue_mode;
+  dequeue_timeout_ = dequeue_timeout;
 }
 
 template<typename T>
@@ -87,7 +106,7 @@ bool LockBasedQueue<T>::enqueue(T item) {
 }
 
 template<typename T>
-bool LockBasedQueue<T>::dequeue(T *item) {
+bool LockBasedQueue<T>::dequeue_default(T *item) {
   int rc = pthread_mutex_lock(global_lock_);
   check_error("pthread_mutex_lock", rc);
   if (head_ == tail_) {

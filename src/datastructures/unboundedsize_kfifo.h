@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "datastructures/queue.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
@@ -33,7 +34,7 @@ struct KSegment {
 }  // namespace uskfifo_details
 
 template<typename T>
-class UnboundedSizeKFifo {
+class UnboundedSizeKFifo : public Queue<T> {
  public:
   explicit UnboundedSizeKFifo(uint64_t k);
   bool enqueue(T item);

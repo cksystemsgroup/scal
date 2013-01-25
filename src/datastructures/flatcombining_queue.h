@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "datastructures/queue.h"
 #include "datastructures/single_list.h"
 #include "util/malloc.h"
 #include "util/threadlocals.h"
@@ -37,7 +38,7 @@ struct Operation {
 }  // fc_details
 
 template<typename T>
-class FlatCombiningQueue {
+class FlatCombiningQueue : public Queue<T> {
  public:
   explicit FlatCombiningQueue(uint64_t num_ops);
   bool enqueue(T item);

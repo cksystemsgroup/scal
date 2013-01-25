@@ -10,10 +10,11 @@
 
 #include <stdlib.h>
 
+#include "datastructures/queue.h"
 #include "util/malloc.h"
 
 template<typename T>
-class SingleList {
+class SingleList : public Queue<T> {
  public:
   SingleList();
   bool enqueue(T item);

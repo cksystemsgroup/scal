@@ -16,6 +16,7 @@
 #include <new>
 
 #include "datastructures/distributed_queue_interface.h"
+#include "datastructures/queue.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/operation_logger.h"
@@ -33,7 +34,7 @@ struct Node {
 }  // namespace ms_details
 
 template<typename T>
-class MSQueue : public DistributedQueueInterface<T> {
+class MSQueue : public DistributedQueueInterface<T>, public Queue<T> {
  public:
   /*
    * Correct size would need to check consistency of state and fix tail ptr.

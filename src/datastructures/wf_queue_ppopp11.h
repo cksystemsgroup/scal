@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <stdint.h> 
 
+#include "datastructures/queue.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
@@ -80,7 +81,7 @@ struct OperationDescriptor {
 }  // namespace wf_details
 
 template<typename T>
-class WaitfreeQueue {
+class WaitfreeQueue : public Queue<T> {
  public:
   explicit WaitfreeQueue(uint64_t num_threads);
   bool enqueue(T item);

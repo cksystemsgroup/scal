@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "datastructures/queue.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
@@ -41,7 +42,7 @@ struct Node {
 }  // namespace rd_details
 
 template<typename T>
-class RandomDequeueQueue {
+class RandomDequeueQueue : public Queue<T> {
  public:
   RandomDequeueQueue(uint64_t quasi_factor, uint64_t max_retries);
   bool enqueue(T item);

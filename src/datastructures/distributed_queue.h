@@ -10,11 +10,12 @@
 #include "datastructures/balancer.h"
 #include "datastructures/distributed_queue_interface.h"
 #include "datastructures/ms_queue.h"
+#include "datastructures/pool.h"
 #include "util/malloc.h"
 #include "util/platform.h"
 
 template<typename T, class P>
-class DistributedQueue {
+class DistributedQueue : public Pool<T> {
  public:
   DistributedQueue(size_t num_queues,
            uint64_t num_threads,

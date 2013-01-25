@@ -17,13 +17,14 @@
 
 #include <new>  // Used for placement new.
 
+#include "datastructures/queue.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
 #include "util/random.h"
 
 template<typename T>
-class BoundedSizeKFifo {
+class BoundedSizeKFifo : public Queue<T> {
  public:
   static BoundedSizeKFifo<T> *get_aligned(
       uint64_t k, uint64_t num_segments, size_t alignment) {

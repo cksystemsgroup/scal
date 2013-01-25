@@ -18,6 +18,7 @@
 
 #include <limits>
 
+#include "datastructures/stack.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
@@ -52,7 +53,7 @@ uint64_t KSegment<T>::K = 1;
 }  // namespace kstack_details
 
 template<typename T>
-class KStack {
+class KStack : public Stack<T> {
  public:
   KStack(uint64_t k, uint64_t num_threads);
   bool push(T item);
