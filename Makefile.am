@@ -29,10 +29,16 @@ UTIL_OBJS = \
 # BFS graph benchmark
 #
 
-bin_PROGRAMS += bfs-single
-bfs_single_SOURCES = \
+bin_PROGRAMS += bfs-analyzer
+bfs_analyzer_SOURCES = \
 	$(UTIL_OBJS) \
-        src/benchmark/bfs/bfs_single.cc \
+        src/benchmark/bfs/bfs_analyzer.cc \
+        src/benchmark/bfs/graph.cc
+
+bin_PROGRAMS += bfs-sequential
+bfs_sequential_SOURCES = \
+	$(UTIL_OBJS) \
+        src/benchmark/bfs/bfs_sequential.cc \
         src/benchmark/bfs/graph.cc
 
 #
