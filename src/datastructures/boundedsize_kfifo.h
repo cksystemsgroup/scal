@@ -71,12 +71,12 @@ BoundedSizeKFifo<T>::BoundedSizeKFifo(uint64_t k, uint64_t num_segments) {
   queue_ = static_cast<AtomicValue<T>**>(calloc(
       queue_size_, sizeof(AtomicValue<T>*)));
   for (uint64_t i = 0; i < queue_size_; i++) {
-    queue_[i] = scal::get<AtomicValue<T>>(kPtrAlignment * 4);
+    queue_[i] = scal::get<AtomicValue<T> >(kPtrAlignment * 4);
   }
 
   // Allocate kPtrAligned head and tail ``pointers''.
-  head_ = scal::get_aligned<AtomicValue<uint64_t>>(kPtrAlignment);
-  tail_ = scal::get_aligned<AtomicValue<uint64_t>>(kPtrAlignment);
+  head_ = scal::get_aligned<AtomicValue<uint64_t> >(kPtrAlignment);
+  tail_ = scal::get_aligned<AtomicValue<uint64_t> >(kPtrAlignment);
 }
 
 template<typename T>

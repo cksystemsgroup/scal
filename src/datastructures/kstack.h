@@ -38,11 +38,11 @@ struct KSegment {
   KSegment() {
     this->remove = scal::tlget<uint64_t>(128);
     *(this->remove) = 0;
-    this->next = scal::tlget<AtomicPointer<KSegment*>>(128);
+    this->next = scal::tlget<AtomicPointer<KSegment*> >(128);
     this->items = static_cast<AtomicValue<T>**>(scal::tlcalloc_aligned(
         K, sizeof(*items), 128));
     for (uint64_t i = 0; i < K; i++) {
-      this->items[i] = scal::tlget<AtomicValue<T>>(128*4);
+      this->items[i] = scal::tlget<AtomicValue<T> >(128*4);
     }
   }
 };
@@ -89,7 +89,7 @@ KStack<T>::KStack(uint64_t k, uint64_t num_threads) {
   k_ = k;
   num_threads_ = num_threads;
   KSegment::K = k_;
-  top_ = scal::tlget<AtomicPointer<KSegment*>>(kSegmentSize);
+  top_ = scal::tlget<AtomicPointer<KSegment*> >(kSegmentSize);
   top_->weak_set_value(scal::tlget<KSegment>(kSegmentSize));
   item_records_ = static_cast<AtomicRaw**>(scal::calloc_aligned(
       num_threads_, sizeof(*item_records_), kPtrAlignment));

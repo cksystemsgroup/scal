@@ -34,7 +34,7 @@ class SingleList : public Queue<T> {
 
 template<typename T>
 SingleList<T>::SingleList() {
-  Node<T> *n = scal::get<Node<T>>(0);
+  Node<T> *n = scal::get<Node<T> >(0);
   head_ = n;
   tail_ = n;
 }
@@ -50,7 +50,7 @@ bool SingleList<T>::is_empty() const {
 
 template<typename T>
 bool SingleList<T>::enqueue(T item) {
-  Node<T> *n = scal::tlget<Node<T>>(0);
+  Node<T> *n = scal::tlget<Node<T> >(0);
   n->value = item;
   tail_->next = n;
   tail_ = n;

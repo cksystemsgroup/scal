@@ -186,11 +186,11 @@ WaitfreeQueue<T>::WaitfreeQueue(uint64_t num_threads,
   // Create sentinel node.
   Node *node = scal::get<Node>(kPtrAlignment);
   // Create aligned head and tail pointers, that point to the sentinel node.
-  AtomicPointer<Node*> *head = scal::get<AtomicPointer<Node*>>(kPtrAlignment);
+  AtomicPointer<Node*> *head = scal::get<AtomicPointer<Node*> >(kPtrAlignment);
   head->weak_set_value(node);
   head->set_aba(Node::kTidNotSet);
   head_ = const_cast<volatile AtomicPointer<Node*>*>(head);
-  AtomicPointer<Node*> *tail = scal::get<AtomicPointer<Node*>>(kPtrAlignment);
+  AtomicPointer<Node*> *tail = scal::get<AtomicPointer<Node*> >(kPtrAlignment);
   tail->weak_set_value(node);
   tail_ = const_cast<volatile AtomicPointer<Node*>*>(tail);
 
@@ -204,7 +204,7 @@ WaitfreeQueue<T>::WaitfreeQueue(uint64_t num_threads,
                  false,
                  OperationDescriptor::Type::kEnqueue,
                  NULL);
-    state_[i] = scal::get<AtomicPointer<OperationDescriptor*>>(kPtrAlignment);
+    state_[i] = scal::get<AtomicPointer<OperationDescriptor*> >(kPtrAlignment);
     state_[i]->weak_set_value(opdesc);
   }
 

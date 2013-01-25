@@ -76,7 +76,7 @@ uskfifo_details::KSegment<T>* UnboundedSizeKFifo<T>::ksegment_new() {
       ksegment->k, sizeof(AtomicValue<T>*)));
   for (uint64_t i = 0; i < ksegment->k; i++) {
     // Segments are contiguous without any alignment.
-    ksegment->items[i] = scal::tlget<AtomicValue<T>>(0);
+    ksegment->items[i] = scal::tlget<AtomicValue<T> >(0);
   }
   ksegment->deleted = false;
   return ksegment;
@@ -87,8 +87,8 @@ UnboundedSizeKFifo<T>::UnboundedSizeKFifo(uint64_t k) {
   k_ = k;
   KSegment *ksegment = ksegment_new();
 
-  head_ = scal::get<AtomicPointer<KSegment*>>(scal::kPageSize);
-  tail_ = scal::get<AtomicPointer<KSegment*>>(scal::kPageSize);
+  head_ = scal::get<AtomicPointer<KSegment*> >(scal::kPageSize);
+  tail_ = scal::get<AtomicPointer<KSegment*> >(scal::kPageSize);
   head_->weak_set_value(ksegment);
   tail_->weak_set_value(ksegment);
 }

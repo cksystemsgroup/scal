@@ -62,8 +62,8 @@ RandomDequeueQueue<T>::RandomDequeueQueue(uint64_t quasi_factor,
                                           uint64_t max_retries) {
   quasi_factor_ = quasi_factor;
   Node *n = scal::get<Node>(scal::kCachePrefetch);
-  head_ = scal::get<AtomicPointer<Node*>>(scal::kPageSize);
-  tail_ = scal::get<AtomicPointer<Node*>>(scal::kPageSize);
+  head_ = scal::get<AtomicPointer<Node*> >(scal::kPageSize);
+  tail_ = scal::get<AtomicPointer<Node*> >(scal::kPageSize);
   head_->set_value(n);
   tail_->set_value(n);
 }
