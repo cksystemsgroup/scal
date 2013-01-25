@@ -15,18 +15,6 @@ void* ds_new() {
   return static_cast<void*>(fcq);
 }
 
-bool ds_put(void *ds, uint64_t item) {
-  FlatCombiningQueue<uint64_t> *fcq =
-      static_cast<FlatCombiningQueue<uint64_t>*>(ds);
-  return fcq->enqueue(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  FlatCombiningQueue<uint64_t> *fcq =
-      static_cast<FlatCombiningQueue<uint64_t>*>(ds);
-  return fcq->dequeue(item);
-}
-
 char* ds_get_stats(void) {
   return NULL;
 }

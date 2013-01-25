@@ -12,16 +12,6 @@ void* ds_new() {
   return static_cast<void*>(ts);
 }
 
-bool ds_put(void *ds, uint64_t item) {
-  TreiberStack<uint64_t> *ts = static_cast<TreiberStack<uint64_t>*>(ds);
-  return ts->push(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  TreiberStack<uint64_t> *ts = static_cast<TreiberStack<uint64_t>*>(ds);
-  return ts->pop(item);
-}
-
 char* ds_get_stats(void) {
   return NULL;
 }

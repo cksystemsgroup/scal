@@ -16,18 +16,6 @@ void* ds_new(void) {
   return static_cast<void*>(rdq);
 }
 
-bool ds_put(void *ds, uint64_t item) {
-  RandomDequeueQueue<uint64_t> *rdq =
-      static_cast<RandomDequeueQueue<uint64_t>*>(ds);
-  return rdq->enqueue(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  RandomDequeueQueue<uint64_t> *rdq =
-      static_cast<RandomDequeueQueue<uint64_t>*>(ds);
-  return rdq->dequeue(item);
-}
-
 char* ds_get_stats(void) {
   return NULL;
 }

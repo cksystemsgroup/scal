@@ -9,24 +9,13 @@
 #include "datastructures/boundedsize_kfifo.h"
 
 DEFINE_uint64(k, 80, "k-segment size");
-DEFINE_uint64(num_segments, 1000000, "number of k-segments in the bounded-size version");
+DEFINE_uint64(num_segments, 1000000, "number of k-segments in the "
+                                     "bounded-size version");
 
 void* ds_new() {
   BoundedSizeKFifo<uint64_t> *kfifo = BoundedSizeKFifo<uint64_t>::get_aligned(
       FLAGS_k, FLAGS_num_segments, 128);
   return static_cast<void*>(kfifo);
-}
-
-bool ds_put(void *ds, uint64_t item) {
-  BoundedSizeKFifo<uint64_t> *kfifo =
-      static_cast<BoundedSizeKFifo<uint64_t>*>(ds);
-  return kfifo->enqueue(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  BoundedSizeKFifo<uint64_t> *kfifo =
-      static_cast<BoundedSizeKFifo<uint64_t>*>(ds);
-  return kfifo->dequeue(item);
 }
 
 char* ds_get_stats(void) {

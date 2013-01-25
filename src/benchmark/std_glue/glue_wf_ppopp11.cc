@@ -13,16 +13,6 @@ void* ds_new(void) {
   return static_cast<void*>(wfq);
 }
 
-bool ds_put(void *ds, uint64_t item) {
-  WaitfreeQueue<uint64_t> *wfq = static_cast<WaitfreeQueue<uint64_t>*>(ds);
-  return wfq->enqueue(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  WaitfreeQueue<uint64_t> *wfq = static_cast<WaitfreeQueue<uint64_t>*>(ds);
-  return wfq->dequeue(item);
-}
-
 char* ds_get_stats(void) {
   return NULL;
 }

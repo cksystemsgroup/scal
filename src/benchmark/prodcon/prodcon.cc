@@ -14,6 +14,7 @@
 
 #include "benchmark/common.h"
 #include "benchmark/std_glue/std_pipe_api.h"
+#include "datastructures/pool.h"
 #include "util/malloc.h"
 #include "util/operation_logger.h"
 #include "util/random.h"
@@ -114,7 +115,7 @@ int main(int argc, const char **argv) {
 }
 
 void ProdConBench::producer(void) {
-  void *ds = data_;
+  Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
   uint64_t thread_id = threadlocals_get()->thread_id;
   uint64_t item;
   // Do not use 0 as value, since there may be datastructures that do not
@@ -122,7 +123,7 @@ void ProdConBench::producer(void) {
   for (uint64_t i = 1; i <= FLAGS_operations; i++) {
     item = thread_id * FLAGS_operations + i;
     scal::StdOperationLogger::get().invoke(1);
-    if (!ds_put(ds, item)) {
+    if (!ds->put(item)) {
       // We should always be able to insert an item.
       fprintf(stderr, "%s: error: put operation failed.\n", __func__);
       abort();
@@ -133,7 +134,7 @@ void ProdConBench::producer(void) {
 }
 
 void ProdConBench::consumer(void) {
-  void *ds = data_;
+  Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
   uint64_t thread_id = threadlocals_get()->thread_id;
   // Calculate the items each consumer has to collect.
   uint64_t operations = FLAGS_producers * FLAGS_operations / FLAGS_consumers;
@@ -147,7 +148,7 @@ void ProdConBench::consumer(void) {
   bool ok;
   while (j < operations) {
     scal::StdOperationLogger::get().invoke(0);
-    ok = ds_get(ds, &ret);
+    ok = ds->get(&ret);
     scal::StdOperationLogger::get().response(ok, ret);
     calculate_pi(FLAGS_c);
     if (!ok) {

@@ -20,18 +20,9 @@ void* ds_new(void) {
   BalancerPartitionedRoundRobin *balancer =
       new BalancerPartitionedRoundRobin(FLAGS_partitions, FLAGS_p);
   DistributedQueue<uint64_t, MSQueue<uint64_t> > *sp =
-      new DistributedQueue<uint64_t, MSQueue<uint64_t> >(FLAGS_p, g_num_threads + 1, balancer);
+      new DistributedQueue<uint64_t, MSQueue<uint64_t> >(
+          FLAGS_p, g_num_threads + 1, balancer);
   return static_cast<void*>(sp);
-}
-
-bool ds_put(void *ds, uint64_t item) {
-  DistributedQueue<uint64_t, MSQueue<uint64_t> > *sp = static_cast<DistributedQueue<uint64_t, MSQueue<uint64_t> >*>(ds);
-  return sp->put(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  DistributedQueue<uint64_t, MSQueue<uint64_t> > *sp = static_cast<DistributedQueue<uint64_t, MSQueue<uint64_t> >*>(ds);
-  return sp->get(item);
 }
 
 char* ds_get_stats(void) {

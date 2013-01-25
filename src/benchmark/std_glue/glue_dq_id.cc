@@ -26,18 +26,6 @@ void* ds_new(void) {
   return static_cast<void*>(dq);
 }
 
-bool ds_put(void *ds, uint64_t item) {
-  DistributedQueue<uint64_t, MSQueue<uint64_t> > *dq =
-      static_cast<DistributedQueue<uint64_t, MSQueue<uint64_t> >*>(ds);
-  return dq->put(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  DistributedQueue<uint64_t, MSQueue<uint64_t> > *dq =
-      static_cast<DistributedQueue<uint64_t, MSQueue<uint64_t> >*>(ds);
-  return dq->get(item);
-}
-
 char* ds_get_stats(void) {
   return NULL;
 }

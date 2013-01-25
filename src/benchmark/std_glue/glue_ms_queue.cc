@@ -12,16 +12,6 @@ void* ds_new(void) {
   return static_cast<void*>(msq);
 }
 
-bool ds_put(void *ds, uint64_t item) {
-  MSQueue<uint64_t> *msq = static_cast<MSQueue<uint64_t>*>(ds);
-  return msq->enqueue(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  MSQueue<uint64_t> *msq = static_cast<MSQueue<uint64_t>*>(ds);
-  return msq->dequeue(item);
-}
-
 char* ds_get_stats(void) {
   return NULL;
 }

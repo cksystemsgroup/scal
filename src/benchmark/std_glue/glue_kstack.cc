@@ -15,16 +15,6 @@ void* ds_new() {
   return static_cast<void*>(kstack);
 }
 
-bool ds_put(void *ds, uint64_t item) {
-  KStack<uint64_t> *kstack = static_cast<KStack<uint64_t>*>(ds);
-  return kstack->push(item);
-}
-
-bool ds_get(void *ds, uint64_t *item) {
-  KStack<uint64_t> *kstack = static_cast<KStack<uint64_t>*>(ds);
-  return kstack->pop(item);
-}
-
 char* ds_get_stats(void) {
   return NULL;
 }
