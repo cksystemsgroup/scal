@@ -19,29 +19,30 @@ LDADD = @GFLAGS_LIBS@
 
 GTEST_DIR = external/googletest
 
+UTIL_OBJS = \
+        src/util/malloc.cc \
+        src/util/random.cc \
+        src/util/threadlocals.cc \
+	src/util/workloads.cc
+
 #
 # BFS graph benchmark
 #
 
 bin_PROGRAMS += bfs-single
 bfs_single_SOURCES = \
+	$(UTIL_OBJS) \
         src/benchmark/bfs/bfs_single.cc \
-        src/benchmark/bfs/graph.cc \
-        src/util/malloc.cc \
-        src/util/random.cc \
-        src/util/threadlocals.cc
+        src/benchmark/bfs/graph.cc
 
 #
 # Producer/Consumer benchmark
 #
 
 PRODCON_BASE_OBJS = \
+	$(UTIL_OBJS) \
         src/benchmark/common.cc \
-        src/benchmark/prodcon/prodcon.cc \
-        src/util/malloc.cc \
-        src/util/random.cc \
-        src/util/threadlocals.cc \
-        src/util/workloads.cc
+        src/benchmark/prodcon/prodcon.cc
 
 bin_PROGRAMS += prodcon-bskfifo
 prodcon_bskfifo_SOURCES = \
