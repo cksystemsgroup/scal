@@ -75,7 +75,8 @@ class LockBasedQueue : Queue<T> {
 };
 
 template<typename T>
-LockBasedQueue<T>::LockBasedQueue(uint64_t dequeue_mode, uint64_t dequeue_timeout) {
+LockBasedQueue<T>::LockBasedQueue(uint64_t dequeue_mode,
+                                  uint64_t dequeue_timeout) {
   global_lock_ = scal::get<pthread_mutex_t>(kPtrAlignment);
   int rc = pthread_mutex_init(global_lock_, NULL);
   check_error("pthread_mutex_init", rc);
