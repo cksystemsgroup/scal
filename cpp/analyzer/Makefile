@@ -7,7 +7,7 @@ all: analyzer
 %.o: %.cpp *.h Makefile
 	g++ ${CPPFLAGS} -c $< -o $@
 
-analyzer: analyzer.o operation.o
+analyzer: analyzer.o operation.o parser.o linearizer.o
 	g++ ${CPPFLAGS} ${LDFLAGS} $^ -o $@
 
 .PHONY: clean

@@ -13,7 +13,7 @@ class Operation {
 
     Operation();
 
-    void initialize(uint64_t start, uint64_t end, OperationType type, uint64_t value);
+    void initialize(uint64_t start, uint64_t lin_time, uint64_t end, OperationType type, uint64_t value);
 
     uint64_t id() const {
       return id_;
@@ -35,24 +35,44 @@ class Operation {
       return real_end_;
     }
 
+    uint64_t lin_time() const {
+      return lin_time_;
+    }
+
     OperationType type() const {
       return type_;
     }
 
-    uint64_t value() const {
+    int64_t value() const {
       return value_;
+    }
+
+    Operation* matching() const {
+      return matching_;
     }
 
   private:
     
-    
+    // A unique ID.
     uint64_t id_;
+    // The start time of the operation, possibly adjusted.
     uint64_t start_;
+    // The start time of the operation, as it was in the logfile.
     uint64_t real_start_;
+    // The end time of the operation, possibly adjusted.
     uint64_t end_;
+    // The end time of the operation, as it was in the logfile.
     uint64_t real_end_;
+    // The timestamp of the linearization point.
+    uint64_t lin_time_;
+    // The type of the operation, either enqueue or dequeue.
     OperationType type_;
-    uint64_t value_;
+    // The element that was inserted or removed by the operation.
+    // The value -1 indicates a null-return.
+    int64_t value_;
+    // The enqueue or dequeue operation which has the same value as this
+    // operation.
+    Operation* matching_;
 };
 
 #endif // OPERATION_H
