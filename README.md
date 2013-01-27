@@ -1,5 +1,4 @@
-Scal
-====
+# Scal
 
 The Scal framework provides implementations and benchmarks for concurrent
 objects.  The benchmarks show the trade-off between concurrent data structure
@@ -7,15 +6,13 @@ semantics and scalability.
 
 Homepage: http://scal.cs.uni-salzburg.at
 
-Dependencies
-------------
+## Dependencies
 
 * pkg-config
-* gflags
-* google-perftools
+* [gflags](https://code.google.com/p/gflags/ "gflags")
+* [google-perftools](https://code.google.com/p/gperftools/ "google-perftools")
 
-Building
---------
+## Building [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://github.com/cksystemsgroup/scal/latest)
 
 This is as easy as
 
@@ -43,8 +40,7 @@ Additional data files, such as graph files, are available as submodule
 
 The resulting files reside in `data/`.
 
-Examples
---------
+## Examples
 
 ### Producer/consumer
 
@@ -71,8 +67,7 @@ And for Distributed Queue with a 1-random balancer:
 
 Try `./prodcon-<data_structure> --help` to see the full list of available parameters.
 
-License
--------
+## License
 
 Copyright (c) 2012-2013, the Scal Project Authors.
 All rights reserved. Please see the AUTHORS file for details.
