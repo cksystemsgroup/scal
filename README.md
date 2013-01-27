@@ -44,7 +44,7 @@ The resulting files reside in `data/`.
 
 ### Producer/consumer
 
-The most common parameter are:
+The most common parameters are:
 * consumers: Number of consuming threads
 * producers: Number of producing threads
 * c: The computational workload (iterative pi calculation) between two data
