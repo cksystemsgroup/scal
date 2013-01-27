@@ -12,7 +12,7 @@ Homepage: http://scal.cs.uni-salzburg.at
 * [gflags](https://code.google.com/p/gflags/ "gflags")
 * [google-perftools](https://code.google.com/p/gperftools/ "google-perftools")
 
-## Building [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://github.com/cksystemsgroup/scal/latest)
+## Building [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://drone.io/github.com/cksystemsgroup/scal/latest)
 
 This is as easy as
 
