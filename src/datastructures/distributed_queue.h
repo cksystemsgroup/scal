@@ -59,7 +59,7 @@ bool DistributedQueue<T, P>::get(T *item) {
   size_t i;
   uint64_t thread_id = threadlocals_get()->thread_id;
   uint64_t start = balancer_->get(num_queues_, NULL, false);
-  uint64_t index;
+  size_t index;
   while (true) {
     for (i = 0; i < num_queues_; i++) {
       index = (start + i) % num_queues_;
