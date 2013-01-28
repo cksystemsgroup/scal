@@ -51,8 +51,7 @@ DistributedQueue<T, P>::DistributedQueue(
 template<typename T, class P>
 bool DistributedQueue<T, P>::put(T item) {
   uint64_t index = balancer_->get(num_queues_, NULL, true);
-  backend_[index]->put(item);
-  return true;  // ms queue is unbounded size, hence no full state
+  return backend_[index]->put(item);
 }
 
 template<typename T, class P>
