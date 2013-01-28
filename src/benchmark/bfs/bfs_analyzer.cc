@@ -14,7 +14,6 @@
 #include "util/threadlocals.h"
 #include "util/time.h"
 
-DEFINE_string(graph_file, "data/cage15.graph", "graph file for BFS");
 DEFINE_string(prealloc_size, "1g", "tread local space that is initialized");
 DEFINE_int64(root, -1, "root for BFS; -1: pseudorandom");
 
@@ -25,9 +24,15 @@ const size_t kMaxDebugLevels = 256;
 }  // namespace
 
 int main(int argc, char **argv) {
-  std::string usage("BFS graph benchmark.");
+  std::string usage("bfs-analyzer [options] graph_file");
   google::SetUsageMessage(usage);
-  google::ParseCommandLineFlags(&argc, const_cast<char***>(&argv), true);
+  uint32_t cmd_index = google::ParseCommandLineFlags(&
+      argc, const_cast<char***>(&argv), true);
+  if (cmd_index >= static_cast<uint32_t>(argc)) {
+    google::ShowUsageWithFlags(google::GetArgv0());
+    exit(EXIT_FAILURE);
+  }
+  const char *graph_file = argv[cmd_index];
 
   uint64_t tlsize = scal::human_size_to_pages(FLAGS_prealloc_size.c_str(),
                                               FLAGS_prealloc_size.size());
@@ -35,7 +40,7 @@ int main(int argc, char **argv) {
   threadlocals_init();
 
   SingleList<uint64_t> *q = new SingleList<uint64_t>();
-  Graph *g = Graph::from_graph_file(FLAGS_graph_file.c_str());
+  Graph *g = Graph::from_graph_file(graph_file);
 
   uint64_t debug_levels = 0;
   uint64_t debug_level_cnt[kMaxDebugLevels];
@@ -76,7 +81,6 @@ int main(int argc, char **argv) {
     printf("%5" PRIu64 " %10" PRIu64 "\n",
         i, debug_level_cnt[i]);
   }
-
 
   return EXIT_SUCCESS;
 }
