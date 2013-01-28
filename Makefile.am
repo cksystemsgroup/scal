@@ -120,16 +120,16 @@ prodcon_wf_ppopp12_SOURCES = \
 #
 
 external/libgtest_main.a:
-	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest_main.cc -o external/gtest_main.o
-	$(AR) -rv external/libgtest_main.a external/gtest_main.o
+	$(AM_V_GEN)$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest_main.cc -o external/gtest_main.o
+	$(AM_V_GEN)$(AR) -cr external/libgtest_main.a external/gtest_main.o
 
 external/libgtest.a:
-	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc -o external/gtest-all.o
-	$(AR) -rv external/libgtest.a external/gtest-all.o
+	$(AM_V_GEN)$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc -o external/gtest-all.o
+	$(AM_V_GEN)$(AR) -cr external/libgtest.a external/gtest-all.o
 
 gtest-clean:
-	rm -f external/gtest-all.o external/gtest_main.o
-	rm -f external/libgtest.a external/libgtest_main.a
+	$(AM_V_GEN)rm -f external/gtest-all.o external/gtest_main.o
+	$(AM_V_GEN)rm -f external/libgtest.a external/libgtest_main.a
 
 GTEST_LIBS = external/libgtest.a external/libgtest_main.a
 

@@ -1,6 +1,7 @@
 AC_INIT([Scal], 1.0)
 
 AM_INIT_AUTOMAKE([foreign subdir-objects])
+AM_SILENT_RULES([yes])
 AC_CONFIG_HEADER([config.h])
 
 : ${CFLAGS=""}
