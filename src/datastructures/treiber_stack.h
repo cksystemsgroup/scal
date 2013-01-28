@@ -58,14 +58,14 @@ TreiberStack<T>::TreiberStack() {
 
 template<typename T>
 bool TreiberStack<T>::push(T item) {
-  Node *n = scal::tlget<Node>(scal::kCachePrefetch);
+  Node *n = scal::tlget<Node>(0);
   n->data = item;
   AtomicPointer<Node*> top_old;
   AtomicPointer<Node*> top_new;
+  top_new.weak_set_value(n);
   do {
     top_old = *top_;
     n->next.weak_set_value(top_old.value());
-    top_new.weak_set_value(n);
     top_new.weak_set_aba(top_old.aba() + 1);
   } while (!top_->cas(top_old, top_new));
   return true;
