@@ -5,9 +5,9 @@
 #ifndef SCAL_UTIL_ATOMIC_VALUE64_NO_OFFSET_H_
 #define SCAL_UTIL_ATOMIC_VALUE64_NO_OFFSET_H_
 
-#define __STDC_LIMIT_MACROS
-
 #include <stdint.h>
+
+#include <limits.h>
 
 #include "util/atomic_value64_base.h"
 
@@ -40,7 +40,7 @@ class AtomicValue64NoOffset : public AtomicValue64Base<T> {
   inline AtomicValue64NoOffset(const AtomicValue64NoOffset<T> &cpy)
       : AtomicValue64Base<T>(cpy) {}
 
-  inline AtomicValue64NoOffset(const volatile AtomicValue64NoOffset<T> &cpy)
+  inline AtomicValue64NoOffset(volatile const AtomicValue64NoOffset<T> &cpy)
       : AtomicValue64Base<T>(cpy) {}
 
   inline AtomicValue64NoOffset<T>& operator=(
@@ -79,6 +79,7 @@ template <typename T>
 const T AtomicValue64NoOffset<T>::kValueMin = (T)1;
 
 template <typename T>
-const T AtomicValue64NoOffset<T>::kValueMax = (T)(UINT64_MAX >> 4);
+const T AtomicValue64NoOffset<T>::kValueMax = 
+    static_cast<T>(std::numeric_limits<uint64_t>::max() >> 4);
 
 #endif  // SCAL_UTIL_ATOMIC_VALUE64_NO_OFFSET_H_

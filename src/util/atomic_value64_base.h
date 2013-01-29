@@ -5,8 +5,6 @@
 #ifndef SCAL_UTIL_ATOMIC_VALUE64_BASE_H_
 #define SCAL_UTIL_ATOMIC_VALUE64_BASE_H_
 
-#define __STDC_LIMIT_MACROS
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -31,7 +29,7 @@ class AtomicValue64Base {
     memory_ = const_cast<AtomicValue64Base<T>&>(cpy).raw();
   }
 
-  inline AtomicValue64Base(const volatile AtomicValue64Base<T> &cpy) {
+  inline AtomicValue64Base(volatile const AtomicValue64Base<T> &cpy) {
     memory_ = const_cast<AtomicValue64Base<T>&>(cpy).raw();
   }
 
@@ -42,7 +40,7 @@ class AtomicValue64Base {
   }
 
   inline AtomicValue64Base<T>& operator=(
-      const volatile AtomicValue64Base<T> &rhs) volatile {
+      volatile const AtomicValue64Base<T> &rhs) volatile {
     memory_ = const_cast<AtomicValue64Base<T>&>(rhs).raw();
     return const_cast<AtomicValue64Base<T>&>(*this);
   }
@@ -57,7 +55,8 @@ class AtomicValue64Base {
 
   inline void set_aba(AtomicAba aba) volatile {
     uint64_t new_memory = memory_;
-    new_memory &= (UINT64_MAX - kAbaMax);  // Clear out ABA
+    // Clear out ABA
+    new_memory &= (std::numeric_limits<uint64_t>::max() - kAbaMax); 
     new_memory |= (aba & kAbaMax);  // Add the new (masked) ABA
     memory_ = new_memory;
   }
@@ -74,8 +73,8 @@ class AtomicValue64Base {
     set_aba(aba);
   }
 
-  inline bool cas(AtomicValue64Base<T> &expected,
-                  AtomicValue64Base<T> &newcp) volatile {
+  inline bool cas(const AtomicValue64Base<T> &expected,
+                  const AtomicValue64Base<T> &newcp) volatile {
     if (memory_ == expected.memory_ &&  // Filter out obvious fails.
         __sync_bool_compare_and_swap(&memory_,
                                      expected.memory_,

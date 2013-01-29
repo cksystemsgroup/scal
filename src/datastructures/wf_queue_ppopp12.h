@@ -13,6 +13,10 @@
 // pointer's reference counter (head_->aba()) is used by the algorithm to stamp
 // the dequeueing thread.  The problem could be solved by using the approach of
 // their PPoPP'11 paper, where deq_tid is stored in the node.
+//
+// We also cannot use the queue with more than kAbaMax threads, which is a
+// problem when used with single-word CAS, where the last few bits represent the
+// ABA counter.
 
 #ifndef SCAL_DATASTRUCTURES_WF_QUEUE_PPOPP12_H_
 #define SCAL_DATASTRUCTURES_WF_QUEUE_PPOPP12_H_
@@ -32,7 +36,7 @@ namespace wf_ppopp12_details {
 template<typename T>
 struct Node {
   // Marks a node as free for other threads.
-  static const uint64_t kTidNotSet = AtomicValue<uint64_t>::kValueMax - 1;
+  static const uint64_t kTidNotSet = AtomicValue<uint64_t>::kAbaMax;
 
   Node() {
     init((T)NULL);

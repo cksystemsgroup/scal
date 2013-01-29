@@ -5,9 +5,9 @@
 #ifndef SCAL_UTIL_ATOMIC_VALUE64_OFFSET_H_
 #define SCAL_UTIL_ATOMIC_VALUE64_OFFSET_H_
 
-#define __STDC_LIMIT_MACROS
-
 #include <stdint.h>
+
+#include <limits>
 
 #include "util/atomic_value64_base.h"
 
@@ -40,7 +40,7 @@ class AtomicValue64Offset : public AtomicValue64Base<T> {
   inline AtomicValue64Offset(const AtomicValue64Offset<T> &cpy)
       : AtomicValue64Base<T>(cpy) {}
 
-  inline AtomicValue64Offset(const volatile AtomicValue64Offset<T> &cpy)
+  inline AtomicValue64Offset(volatile const AtomicValue64Offset<T> &cpy)
       : AtomicValue64Base<T>(cpy) {}
 
   inline AtomicValue64Offset<T>& operator=(
@@ -56,11 +56,13 @@ class AtomicValue64Offset : public AtomicValue64Base<T> {
   }
 
   inline T value(void) const volatile {
-    return (T)(this->raw() & (UINT64_MAX - AtomicValue64Base<T>::kAbaMax));
+    return (T)(this->raw() &
+        (std::numeric_limits<uint64_t>::max() - AtomicValue64Base<T>::kAbaMax));
   }
 
   inline void set_value(T value) volatile {
-    uint64_t new_value = (uint64_t)value & (UINT64_MAX - kAbaMax);
+    uint64_t new_value = (uint64_t)value & 
+        (std::numeric_limits<uint64_t>::max() - kAbaMax);
     uint64_t new_memory = this->memory_;
     new_memory &= kAbaMax;
     new_memory |= new_value;
@@ -79,6 +81,7 @@ template <typename T>
 const T AtomicValue64Offset<T>::kValueMin = (T)(1 << 4);
 
 template <typename T>
-const T AtomicValue64Offset<T>::kValueMax = (T)(UINT64_MAX);
+const T AtomicValue64Offset<T>::kValueMax = 
+    static_cast<T>(std::numeric_limits<uint64_t>::max());
 
 #endif  // SCAL_UTIL_ATOMIC_VALUE64_OFFSET_H_
