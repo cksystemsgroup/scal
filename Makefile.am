@@ -5,7 +5,7 @@ TESTS =
 
 AM_CPPFLAGS = -Werror -mcx16 -m64  -std=c++0x \
         @CC_OPTIMIZATION@ \
-        -I./src \
+        -I${top_srcdir}/src \
         -ffast-math \
         -fno-builtin-malloc \
         -fno-builtin-calloc \
@@ -19,10 +19,58 @@ LDADD = @GFLAGS_LIBS@
 
 GTEST_DIR = external/googletest
 
+DATASTRUCTURE_INCLUDES = \
+	src/datastructures/balancer_1random.h \
+	src/datastructures/balancer.h \
+	src/datastructures/balancer_id.h \
+	src/datastructures/balancer_partrr.h \
+	src/datastructures/boundedsize_kfifo.h \
+	src/datastructures/distributed_queue.h \
+	src/datastructures/distributed_queue_interface.h \
+	src/datastructures/flatcombining_queue.h \
+	src/datastructures/kstack.h \
+	src/datastructures/lockbased_queue.h \
+	src/datastructures/ms_queue.h \
+	src/datastructures/pool.h \
+	src/datastructures/queue.h \
+	src/datastructures/random_dequeue_queue.h \
+	src/datastructures/single_list.h \
+	src/datastructures/stack.h \
+	src/datastructures/treiber_stack.h \
+	src/datastructures/unboundedsize_kfifo.h \
+	src/datastructures/wf_queue_ppopp11.h \
+	src/datastructures/wf_queue_ppopp12.h 
+
+noinst_HEADERS = \
+	$(DATASTRUCTURE_INCLUDES) \
+	src/benchmark/common.h \
+	src/benchmark/std_glue/std_pipe_api.h \
+	src/util/atomic_value.h \
+	src/util/atomic_value128.h \
+	src/util/atomic_value64_base.h \
+	src/util/atomic_value64_offset.h \
+	src/util/atomic_value64_no_offset.h
+
 UTIL_OBJS = \
+	src/util/atomic_value128.h \
+	src/util/atomic_value128_unittest-malloc.o \
+	src/util/atomic_value64_base.h \
+	src/util/atomic_value64_no_offset.h \
+	src/util/atomic_value64_offset.h \
+	src/util/atomic_value64_unittest-malloc.o \
+	src/util/atomic_value.h \
+	src/util/barrier.h \
+	src/util/bitmap.h \
+	src/util/malloc.h \
         src/util/malloc.cc \
+        src/util/operation_logger.h \
+        src/util/platform.h \
+        src/util/random.h \
         src/util/random.cc \
+        src/util/threadlocals.h \
         src/util/threadlocals.cc \
+	src/util/time.h \
+	src/util/workloads.h \
 	src/util/workloads.cc
 
 #
@@ -33,12 +81,14 @@ bin_PROGRAMS += bfs-analyzer
 bfs_analyzer_SOURCES = \
 	$(UTIL_OBJS) \
         src/benchmark/bfs/bfs_analyzer.cc \
+	src/benchmark/bfs/graph.h \
         src/benchmark/bfs/graph.cc
 
 bin_PROGRAMS += bfs-sequential
 bfs_sequential_SOURCES = \
 	$(UTIL_OBJS) \
         src/benchmark/bfs/bfs_sequential.cc \
+	src/benchmark/bfs/graph.h \
         src/benchmark/bfs/graph.cc
 
 #
@@ -133,12 +183,20 @@ gtest-clean:
 
 GTEST_LIBS = external/libgtest.a external/libgtest_main.a
 
-TEST_CPPFLAGS = -Wall -mcx16 -m64 -std=c++0x
+TEST_CPPFLAGS = -Werror -mcx16 -m64 -std=c++0x \
+	@CC_OPTIMIZATION@ \
+        -I${top_srcdir}/src \
+        -ffast-math \
+        -fno-builtin-malloc \
+        -fno-builtin-calloc \
+        -fno-builtin-realloc \
+        -fno-builtin-free \
+        -fno-omit-frame-pointer \
+	@GFLAGS_CFLAGS@
 
 TESTS += atomic_value128_unittest
 atomic_value128_unittest_CPPFLAGS = \
 	$(TEST_CPPFLAGS) \
-        -I./src \
         -I$(GTEST_DIR)/include
 atomic_value128_unittest_LDADD = \
         @GFLAGS_LIBS@ \
@@ -150,7 +208,6 @@ atomic_value128_unittest_SOURCES = \
 TESTS += atomic_value64_unittest
 atomic_value64_unittest_CPPFLAGS = \
 	$(TEST_CPPFLAGS) \
-        -I./src \
         -I$(GTEST_DIR)/include
 atomic_value64_unittest_LDADD = \
         @GFLAGS_LIBS@ \
