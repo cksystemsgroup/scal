@@ -14,6 +14,8 @@ void initialize(Operations* operations, Operation** ops, int num_ops);
 Node* linearize_remove_ops(Operations* operations);
 Node* linearize_insert_ops(Operations* operations);
 void next_order(Order** order, Operation* operation, uint64_t* next_index);
+Order** merge_linearizations(Node* insert_linearization, 
+    Node* remove_linearization, int num_ops);
 
 int compare_operations_by_start_time(const void* left, const void* right) {
   return (*(Node**) left)->operation->start() > (*(Node**) right)->operation->start();

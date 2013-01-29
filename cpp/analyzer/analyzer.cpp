@@ -10,7 +10,7 @@ void print_op(Operation* op) {
   if (op->type() == Operation::INSERT) {
     printf("enqueue %"PRId64"\n", op->value());
   } else {
-    printf("        %"PRId64" dequeue\n", op->value());
+    printf("              %"PRId64" dequeue\n", op->value());
   } 
 }
 
