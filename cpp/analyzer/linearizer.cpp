@@ -78,18 +78,23 @@ Order** linearize(Operation** ops, int num_ops) {
 
 }
 
-int get_insert_costs(Operations* operations, Node* insert_op) {
+int get_insert_costs(Operations* operations, Node* insert_op, 
+    int maximal_costs, uint64_t first_end, uint64_t* selectable_bound) {
 
   assert (insert_op != NULL);
   assert (insert_op->matching_op != NULL);
 
-  int costs = insert_op->matching_op->order;
+  int costs = maximal_costs;
   Node* next_op = insert_op->next;
   while (next_op != operations->insert_list &&
       next_op->operation->start() <= insert_op->operation->end()) {
 
     if (next_op->matching_op->order < costs) {
       costs = next_op->matching_op->order;
+      if (next_op->operation->start() > first_end) {
+        *selectable_bound =next_op->operation->start();
+        return costs;
+      }
     }
     next_op = next_op->next;
   }
@@ -126,51 +131,60 @@ Node* linearize_insert_ops(Operations* operations) {
     Node* op = operations->insert_list->next;
     uint64_t first_end = op->operation->end();
 
-    Node* maximal_costs_op = op;
-    int maximal_costs = -1;
-
-    Node* minimal_order_op = op;
     int minimal_order = INT_MAX;
 
+    Node* tmp = op;
+    // Calculate the end of the first overlap group.
+    while (tmp != operations->insert_list && tmp->operation->start() <= first_end) {
+
+      if (tmp->operation->end() < first_end) {
+        first_end = tmp->operation->end();
+      }
+
+      if (tmp->matching_op->order < minimal_order) {
+        minimal_order = tmp->matching_op->order;
+      }
+
+      tmp = tmp->next;
+    }
+
     // Selectable bound: operations which respond after the selectable bound
-    // cannot be selected.
- //   uint64_t selectable_bound = (uint64_t)-1;
+    // cannot be selected. The selectable bound is the invocation of the first
+    // operation after the first overlap group whose matching remove operation
+    // precedes all remove which match with an insert operation in the first
+    // overlap group.
+    uint64_t selectable_bound = (uint64_t)-1;
 
     // There is no need to calculate the costs of operations which respond
     // before the last_end because its costs cannot be lower than the costs of
     // already calculated operations.
-//    uint64_t last_end = op->operation->end;
+    uint64_t last_end = 0;
 
-    // Only operations which start before the first remove operation ends are
-    // within the first overlap group.
+    Node* maximal_costs_op = op;
+    int maximal_costs = -1;
+
     while (op != operations->insert_list && op->operation->start() <= first_end) {
+    
+      if (op->operation->end() < selectable_bound) {
 
-      if (op->operation->end() < first_end) {
-        first_end = op->operation->end();
+        if (op->operation->end() > last_end) {
+        
+          last_end = op->operation->end();
+          int costs = get_insert_costs(operations, op, minimal_order,
+              first_end, &selectable_bound);
+
+          if (costs > maximal_costs) {
+
+            maximal_costs = costs;
+            maximal_costs_op = op;
+          } else if (costs == maximal_costs &&
+              op->matching_op->order < maximal_costs_op->matching_op->order) {
+
+            maximal_costs_op = op;
+          }
+        }
       }
-
-      int costs = get_insert_costs(operations, op);
-
-      if (costs > maximal_costs) {
-
-        maximal_costs = costs;
-        maximal_costs_op = op;
-      } else if (costs == maximal_costs &&
-          op->matching_op->order < maximal_costs_op->matching_op->order) {
-
-        maximal_costs_op = op;
-      }
-
-      if (op->matching_op->order < minimal_order) {
-        minimal_order = op->matching_op->order;
-        minimal_order_op = op;
-      }
-
       op = op->next;
-    }
-
-    if (minimal_order < maximal_costs) {
-      maximal_costs_op = minimal_order_op;
     }
 
     remove_from_list(maximal_costs_op);

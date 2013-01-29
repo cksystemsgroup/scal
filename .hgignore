@@ -1,3 +1,5 @@
+cpp/analyzer/.*\.o
+cpp/analyzer/analyzer
 cpp/verifier/.*\.o
 cpp/verifier/test
 cpp/verifier/analyze_semantics

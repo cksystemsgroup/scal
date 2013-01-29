@@ -1,5 +1,5 @@
-CPPFLAGS = -Wall -Werror -ggdb
-# CPPFLAGS = -Wall -Werror -03
+#CPPFLAGS = -Wall -Werror -ggdb
+CPPFLAGS = -Wall -Werror -O3
 LDFLAGS = 
 
 all: analyzer
