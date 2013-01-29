@@ -34,7 +34,7 @@ struct Node {
 }  // namespace ms_details
 
 template<typename T>
-class MSQueue : public DistributedQueueInterface<T>, public Queue<T> {
+class MSQueue : public Queue<T>, public DistributedQueueInterface<T> {
  public:
   /*
    * Correct size would need to check consistency of state and fix tail ptr.

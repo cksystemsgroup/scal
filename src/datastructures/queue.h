@@ -13,11 +13,11 @@ class Queue : public Pool<T> {
   virtual bool enqueue(T item) = 0;
   virtual bool dequeue(T *item) = 0;
 
-  inline bool put(T item) {
+  virtual inline bool put(T item) {
     return enqueue(item);
   }
 
-  inline bool get(T *item) {
+  virtual inline bool get(T *item) {
     return dequeue(item);
   }
 };
