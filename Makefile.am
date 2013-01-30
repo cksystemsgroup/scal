@@ -176,19 +176,7 @@ gtest/libgtest_main.a: gtest
 
 gtest/libgtest.a: gtest
 
-GTEST_DIR = external/googletest
-
-external/libgtest_main.a:
-	$(AM_V_GEN)$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest_main.cc -o external/gtest_main.o
-	$(AM_V_GEN)$(AR) -cr external/libgtest_main.a external/gtest_main.o
-
-external/libgtest.a:
-	$(AM_V_GEN)$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc -o external/gtest-all.o
-	$(AM_V_GEN)$(AR) -cr external/libgtest.a external/gtest-all.o
-
 gtest-clean:
-	$(AM_V_GEN)rm -f external/gtest-all.o external/gtest_main.o
-	$(AM_V_GEN)rm -f external/libgtest.a external/libgtest_main.a
 	$(AM_V_GEN)rm -fr gtest
 
 GTEST_LIBS = gtest/libgtest.a gtest/libgtest_main.a
@@ -203,8 +191,6 @@ TEST_CPPFLAGS = -Werror -mcx16 -m64 -std=c++0x \
         -fno-builtin-free \
         -fno-omit-frame-pointer \
 	@GFLAGS_CFLAGS@
-
-#-I$(GTEST_DIR)/include
 
 TESTS += atomic_value128_unittest
 atomic_value128_unittest_CPPFLAGS = \
