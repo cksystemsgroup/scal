@@ -9,6 +9,8 @@ Homepage: http://scal.cs.uni-salzburg.at
 ## Dependencies
 
 * pkg-config
+* cmake
+* [googletest](https://code.google.com/p/googletest "googletest")
 * [gflags](https://code.google.com/p/gflags/ "gflags")
 * [google-perftools](https://code.google.com/p/gperftools/ "google-perftools")
 
@@ -16,8 +18,6 @@ Homepage: http://scal.cs.uni-salzburg.at
 
 This is as easy as
 
-    git submodule init
-    git submodule update external/googletest
     ./autogen.sh
     ./configure
     make
@@ -36,6 +36,7 @@ tests can be performed after building the framework.
 
 Additional data files, such as graph files, are available as submodule
 
+    git submodule init
     git submodule update data
 
 The resulting files reside in `data/`.
