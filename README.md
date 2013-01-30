@@ -14,7 +14,7 @@ Homepage: http://scal.cs.uni-salzburg.at
 * [gflags](https://code.google.com/p/gflags/ "gflags")
 * [google-perftools](https://code.google.com/p/gperftools/ "google-perftools")
 
-On Ubuntu (>= 12.04) based systems:
+On Ubuntu (&ge; 12.04) based systems:
 
     sudo apt-get install google-perftools libgoogle-perftools-dev cmake libgtest-dev
     wget https://gflags.googlecode.com/files/libgflags0_2.0-1_amd64.deb
@@ -22,7 +22,7 @@ On Ubuntu (>= 12.04) based systems:
     sudo dpkg -i libgflags0_2.0-1_amd64.deb
     sudo dpkg -i libgflags-dev_2.0-1_amd64.deb
 
-A similar script is executed on our [continuous integration test.](https://drone.io/github.com/cksystemsgroup/scal/admin).
+A similar script is executed on our [continuous integration test.](https://drone.io/github.com/cksystemsgroup/scal/admin)
 
 ## Building [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://drone.io/github.com/cksystemsgroup/scal/latest)
 
