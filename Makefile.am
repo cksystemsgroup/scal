@@ -55,7 +55,6 @@ UTIL_OBJS = \
 	src/util/atomic_value64_base.h \
 	src/util/atomic_value64_no_offset.h \
 	src/util/atomic_value64_offset.h \
-	src/util/atomic_value64_unittest-malloc.o \
 	src/util/atomic_value.h \
 	src/util/barrier.h \
 	src/util/bitmap.h \
@@ -177,7 +176,7 @@ gtest/libgtest_main.a: gtest
 gtest/libgtest.a: gtest
 
 gtest-clean:
-	$(AM_V_GEN)rm -fr gtest
+	$(AM_V_GEN)rm -rf gtest
 
 GTEST_LIBS = gtest/libgtest.a gtest/libgtest_main.a
 
