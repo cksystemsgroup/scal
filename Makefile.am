@@ -17,8 +17,6 @@ AM_CPPFLAGS = -Werror -mcx16 -m64  -std=c++0x \
 AM_LDFLAGS = -Wl,--as-needed 
 LDADD = @GFLAGS_LIBS@
 
-GTEST_DIR = external/googletest
-
 DATASTRUCTURE_INCLUDES = \
 	src/datastructures/balancer_1random.h \
 	src/datastructures/balancer.h \
@@ -169,6 +167,17 @@ prodcon_wf_ppopp12_SOURCES = \
 # Tests -- currenctly only the atomic containers
 #
 
+gtest:
+	$(AM_V_GEN)mkdir -p gtest
+	cd gtest ; cmake /usr/src/gtest
+	$(AM_V_GEN)make -C gtest all
+
+gtest/libgtest_main.a: gtest
+
+gtest/libgtest.a: gtest
+
+GTEST_DIR = external/googletest
+
 external/libgtest_main.a:
 	$(AM_V_GEN)$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest_main.cc -o external/gtest_main.o
 	$(AM_V_GEN)$(AR) -cr external/libgtest_main.a external/gtest_main.o
@@ -180,8 +189,9 @@ external/libgtest.a:
 gtest-clean:
 	$(AM_V_GEN)rm -f external/gtest-all.o external/gtest_main.o
 	$(AM_V_GEN)rm -f external/libgtest.a external/libgtest_main.a
+	$(AM_V_GEN)rm -fr gtest
 
-GTEST_LIBS = external/libgtest.a external/libgtest_main.a
+GTEST_LIBS = gtest/libgtest.a gtest/libgtest_main.a
 
 TEST_CPPFLAGS = -Werror -mcx16 -m64 -std=c++0x \
 	@CC_OPTIMIZATION@ \
@@ -194,10 +204,11 @@ TEST_CPPFLAGS = -Werror -mcx16 -m64 -std=c++0x \
         -fno-omit-frame-pointer \
 	@GFLAGS_CFLAGS@
 
+#-I$(GTEST_DIR)/include
+
 TESTS += atomic_value128_unittest
 atomic_value128_unittest_CPPFLAGS = \
-	$(TEST_CPPFLAGS) \
-        -I$(GTEST_DIR)/include
+	$(TEST_CPPFLAGS)
 atomic_value128_unittest_LDADD = \
         @GFLAGS_LIBS@ \
         $(GTEST_LIBS) 
@@ -205,15 +216,24 @@ atomic_value128_unittest_SOURCES = \
         src/test/atomic_value128_unittest.cc \
         src/util/malloc.cc
 
-TESTS += atomic_value64_unittest
-atomic_value64_unittest_CPPFLAGS = \
-	$(TEST_CPPFLAGS) \
-        -I$(GTEST_DIR)/include
-atomic_value64_unittest_LDADD = \
+TESTS += atomic_value64_no_offset_unittest
+atomic_value64_no_offset_unittest_CPPFLAGS = \
+	$(TEST_CPPFLAGS)
+atomic_value64_no_offset_unittest_LDADD = \
         @GFLAGS_LIBS@ \
         $(GTEST_LIBS) 
-atomic_value64_unittest_SOURCES = \
-        src/test/atomic_value64_unittest.cc \
+atomic_value64_no_offset_unittest_SOURCES = \
+        src/test/atomic_value64_no_offset_unittest.cc \
+        src/util/malloc.cc
+
+TESTS += atomic_value64_offset_unittest
+atomic_value64_offset_unittest_CPPFLAGS = \
+	$(TEST_CPPFLAGS)
+atomic_value64_offset_unittest_LDADD = \
+        @GFLAGS_LIBS@ \
+        $(GTEST_LIBS) 
+atomic_value64_offset_unittest_SOURCES = \
+        src/test/atomic_value64_offset_unittest.cc \
         src/util/malloc.cc
 
 noinst_PROGRAMS += $(TESTS)

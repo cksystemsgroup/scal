@@ -17,9 +17,9 @@ typedef uint64_t AtomicRaw;
 template<typename T>
 class AtomicValue64Base {
  public:
-  static const uint8_t kAbaMin = 0;
-  static const uint8_t kAbaMax = 0xF;
-  static const uint8_t kAbaBits = 4;
+  static const AtomicAba kAbaMin = 0;
+  static const AtomicAba kAbaMax = 0x7;
+  static const uint8_t kAbaBits = 3;
 
   inline AtomicValue64Base(void) {
     memory_ = 0;

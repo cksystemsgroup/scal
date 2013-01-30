@@ -14,12 +14,12 @@
 template<typename T>
 class AtomicValue64Offset : public AtomicValue64Base<T> {
  public:
-  static const uint64_t kAbaMin = 0;
-  static const uint64_t kAbaMax = 0xF;
-  static const uint8_t  kAbaBits = 4;
-  static const T        kValueMin;
-  static const T        kValueMax;
-  static const uint8_t  kValueBits = 60;
+  static const AtomicAba  kAbaMin = 0;
+  static const AtomicAba  kAbaMax = 0x7;
+  static const uint8_t    kAbaBits = 3;
+  static const T          kValueMin;
+  static const T          kValueMax;
+  static const uint8_t    kValueBits = 61;
 
   // deprecated
   static AtomicValue64Offset<T>* get_aligned(uint64_t alignment) {
@@ -78,10 +78,11 @@ class AtomicValue64Offset : public AtomicValue64Base<T> {
 };
 
 template <typename T>
-const T AtomicValue64Offset<T>::kValueMin = (T)(1 << 4);
+const T AtomicValue64Offset<T>::kValueMin =
+    static_cast<T>(1 << AtomicValue64Offset<T>::kAbaBits);
 
 template <typename T>
 const T AtomicValue64Offset<T>::kValueMax = 
-    static_cast<T>(std::numeric_limits<uint64_t>::max());
+    static_cast<T>(std::numeric_limits<uint64_t>::max() - kAbaMax);
 
 #endif  // SCAL_UTIL_ATOMIC_VALUE64_OFFSET_H_
