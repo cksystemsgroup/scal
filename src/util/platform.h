@@ -10,9 +10,10 @@
 
 namespace scal {
 
-const uint64_t kPageSize = 4096;
-const uint64_t kCachelineSize = 64;
-const uint64_t kCachePrefetch = 128;
+const uint64_t  kPageSize = 4096;
+const uint64_t  kCachelineSize = 64;
+const uint64_t  kCachePrefetch = 128;
+const size_t    kWordSize = sizeof(void*);
 
 // For sake of simplicity: Assume posix with optional _SC_NPROCESSORS_ONLN
 // variable.
