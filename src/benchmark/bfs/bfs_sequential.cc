@@ -49,20 +49,19 @@ int main(int argc, char **argv) {
     root_index = static_cast<uint64_t>(FLAGS_root);
   }
 
-  Vertex *neighbor;
-  Vertex *cur_vertex = g->get(root_index);
-  cur_vertex->distance = 0;
+  Vertex& cur_vertex = g->get(root_index);
+  cur_vertex.distance = 0;
   q->enqueue(root_index);
 
   uint64_t start_time = get_utime();
   uint64_t vertex_index;
   while (q->dequeue(&vertex_index)) {
     cur_vertex = g->get(vertex_index);  
-    for (uint64_t i = 0; i < cur_vertex->len_neighbors; i++) {
-      neighbor = g->get(cur_vertex->neighbors[i]);
-      if (neighbor->distance == Vertex::no_distance) {
-        neighbor->distance = cur_vertex->distance + 1;
-        q->enqueue(cur_vertex->neighbors[i]);
+    for (uint64_t i = 0; i < cur_vertex.len_neighbors; i++) {
+      Vertex& neighbor = g->get(cur_vertex.neighbors[i]);
+      if (neighbor.distance == Vertex::no_distance) {
+        neighbor.distance = cur_vertex.distance + 1;
+        q->enqueue(cur_vertex.neighbors[i]);
       }
     }
   }

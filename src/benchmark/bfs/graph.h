@@ -25,8 +25,8 @@ class Graph {
     return num_vertices_;
   }
 
-  inline Vertex* get(uint64_t index) {
-    return vertices_[index];
+  inline Vertex& get(uint64_t index) {
+    return *vertices_[index];
   }
 
  private:
