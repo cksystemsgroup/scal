@@ -7,6 +7,45 @@
 #include "linearizer.h"
 #include <limits.h>
 
+struct Node {
+  // The operation stored in this node.
+  Operation* operation;
+  // The operation matching the operation stored in this node, e.g. an insert
+  // operation if this node contains a remove operation. The matching operation
+  // of a null-remove operation is the remove operation itself.
+  Node* matching_op;
+  // The next node in the doubly-linked list.
+  Node* next;
+  // The node which precedes this node in the doubly-linked list.
+  Node* prev;
+  // The costs of this operation calculated by the cost function.
+  int costs;
+  // The order in which this node was selected, i.e. removed from the
+  // doulby-linked list.
+  int order;
+  // The first response of any operation in the first overlap group at the time
+  // this operation was selected.
+  uint64_t latest_lin_point;
+  // This flag indicates that the matching insert operations has already been
+  // added to the linearization, only necessary for remove operations.
+  bool insert_added;
+};
+  
+struct Operations {
+  // Array of insert operations
+  Node** insert_ops;
+  // Doubly-linked list of insert operations.
+  Node* insert_list;
+  // Number of insert operations.
+  int num_insert_ops;
+  // Array of remove operations.
+  Node** remove_ops;
+  // Doubly-linked list of remove operations.
+  Node* remove_list;
+  // Number of remove operations
+  int num_remove_ops;
+};
+
 void match_operations(Operations* operations);
 void create_insert_and_remove_array(Operations* operations, Operation** ops, int num_ops);
 void create_doubly_linked_lists(Node* head, Node** ops, int num_ops);
@@ -299,20 +338,38 @@ Node* linearize_remove_ops(Operations* operations) {
     // within the first overlap group.
     while (op != operations->remove_list && op->operation->start() <= first_end) {
 
+      int minimal_costs = -1;
       if (op->operation->end() < first_end) {
         first_end = op->operation->end();
       }
 
-      int costs = get_remove_costs(operations, op, last_selected, true);
-      if (costs < minimal_costs) {
-
-        minimal_costs = costs;
-        minimal_costs_op = op;
-      } else if (costs == minimal_costs &&
-          op->matching_op->operation->start() <
+      if (op == minimal_costs_op) {
+        // This op is already the minimal_costs_op.
+      } else if (op->matching_op->operation->start() > 
+          minimal_costs_op->matching_op->operation->end()) {
+        // This op cannot have lower costs than the minimal_costs_op.
+      } else if (op->matching_op->operation->end() <
           minimal_costs_op->matching_op->operation->start()) {
-
         minimal_costs_op = op;
+        minimal_costs = -1;
+        // This op has definitely lower costs than the minimal_costs_op.
+      } else {
+
+        if (minimal_costs == -1) {
+          // We have not yet calculated the minimal costs.
+          minimal_costs = get_remove_costs(operations, minimal_costs_op, NULL, false);
+        }
+        int costs = get_remove_costs(operations, op, last_selected, false);
+        if (costs < minimal_costs) {
+
+          minimal_costs = costs;
+          minimal_costs_op = op;
+        } else if (costs == minimal_costs &&
+            op->matching_op->operation->start() <
+            minimal_costs_op->matching_op->operation->start()) {
+
+          minimal_costs_op = op;
+        }
       }
       op = op->next;
     }
@@ -343,7 +400,6 @@ Node* linearize_remove_ops(Operations* operations) {
     last_selected = minimal_costs_op;
     x++;
     total_costs += minimal_costs;
-
   }
 
   delete(operations->remove_list);
