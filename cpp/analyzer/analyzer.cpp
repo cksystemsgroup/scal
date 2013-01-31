@@ -27,8 +27,11 @@ int main(int argc, char** argv) {
 
   Operation** ops = parse(filename, num_ops);
   
-  Order** linearization = linearize(ops, num_ops);
-
+  Order** linearization;
+//  linearization = linearize(ops, num_ops);
+//  linearization = linearize_by_invocation(ops, num_ops);
+  linearization = linearize_by_invocation(ops, num_ops);
+  linearization = linearize_by_min_sum(ops, num_ops, linearization);
   for (int i = 0; i < 50; i++) {
     print_op(linearization[i]->operation);
   }
