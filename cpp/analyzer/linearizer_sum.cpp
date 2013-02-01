@@ -34,7 +34,7 @@ struct Node {
   // added to the linearization, only necessary for remove operations.
   bool insert_added;
 };
-  
+
 struct Operations {
   // Array of insert operations
   Node** insert_ops;
@@ -56,7 +56,7 @@ struct Operations {
   int num_remove_ops;
 };
 
-void match_operations(Node** insert_ops, int num_insert_ops, 
+void match_operations(Node** insert_ops, int num_insert_ops,
                       Node** remove_ops, int num_remove_ops);
 void create_insert_and_remove_array(Operations* operations, Operation** ops, int num_ops);
 void create_doubly_linked_lists(Node* head, Node** ops, int num_ops);
@@ -75,6 +75,10 @@ int compare_operations_by_value(const void* left, const void* right) {
   return (*(Node**) left)->operation->value() > (*(Node**) right)->operation->value();
 }
 
+int compare_operations_by_order(const void* left, const void* right) {
+  return (*(Node**) left)->order > (*(Node**) right)->order;
+}
+
 void remove_from_list(Node* node) {
   node->prev->next = node->next;
   node->next->prev = node->prev;
@@ -90,27 +94,96 @@ void insert_to_list(Node* node, Node* predecessor) {
 }
 
 
-bool is_selectable_remove (Operations* operations, Node* remove_op) {
+bool is_selectable_insert (Operations* operations, Node* insert_op, uint64_t first_end) {
 
-  // 1.) Find the operation remove_op in the order.
-  // 2.) Iterate backwards in the order as long as the operation op overlaps with
-  //      remove_op:
-  //   a.) If the insert operation matching op is strictly preceded by insert_op
-  //       increase left_index by one.
-  //   b.) If the insert operation matching op strictly precedes insert_op
-  //       and op is not within the first overlap group increase right_index by one.
-  //   c.) If right_index >= left_index then break and return false;
-  // 3.) return false.
+  int left_index = 0;
+  int right_index = 0;
 
-  // What we need:
-  //   We need to find the insert operation matching a remove operation in the
-  //   order.
-  //
-  //   We need to remove selected operations from the order.
-  //
-  //   We need to iterate over the order.
+  Node* op = operations->insert_order->next;
+
+  while (op != operations->insert_order) {
+
+    if (op == insert_op) {
+      // Do nothing.
+    } else if (op->operation->start() > insert_op->operation->end()) {
+      // Upper bound for the calculation.
+      break;
+    } else if(op->matching_op->order >
+        insert_op->matching_op->order) {
+
+      left_index++;
+    } else if (op->operation->start() > first_end &&
+        op->matching_op->order <
+        insert_op->matching_op->order) {
+
+      right_index++;
+      if (right_index >= left_index) {
+        return false;
+      }
+    }
+
+    op = op->next;
+  }
 
   return true;
+}
+
+bool is_selectable_remove (Operations* operations, Node* remove_op, uint64_t first_end) {
+
+  int left_index = 0;
+  int right_index = 0;
+
+  Node* op = operations->remove_order->next;
+
+  while (op != operations->remove_order) {
+
+    if (op == remove_op) {
+      // Do nothing.
+    } else if (op->operation->start() > remove_op->operation->end()) {
+      // Upper bound for the calculation.
+      break;
+    } else if(op->matching_op->operation->start() >
+        remove_op->matching_op->operation->end()) {
+
+      left_index++;
+    } else if (op->operation->start() > first_end &&
+        op->matching_op->operation->end() <
+        remove_op->matching_op->operation->start()) {
+
+      right_index++;
+      if (right_index >= left_index) {
+        return false;
+      }
+    }
+
+    op = op->next;
+  }
+
+  return true;
+}
+
+///
+// This function calculates the costs of insert operations.
+//
+// operations All operations.
+// insert_op The insert operation the costs are calculated for.
+int get_insert_costs(Operations* operations, Node* insert_op) {
+
+  Node* matching_remove = insert_op->matching_op;
+  int costs = 0;
+  Node* next_op = operations->remove_list->next;
+  while (next_op != operations->remove_list) {
+
+    if (next_op->order < matching_remove->order) {
+      costs++;
+    } else {
+      break;
+    }
+
+    next_op = next_op->next;
+  }
+  assert(costs >= 0);
+  return costs;
 }
 
 ///
@@ -118,112 +191,115 @@ bool is_selectable_remove (Operations* operations, Node* remove_op) {
 //
 // operations All operations.
 // remove_op The remove operation the costs are calculated for.
-// last_selected_op The operation which was selected last by the linearization
-//                 algorithm. Used for the optimization.
-// optimize A flag which turns on the optimization.
-int get_remove_costs(Operations* operations, Node* remove_op, Node* last_selected_op, bool optimize) {
+int get_remove_costs(Operations* operations, Node* remove_op) {
 
-  // If we have calculated the costs already once, we can reuse the result. If
-  // the insert operation matching the last_selected_op strictly precedes the
-  // insert operation matching the remove_op, then the costs decrease by 1,
-  // otherwise they remain the same. Note that this is just an optimization.
-  if (optimize && remove_op->costs >= 0) {
-    if (last_selected_op != NULL) {
-      if (last_selected_op->matching_op->operation->end() <
-          remove_op->matching_op->operation->start() &&
-          last_selected_op->operation->value() != -1) {
-        remove_op->costs--;
-        if (remove_op->costs < 0) {
-          printf("Start %"PRIu64" < %"PRIu64" End\n",
-              remove_op->matching_op->operation->start(),
-              last_selected_op->matching_op->operation->end());
-          exit(5);
-        }
-      }
+  Node* matching_insert = remove_op->matching_op;
+  remove_op->costs = 0;
+  Node* next_op = operations->insert_list->next;
+  while (next_op != operations->insert_list) {
+
+    // No further insert operations can be found which strictly precede the
+    // matching insert operation.
+    if (next_op->operation->start() > matching_insert->operation->start()) {
+      break;
     }
-  }
-  else {
-
-    Node* matching_insert = remove_op->matching_op;
-    remove_op->costs = 0;
-    Node* next_op = operations->insert_list->next;
-    while (next_op != operations->insert_list) {
-
-      // No further insert operations can be found which strictly precede the
-      // matching insert operation.
-      if (next_op->operation->start() > matching_insert->operation->start()) {
-        break;
-      }
-      // The operation op strictly precedes matching_insert. Costs increase by
-      // one.
-      if (next_op->operation->end() < matching_insert->operation->start()) {
-        remove_op->costs++;
-      }
-
-      next_op = next_op->next;
+    // The operation op strictly precedes matching_insert. Costs increase by
+    // one.
+    if (next_op->operation->end() < matching_insert->operation->start()) {
+      remove_op->costs++;
     }
+
+    next_op = next_op->next;
   }
   assert(remove_op->costs >= 0);
   return remove_op->costs;
 }
 
-Node* linearize_remove_ops(Operations* operations) {
+void linearize_insert_ops(Operations* operations) {
 
-  Node* last_selected = NULL;
-  // The resulting remove linearization.
-  Node* remove_linearization = new Node();
-  // Initialize an empty doubly-linked list.
-  remove_linearization->next = remove_linearization;
-  remove_linearization->prev = remove_linearization;
+  qsort(operations->remove_ops, operations->num_remove_ops, sizeof(Node*), compare_operations_by_order);
+  operations->remove_list = new Node();
+  operations->remove_list->operation = NULL;
+  create_doubly_linked_lists(operations->remove_list,
+      operations->remove_ops, operations->num_remove_ops);
 
   operations->insert_list = new Node();
   operations->insert_list->operation = NULL;
   create_doubly_linked_lists(operations->insert_list,
       operations->insert_ops, operations->num_insert_ops);
 
-  operations->remove_list = new Node();
-  operations->remove_list->operation = NULL;
-  create_doubly_linked_lists(operations->remove_list,
-      operations->remove_ops, operations->num_remove_ops);
-
-  operations->remove_list_order = new Node();
-  operations->remove_list_order->operation = NULL;
-  create_doubly-linked_list(operations->remove_list_order,
-      operations->remove_ops_order, operations->num_remove_ops);
+  operations->insert_order = new Node();
+  operations->insert_order->operation = NULL;
+  create_doubly_linked_lists(operations->insert_order,
+      operations->insert_ops_order, operations->num_insert_ops);
 
   int next_order = 0;
 
-  while (operations->remove_list->next != operations->remove_list) {
+  while (operations->insert_list->next != operations->insert_list) {
 
-    Node* op = operations->remove_list->next;
+    Node* op = operations->insert_list->next;
     uint64_t first_end = op->operation->end();
+
+    Node* tmp = op;
+    // Calculate the end of the first overlap group.
+    while (tmp != operations->insert_list && tmp->operation->start() <= first_end) {
+
+      if (tmp->operation->end() < first_end) {
+        first_end = tmp->operation->end();
+      }
+
+      tmp = tmp->next;
+    }
 
     Node* minimal_costs_op = op;
 
-    int minimal_costs = INT_MAX;
-
-    // Only operations which start before the first remove operation ends are
+    // Only operations which start before the first insert operation ends are
     // within the first overlap group.
-    while (op != operations->remove_list && op->operation->start() <= first_end) {
+    while (op != operations->insert_list && op->operation->start() <= first_end) {
 
-      if (op->operation->end() < first_end) {
-        first_end = op->operation->end();
-      }
+      int minimal_costs = -1;
 
-      if (is_selectable_remove (operations, op)) {
-        int costs = get_remove_costs(operations, op, last_selected, true);
+      if (op == minimal_costs_op) {
+        // This op is already the minimal_costs_op.
+      } else if (op->matching_op->operation->start() >
+          minimal_costs_op->matching_op->operation->end()) {
+        // This op cannot have lower costs than the minimal_costs_op.
+      } else if (op->matching_op->operation->end() <
+          minimal_costs_op->matching_op->operation->start()
+          && is_selectable_insert(operations, op, first_end)) {
+        minimal_costs_op = op;
+        minimal_costs = -1;
+        // This op has definitely lower costs than the minimal_costs_op.
+      } else if (is_selectable_insert(operations, op, first_end)) {
+
+        if (minimal_costs == -1) {
+          // We have not yet calculated the minimal costs.
+          minimal_costs = get_insert_costs(operations, minimal_costs_op);
+        }
+        int costs = get_insert_costs(operations, op);
         if (costs < minimal_costs) {
 
           minimal_costs = costs;
           minimal_costs_op = op;
-        } else if (costs == minimal_costs &&
-            op->matching_op->operation->start() <
-            minimal_costs_op->matching_op->operation->start()) {
-
-          minimal_costs_op = op;
+        } else if (costs == minimal_costs) {
+          fprintf(stderr,
+              "Two insert operations have the same costs, this should not happen.\n");
+          exit(7);
         }
       }
       op = op->next;
+    }
+
+    tmp = operations->insert_order->next;
+    while (tmp != operations->insert_order) {
+
+      if (tmp->operation == minimal_costs_op->operation) {
+
+        tmp->order = next_order;
+        remove_from_list(tmp);
+        break;
+      }
+      tmp = tmp->next;
     }
 
     // Remove the operation with minimal costs from the list of unselected
@@ -242,23 +318,148 @@ Node* linearize_remove_ops(Operations* operations) {
     if (minimal_costs_op != minimal_costs_op->matching_op) {
       remove_from_list(minimal_costs_op->matching_op);
     }
-
-    if (last_selected == NULL) {
-      insert_to_list(minimal_costs_op, remove_linearization);
-    } else {
-      insert_to_list(minimal_costs_op, last_selected);
-    }
-
-    last_selected = minimal_costs_op;
-
   }
 
   delete(operations->remove_list);
   operations->remove_list = NULL;
   delete(operations->insert_list);
   operations->insert_list = NULL;
+  delete(operations->insert_order);
+  operations->insert_order = NULL;
 
-  return remove_linearization;
+}
+
+void linearize_remove_ops(Operations* operations) {
+
+  // The resulting remove linearization.
+
+  operations->insert_list = new Node();
+  operations->insert_list->operation = NULL;
+  create_doubly_linked_lists(operations->insert_list,
+      operations->insert_ops, operations->num_insert_ops);
+
+  operations->remove_list = new Node();
+  operations->remove_list->operation = NULL;
+  create_doubly_linked_lists(operations->remove_list,
+      operations->remove_ops, operations->num_remove_ops);
+
+  operations->remove_order = new Node();
+  operations->remove_order->operation = NULL;
+  create_doubly_linked_lists(operations->remove_order,
+      operations->remove_ops_order, operations->num_remove_ops);
+
+  int next_order = 0;
+  while (operations->remove_list->next != operations->remove_list) {
+
+    Node* op = operations->remove_list->next;
+    uint64_t first_end = op->operation->end();
+
+    Node* tmp = op;
+    // Calculate the end of the first overlap group.
+    while (tmp != operations->remove_list && tmp->operation->start() <= first_end) {
+
+      if (tmp->operation->end() < first_end) {
+        first_end = tmp->operation->end();
+      }
+
+      tmp = tmp->next;
+    }
+
+    Node* minimal_costs_op = op;
+
+    // Only operations which start before the first remove operation ends are
+    // within the first overlap group.
+    while (op != operations->remove_list && op->operation->start() <= first_end) {
+
+      int minimal_costs = -1;
+
+      if (op == minimal_costs_op) {
+        // This op is already the minimal_costs_op.
+      } else if (op->matching_op->operation->start() >
+          minimal_costs_op->matching_op->operation->end()) {
+        // This op cannot have lower costs than the minimal_costs_op.
+      } else if (op->matching_op->operation->end() <
+          minimal_costs_op->matching_op->operation->start()
+          && is_selectable_remove(operations, op, first_end)) {
+        minimal_costs_op = op;
+        minimal_costs = -1;
+        // This op has definitely lower costs than the minimal_costs_op.
+      } else if (is_selectable_remove(operations, op, first_end)) {
+
+        if (minimal_costs == -1) {
+          // We have not yet calculated the minimal costs.
+          minimal_costs = get_remove_costs(operations, minimal_costs_op);
+        }
+        int costs = get_remove_costs(operations, op);
+        if (costs < minimal_costs) {
+
+          minimal_costs = costs;
+          minimal_costs_op = op;
+        } else if (costs == minimal_costs &&
+            op->matching_op->operation->end() <
+            minimal_costs_op->matching_op->operation->end()) {
+
+          minimal_costs_op = op;
+        }
+      }
+      op = op->next;
+    }
+
+    tmp = operations->remove_order->next;
+    while (tmp != operations->remove_order) {
+
+      if (tmp->operation == minimal_costs_op->operation) {
+
+        tmp->order = next_order;
+        remove_from_list(tmp);
+        break;
+      }
+      tmp = tmp->next;
+    }
+
+    // Remove the operation with minimal costs from the list of unselected
+    // operations.
+    remove_from_list(minimal_costs_op);
+
+    // Assign the order index to the removed operation.
+    minimal_costs_op->order = next_order;
+    next_order++;
+    // The first response of any operation in the first overlap group is the
+    // last possible linearization point of the operation.
+    minimal_costs_op->latest_lin_point = first_end;
+
+    // Remove the matching insert operation from its list, but only if the
+    // minimal_cost_op is not a null-return remove operation.
+    if (minimal_costs_op != minimal_costs_op->matching_op) {
+      remove_from_list(minimal_costs_op->matching_op);
+    }
+  }
+
+  delete(operations->remove_list);
+  operations->remove_list = NULL;
+  delete(operations->insert_list);
+  operations->insert_list = NULL;
+  delete(operations->remove_order);
+  operations->remove_order = NULL;
+}
+
+void adjust_start_times(Operations* operations) {
+
+  for (int i = 0; i < operations->num_remove_ops; i++) {
+
+    Operation* remove_op = operations->remove_ops[i]->operation;
+    if (!remove_op->is_null_return()) {
+
+      Operation* insert_op = operations->remove_ops[i]->matching_op->operation;
+
+      if (remove_op->start() < insert_op->start()) {
+        remove_op->adjust_start(insert_op->start());
+      }
+      if (insert_op->end() > remove_op->end()) {
+        insert_op->adjust_end(remove_op->end());
+      }
+    }
+  }
 }
 
 void initialize(Operations* operations, Operation** ops, int num_ops, Order** order) {
@@ -266,21 +467,22 @@ void initialize(Operations* operations, Operation** ops, int num_ops, Order** or
   create_insert_and_remove_array(operations, ops, num_ops);
   match_operations(operations->insert_ops, operations->num_insert_ops,
                    operations->remove_ops, operations->num_remove_ops);
+  adjust_start_times(operations);
   printf("before create_orders\n");
   create_orders(operations, order, num_ops);
   printf("after create_orders\n");
 
-  qsort(operations->insert_ops, operations->num_insert_ops, 
+  qsort(operations->insert_ops, operations->num_insert_ops,
       sizeof(Node*), compare_operations_by_start_time);
 
-  qsort(operations->remove_ops, operations->num_remove_ops, 
+  qsort(operations->remove_ops, operations->num_remove_ops,
       sizeof(Node*), compare_operations_by_start_time);
 }
 
-void match_operations(Node** insert_ops, int num_insert_ops, 
+void match_operations(Node** insert_ops, int num_insert_ops,
     Node** remove_ops, int num_remove_ops) {
 
-  removeinsert_ops, num_insert_ops, sizeof(Node*),
+  qsort(insert_ops, num_insert_ops, sizeof(Node*),
       compare_operations_by_value);
 
   qsort(remove_ops, num_remove_ops, sizeof(Node*),
@@ -294,7 +496,7 @@ void match_operations(Node** insert_ops, int num_insert_ops,
     int64_t value = remove_ops[remove_index]->operation->value();
 
     // If the remove operation is not a null-return.
-    if (value != -1) {
+    if (!remove_ops[remove_index]->operation->is_null_return()) {
       while (insert_ops[insert_index]->operation->value() < value) {
         printf("insert without remove: %"PRIu64" because of value %"PRIu64"\n",
           insert_ops[insert_index]->operation->value(), value);
@@ -387,7 +589,7 @@ void create_orders (Operations* operations, Order** order, int num_ops) {
     Node* remove_node = new Node();
     operations->remove_ops_order[i] = remove_node;
     remove_node->operation = operations->remove_ops[i]->operation;
-    if (remove_node->operation->value() == -1) {
+    if (remove_node->operation->is_null_return()) {
       remove_node->matching_op = remove_node;
     } else {
 
@@ -402,29 +604,29 @@ void create_orders (Operations* operations, Order** order, int num_ops) {
   }
 
   qsort(order, num_ops, sizeof(Order*), compare_orders_by_id);
-  qsort(operations->insert_ops_order, operations->num_insert_ops, sizeof(Node*), 
+  qsort(operations->insert_ops_order, operations->num_insert_ops, sizeof(Node*),
       compare_operations_by_id);
-  qsort(operations->remove_ops_order, operations->num_remove_ops, sizeof(Node*), 
+  qsort(operations->remove_ops_order, operations->num_remove_ops, sizeof(Node*),
       compare_operations_by_id);
 
   int insert_index = 0;
   int remove_index = 0;
   for (int i = 0; i < num_ops; i++) {
     if (order[i]->operation->type() == Operation::INSERT) {
-      assert (order[i]->operation == 
+      assert (order[i]->operation ==
           operations->insert_ops_order[insert_index]->operation);
       operations->insert_ops_order[insert_index]->selectable_order = order[i]->order;
       insert_index++;
     } else {
-      assert (order[i]->operation == 
+      assert (order[i]->operation ==
           operations->remove_ops_order[remove_index]->operation);
       operations->remove_ops_order[remove_index]->selectable_order = order[i]->order;
       remove_index++;
     }
   }
-  qsort(operations->insert_ops_order, operations->num_insert_ops, sizeof(Node*), 
+  qsort(operations->insert_ops_order, operations->num_insert_ops, sizeof(Node*),
       compare_operations_by_selectable_order);
-  qsort(operations->remove_ops_order, operations->num_remove_ops, sizeof(Node*), 
+  qsort(operations->remove_ops_order, operations->num_remove_ops, sizeof(Node*),
       compare_operations_by_selectable_order);
 }
 
@@ -448,6 +650,76 @@ void create_doubly_linked_lists(Node* head, Node** ops, int num_ops) {
   printf("list created\n");
 }
 
+void next_order(Order** order, Operation* operation, int* next_index) {
+
+  Order* new_order = new Order();
+  new_order->operation = operation;
+  new_order->order = (uint64_t)(*next_index);
+  order[*next_index] = new_order;
+  (*next_index)++;
+}
+
+Order** merge_linearizations(Operations* operations) {
+
+  Order** result = new Order*[operations->num_insert_ops + operations->num_remove_ops];
+
+  qsort(operations->insert_ops, operations->num_insert_ops, sizeof(Node*), compare_operations_by_order);
+  qsort(operations->remove_ops, operations->num_remove_ops, sizeof(Node*), compare_operations_by_order);
+
+  int next_index = 0;
+
+  int j = 0;
+  int i = 0;
+  while (i < operations->num_insert_ops || j < operations->num_remove_ops) {
+
+    if (i >= operations->num_insert_ops) {
+      Node* remove_op = operations->remove_ops[j];
+      next_order(result, remove_op->operation, &next_index);
+      j++;
+    } else if (j >= operations->num_remove_ops) {
+      Node* insert_op = operations->insert_ops[i];
+      next_order(result, insert_op->operation, &next_index);
+      insert_op->matching_op->insert_added = true;
+      i++;
+    } else {
+      Node* remove_op = operations->remove_ops[j];
+      Node* insert_op = operations->insert_ops[i];
+      if (remove_op->insert_added && 
+          remove_op->operation->start() < insert_op->latest_lin_point) {
+        next_order(result, remove_op->operation, &next_index);
+        j++;
+      } else {
+        next_order(result, insert_op->operation, &next_index);
+        insert_op->matching_op->insert_added = true;
+        i++;
+      }
+    }
+  }
+
+  printf("merging done\n");
+  return result;
+}
+
+}
+
+int compare_orders_by_order(const void* left, const void* right) {
+  return (*(Order**) left)->order > (*(Order**) right)->order;
+}
+
+bool fixed_point_reached(Order** left, Order** right, int num_ops) {
+
+  qsort(left, num_ops, sizeof(Order*), compare_orders_by_order);
+  qsort(right, num_ops, sizeof(Order*), compare_orders_by_order);
+
+  for (int i = num_ops - 1; i >= 0; i--) {
+
+    if (left[i]->operation != right[i]->operation) {
+      printf("Difference at position %d, %"PRIu64" != %"PRIu64"\n", i,
+          left[i]->operation->id(), right[i]->operation->id());
+      return false;
+    }
+  }
+  return true;
 }
 
 Order** linearize_by_min_sum(Operation** ops, int num_ops, Order** order) {
@@ -457,11 +729,18 @@ Order** linearize_by_min_sum(Operation** ops, int num_ops, Order** order) {
 
   initialize(operations, ops, num_ops, order);
 
-//  Node* remove_linearization = linearize_remove_ops(operations);
-//  Node* insert_linearization = linearize_insert_ops(operations);
+  linearize_remove_ops(operations);
+  linearize_insert_ops(operations);
 
-//  printf("linearizations finished\n");
+//  qsort(order, num_ops, sizeof(Order*), compare_orders_by_id);
 
-//  return merge_linearizations(insert_linearization, remove_linearization, num_ops); 
-  return NULL;
+  printf("linearizations finished\n");
+  
+  Order** new_order = merge_linearizations(operations);
+
+  if (fixed_point_reached(order, new_order, num_ops)) {
+    return new_order;
+  } else {
+    return linearize_by_min_sum(ops, num_ops, new_order);
+  }
 }

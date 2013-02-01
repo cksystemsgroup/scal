@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 //  linearization = linearize_by_invocation(ops, num_ops);
   linearization = linearize_by_invocation(ops, num_ops);
   linearization = linearize_by_min_sum(ops, num_ops, linearization);
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 40; i++) {
     print_op(linearization[i]->operation);
   }
   printf("runtime: %lu\n", (clock() - start));

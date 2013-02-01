@@ -15,6 +15,12 @@ class Operation {
 
     void initialize(uint64_t start, uint64_t lin_time, uint64_t end, OperationType type, uint64_t value);
 
+    void adjust_start(uint64_t new_start);
+    void adjust_end(uint64_t new_end);
+    bool is_null_return() {
+      return value_ == -1;
+    }
+
     uint64_t id() const {
       return id_;
     }
