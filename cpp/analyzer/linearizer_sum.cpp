@@ -25,6 +25,8 @@ struct Node {
   // The order in which this node was selected, i.e. removed from the
   // doulby-linked list.
   int order;
+  // The order for the selectable calculation.
+  int selectable_order;
   // The first response of any operation in the first overlap group at the time
   // this operation was selected.
   uint64_t latest_lin_point;
@@ -36,6 +38,7 @@ struct Node {
 struct Operations {
   // Array of insert operations
   Node** insert_ops;
+  Node** insert_ops_order;
   // Doubly-linked list of insert operations.
   Node* insert_list;
   // The order used to calculate the selectable function.
@@ -44,6 +47,7 @@ struct Operations {
   int num_insert_ops;
   // Array of remove operations.
   Node** remove_ops;
+  Node** remove_ops_order;
   // Doubly-linked list of remove operations.
   Node* remove_list;
   // The order used to calculate the selectable function.
@@ -182,6 +186,11 @@ Node* linearize_remove_ops(Operations* operations) {
   create_doubly_linked_lists(operations->remove_list,
       operations->remove_ops, operations->num_remove_ops);
 
+  operations->remove_list_order = new Node();
+  operations->remove_list_order->operation = NULL;
+  create_doubly-linked_list(operations->remove_list_order,
+      operations->remove_ops_order, operations->num_remove_ops);
+
   int next_order = 0;
 
   while (operations->remove_list->next != operations->remove_list) {
@@ -255,17 +264,23 @@ Node* linearize_remove_ops(Operations* operations) {
 void initialize(Operations* operations, Operation** ops, int num_ops, Order** order) {
 
   create_insert_and_remove_array(operations, ops, num_ops);
+  match_operations(operations->insert_ops, operations->num_insert_ops,
+                   operations->remove_ops, operations->num_remove_ops);
   printf("before create_orders\n");
   create_orders(operations, order, num_ops);
   printf("after create_orders\n");
-  match_operations(operations->insert_ops, operations->num_insert_ops,
-                   operations->remove_ops, operations->num_remove_ops);
+
+  qsort(operations->insert_ops, operations->num_insert_ops, 
+      sizeof(Node*), compare_operations_by_start_time);
+
+  qsort(operations->remove_ops, operations->num_remove_ops, 
+      sizeof(Node*), compare_operations_by_start_time);
 }
 
 void match_operations(Node** insert_ops, int num_insert_ops, 
     Node** remove_ops, int num_remove_ops) {
 
-  qsort(insert_ops, num_insert_ops, sizeof(Node*),
+  removeinsert_ops, num_insert_ops, sizeof(Node*),
       compare_operations_by_value);
 
   qsort(remove_ops, num_remove_ops, sizeof(Node*),
@@ -348,44 +363,73 @@ void create_insert_and_remove_array(Operations* operations, Operation** ops, int
 }
 
 int compare_orders_by_id(const void* left, const void* right) {
-  return (*(Order**) left)->operation->start() > (*(Order**) right)->operation->start();
+  return (*(Order**) left)->operation->id() > (*(Order**) right)->operation->id();
 }
 
 int compare_operations_by_id(const void* left, const void* right) {
-  return (*(Node**) left)->operation->start() > (*(Node**) right)->operation->start();
+  return (*(Node**) left)->operation->id() > (*(Node**) right)->operation->id();
+}
+
+int compare_operations_by_selectable_order(const void* left, const void* right) {
+  return (*(Node**) left)->selectable_order > (*(Node**) right)->selectable_order;
 }
 
 /// Precondition: operations->insert_ops and operations->remove_ops exists
-//already.
+// already and insert and remove operations are already matched.
 void create_orders (Operations* operations, Order** order, int num_ops) {
 
+  operations->insert_ops_order = new Node*[operations->num_insert_ops];
+  operations->remove_ops_order = new Node*[operations->num_remove_ops];
+
+  int insert_position = 0;
+
+  for (int i = 0; i < operations->num_remove_ops; i++) {
+    Node* remove_node = new Node();
+    operations->remove_ops_order[i] = remove_node;
+    remove_node->operation = operations->remove_ops[i]->operation;
+    if (remove_node->operation->value() == -1) {
+      remove_node->matching_op = remove_node;
+    } else {
+
+      Node* matching_op = operations->remove_ops[i]->matching_op;
+      Node* insert_node = new Node();
+      operations->insert_ops_order[insert_position] = insert_node;
+      insert_position++;
+      insert_node->operation = matching_op->operation;
+      remove_node->matching_op = insert_node;
+      insert_node->matching_op = remove_node;
+    }
+  }
+
   qsort(order, num_ops, sizeof(Order*), compare_orders_by_id);
-  qsort(operations->insert_ops, operations->num_insert_ops, sizeof(Node*), 
+  qsort(operations->insert_ops_order, operations->num_insert_ops, sizeof(Node*), 
       compare_operations_by_id);
-  qsort(operations->remove_ops, operations->num_remove_ops, sizeof(Node*), 
+  qsort(operations->remove_ops_order, operations->num_remove_ops, sizeof(Node*), 
       compare_operations_by_id);
 
-  insert_index = 0;
-  remove_index = 0;
+  int insert_index = 0;
+  int remove_index = 0;
   for (int i = 0; i < num_ops; i++) {
-
     if (order[i]->operation->type() == Operation::INSERT) {
       assert (order[i]->operation == 
-          operations->insert_ops[insert_index]->operation);
-      operations->insert_ops[insert_index]->selectable_order = order[i]->order;
+          operations->insert_ops_order[insert_index]->operation);
+      operations->insert_ops_order[insert_index]->selectable_order = order[i]->order;
       insert_index++;
     } else {
       assert (order[i]->operation == 
-          operations->remove_ops[remove_index]->operation);
-      operations->remove_ops[remove_index]->selectable_order = order[i]->order;
+          operations->remove_ops_order[remove_index]->operation);
+      operations->remove_ops_order[remove_index]->selectable_order = order[i]->order;
       remove_index++;
     }
   }
+  qsort(operations->insert_ops_order, operations->num_insert_ops, sizeof(Node*), 
+      compare_operations_by_selectable_order);
+  qsort(operations->remove_ops_order, operations->num_remove_ops, sizeof(Node*), 
+      compare_operations_by_selectable_order);
 }
 
 void create_doubly_linked_lists(Node* head, Node** ops, int num_ops) {
 
-  qsort(ops, num_ops, sizeof(Node*), compare_operations_by_start_time);
 
   for (int i = 1; i < num_ops - 1; i++) {
     ops[i]->next = ops[i + 1];
