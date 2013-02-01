@@ -18,8 +18,6 @@ struct Node {
   Node* next;
   // The node which precedes this node in the doubly-linked list.
   Node* prev;
-  // The costs of this operation calculated by the cost function.
-  int costs;
   // The order in which this node was selected, i.e. removed from the
   // doulby-linked list.
   int order;
@@ -140,7 +138,6 @@ int get_insert_costs(Operations* operations, Node* insert_op,
     next_op = next_op->next;
   }
 
-  insert_op->costs = costs;
   return costs;
 }
 
@@ -170,10 +167,10 @@ Node* linearize_insert_ops(Operations* operations) {
   while (operations->insert_list->next != operations->insert_list) {
 
     Node* op = operations->insert_list->next;
-    uint64_t first_end = op->operation->end();
 
     int minimal_order = INT_MAX;
 
+    uint64_t first_end = op->operation->end();
     Node* tmp = op;
     // Calculate the end of the first overlap group.
     while (tmp != operations->insert_list && tmp->operation->start() <= first_end) {
@@ -253,59 +250,32 @@ Node* linearize_insert_ops(Operations* operations) {
 //
 // operations All operations.
 // remove_op The remove operation the costs are calculated for.
-// last_selected_op The operation which was selected last by the linearization
-//                 algorithm. Used for the optimization.
-// optimize A flag which turns on the optimization.
-int get_remove_costs(Operations* operations, Node* remove_op, Node* last_selected_op, bool optimize) {
+int get_remove_costs(Operations* operations, Node* remove_op) {
 
-  // If we have calculated the costs already once, we can reuse the result. If
-  // the insert operation matching the last_selected_op strictly precedes the
-  // insert operation matching the remove_op, then the costs decrease by 1,
-  // otherwise they remain the same. Note that this is just an optimization.
-  if (optimize && remove_op->costs >= 0) {
-    if (last_selected_op != NULL) {
-      if (last_selected_op->matching_op->operation->end() <
-          remove_op->matching_op->operation->start() &&
-          last_selected_op->operation->value() != -1) {
-        remove_op->costs--;
-        if (remove_op->costs < 0) {
-          printf("Start %"PRIu64" < %"PRIu64" End\n",
-              remove_op->matching_op->operation->start(),
-              last_selected_op->matching_op->operation->end());
-          exit(5);
-        }
-      }
+  Node* matching_insert = remove_op->matching_op;
+  int costs = 0;
+  Node* next_op = operations->insert_list->next;
+  while (next_op != operations->insert_list) {
+
+    // No further insert operations can be found which strictly precede the
+    // matching insert operation.
+    if (next_op->operation->start() > matching_insert->operation->start()) {
+      break;
     }
-  }
-  else {
-
-    Node* matching_insert = remove_op->matching_op;
-    remove_op->costs = 0;
-    Node* next_op = operations->insert_list->next;
-    while (next_op != operations->insert_list) {
-
-      // No further insert operations can be found which strictly precede the
-      // matching insert operation.
-      if (next_op->operation->start() > matching_insert->operation->start()) {
-        break;
-      }
-      // The operation op strictly precedes matching_insert. Costs increase by
-      // one.
-      if (next_op->operation->end() < matching_insert->operation->start()) {
-        remove_op->costs++;
-      }
-
-      next_op = next_op->next;
+    // The operation op strictly precedes matching_insert. Costs increase by
+    // one.
+    if (next_op->operation->end() < matching_insert->operation->start()) {
+      costs++;
     }
+
+    next_op = next_op->next;
   }
-  assert(remove_op->costs >= 0);
-  return remove_op->costs;
+  assert(costs >= 0);
+  return costs;
 }
 
 Node* linearize_remove_ops(Operations* operations) {
 
-  int x = 0;
-  int64_t total_costs = 0;
   Node* last_selected = NULL;
   // The resulting remove linearization.
   Node* remove_linearization = new Node();
@@ -332,8 +302,6 @@ Node* linearize_remove_ops(Operations* operations) {
 
     Node* minimal_costs_op = op;
 
-    int minimal_costs = INT_MAX;
-
     // Only operations which start before the first remove operation ends are
     // within the first overlap group.
     while (op != operations->remove_list && op->operation->start() <= first_end) {
@@ -357,9 +325,9 @@ Node* linearize_remove_ops(Operations* operations) {
 
         if (minimal_costs == -1) {
           // We have not yet calculated the minimal costs.
-          minimal_costs = get_remove_costs(operations, minimal_costs_op, NULL, false);
+          minimal_costs = get_remove_costs(operations, minimal_costs_op);
         }
-        int costs = get_remove_costs(operations, op, last_selected, false);
+        int costs = get_remove_costs(operations, op);
         if (costs < minimal_costs) {
 
           minimal_costs = costs;
@@ -398,8 +366,6 @@ Node* linearize_remove_ops(Operations* operations) {
     }
 
     last_selected = minimal_costs_op;
-    x++;
-    total_costs += minimal_costs;
   }
 
   delete(operations->remove_list);
@@ -407,7 +373,6 @@ Node* linearize_remove_ops(Operations* operations) {
   delete(operations->insert_list);
   operations->insert_list = NULL;
 
-  printf("After list iteration x=%d with %"PRId64" costs\n", x, total_costs);
   return remove_linearization;
 }
 
@@ -485,7 +450,6 @@ void create_insert_and_remove_array(Operations* operations, Operation** ops, int
 
     Node* node = new Node();
     node->operation = ops[i];
-    node->costs = -1;
     node->insert_added = false;
     if (ops[i]->type() == Operation::INSERT) {
       operations->insert_ops[next_insert] = node;
