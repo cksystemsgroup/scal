@@ -52,7 +52,6 @@ Operation** parse(char* filename, int num_ops) {
 
     ops[i] = new Operation();
     ops[i]->initialize(op_start, lin_time, op_end, op_type, op_value);
-
   }
 
   fclose(input);

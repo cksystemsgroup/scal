@@ -1,3 +1,4 @@
+#define __STDC_FORMAT_MACROS
 #include <stdio.h>
 #include "operation.h"
 #include "parser.h"
@@ -28,10 +29,10 @@ int main(int argc, char** argv) {
   Operation** ops = parse(filename, num_ops);
   
   Order** linearization;
-//  linearization = linearize(ops, num_ops);
+  linearization = linearize_by_min_max(ops, num_ops);
 //  linearization = linearize_by_invocation(ops, num_ops);
-  linearization = linearize_by_invocation(ops, num_ops);
-  linearization = linearize_by_min_sum(ops, num_ops, linearization);
+//  linearization = linearize_by_lin_point(ops, num_ops);
+//  linearization = linearize_by_min_sum(ops, num_ops, linearization);
   for (int i = 0; i < 40; i++) {
     print_op(linearization[i]->operation);
   }
