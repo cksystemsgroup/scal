@@ -10,7 +10,9 @@ struct Order {
   Operation* operation;
 };
 
-Order** linearize(Operation** ops, int num_ops);
+Order** linearize_by_min_max(Operation** ops, int num_ops);
 Order** linearize_by_invocation(Operation** ops, int num_ops);
 Order** linearize_by_min_sum(Operation** ops, int num_ops, Order** order);
+Order** linearize_by_lin_point(Operation** ops, int num_ops);
+Order** linearize_by_end(Operation** ops, int num_ops);
 #endif // LINEARIZER_H

@@ -102,7 +102,7 @@ Order** merge_linearizations(Node* insert_linearization, Node* remove_linearizat
   return result;
 }
 
-Order** linearize(Operation** ops, int num_ops) {
+Order** linearize_by_min_max(Operation** ops, int num_ops) {
 
   Operations* operations = new Operations();
 
