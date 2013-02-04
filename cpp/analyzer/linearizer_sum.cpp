@@ -241,23 +241,25 @@ void linearize_insert_ops(Operations* operations) {
     uint64_t first_end = op->operation->end();
 
     Node* tmp = op;
+    Node* minimal_costs_op = op;
     // Calculate the end of the first overlap group.
     while (tmp != operations->insert_list && tmp->operation->start() <= first_end) {
 
       if (tmp->operation->end() < first_end) {
         first_end = tmp->operation->end();
+        // The operation with the first end is the initial minimal_costs_op
+        // because it is guaranteed to be selectable.
+        minimal_costs_op = tmp;
       }
 
       tmp = tmp->next;
     }
 
-    Node* minimal_costs_op = op;
+    int minimal_costs = -1;
 
     // Only operations which start before the first insert operation ends are
     // within the first overlap group.
     while (op != operations->insert_list && op->operation->start() <= first_end) {
-
-      int minimal_costs = -1;
 
       if (op == minimal_costs_op) {
         // This op is already the minimal_costs_op.
@@ -355,23 +357,25 @@ void linearize_remove_ops(Operations* operations) {
     uint64_t first_end = op->operation->end();
 
     Node* tmp = op;
+    Node* minimal_costs_op = op;
     // Calculate the end of the first overlap group.
     while (tmp != operations->remove_list && tmp->operation->start() <= first_end) {
 
       if (tmp->operation->end() < first_end) {
         first_end = tmp->operation->end();
+        // The remove operation with the first response is the initial
+        // minimal_costs_op because it is guaranteed to be selectable.
+        minimal_costs_op = tmp;
       }
 
       tmp = tmp->next;
     }
 
-    Node* minimal_costs_op = op;
+    int minimal_costs = -1;
 
     // Only operations which start before the first remove operation ends are
     // within the first overlap group.
     while (op != operations->remove_list && op->operation->start() <= first_end) {
-
-      int minimal_costs = -1;
 
       if (op == minimal_costs_op) {
         // This op is already the minimal_costs_op.
@@ -468,9 +472,9 @@ void initialize(Operations* operations, Operation** ops, int num_ops, Order** or
   match_operations(operations->insert_ops, operations->num_insert_ops,
                    operations->remove_ops, operations->num_remove_ops);
   adjust_start_times(operations);
-  printf("before create_orders\n");
+//  printf("before create_orders\n");
   create_orders(operations, order, num_ops);
-  printf("after create_orders\n");
+//  printf("after create_orders\n");
 
   qsort(operations->insert_ops, operations->num_insert_ops,
       sizeof(Node*), compare_operations_by_start_time);
@@ -559,8 +563,8 @@ void create_insert_and_remove_array(Operations* operations, Operation** ops, int
   assert(next_insert + next_remove == num_ops);
   operations->num_insert_ops = next_insert;
   operations->num_remove_ops = next_remove;
-  printf("Arrays created; %d insert operations and %d remove operations\n",
-      next_insert, next_remove);
+//  printf("Arrays created; %d insert operations and %d remove operations\n",
+//      next_insert, next_remove);
 
 }
 
@@ -647,7 +651,7 @@ void create_doubly_linked_lists(Node* head, Node** ops, int num_ops) {
   head->next = ops[0];
   head->prev = ops[num_ops - 1];
 
-  printf("list created\n");
+//  printf("list created\n");
 }
 
 void next_order(Order** order, Operation* operation, int* next_index) {
@@ -696,7 +700,7 @@ Order** merge_linearizations(Operations* operations) {
     }
   }
 
-  printf("merging done\n");
+//  printf("merging done\n");
   return result;
 }
 
@@ -714,6 +718,7 @@ bool fixed_point_reached(Order** left, Order** right, int num_ops) {
   for (int i = num_ops - 1; i >= 0; i--) {
 
     if (left[i]->operation != right[i]->operation) {
+      
       printf("Difference at position %d, %"PRIu64" != %"PRIu64"\n", i,
           left[i]->operation->id(), right[i]->operation->id());
       return false;
@@ -734,7 +739,7 @@ Order** linearize_by_min_sum(Operation** ops, int num_ops, Order** order) {
 
 //  qsort(order, num_ops, sizeof(Order*), compare_orders_by_id);
 
-  printf("linearizations finished\n");
+//  printf("linearizations finished\n");
   
   Order** new_order = merge_linearizations(operations);
 
