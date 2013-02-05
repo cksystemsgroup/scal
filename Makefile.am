@@ -221,6 +221,17 @@ atomic_value64_offset_unittest_SOURCES = \
         src/test/atomic_value64_offset_unittest.cc \
         src/util/malloc.cc
 
+TESTS += random_unittest
+random_unittest_CPPFLAGS = \
+	$(TEST_CPPFLAGS)
+random_unittest_LDADD = \
+        @GFLAGS_LIBS@ \
+        $(GTEST_LIBS) 
+random_unittest_SOURCES = \
+        src/test/random_unittest.cc \
+        src/util/random.cc \
+        src/util/threadlocals.cc
+
 noinst_PROGRAMS += $(TESTS)
 
 #
