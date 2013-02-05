@@ -9,7 +9,7 @@
 
 struct threadlocals_t {
   uint64_t thread_id;
-  unsigned int random_seed;
+  int32_t random_seed;
   void *data;
 };
 

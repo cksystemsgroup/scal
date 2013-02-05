@@ -18,6 +18,7 @@ const uint64_t kMaxThreads = 1024;
 
 pthread_key_t threadlocals_key;
 pthread_once_t key_once = PTHREAD_ONCE_INIT;
+pthread_once_t init_once = PTHREAD_ONCE_INIT;
 uint64_t id_cnt = 0;
 threadlocals_t *threadlocals[kMaxThreads];
 
@@ -25,10 +26,7 @@ void make_key(void) {
   pthread_key_create(&threadlocals_key, NULL);
 }
 
-}  // namespace
-
-void threadlocals_init(void) {
-  pthread_once(&key_once, make_key);
+void init_thread(void) {
   threadlocals_t *t;
   uint64_t size = (sizeof(threadlocals_t) / kPageSize + 1) * kPageSize;
   if (posix_memalign(reinterpret_cast<void**>(&t),
@@ -45,6 +43,13 @@ void threadlocals_init(void) {
     abort();
   }
   threadlocals[t->thread_id] = t;
+}
+
+}  // namespace
+
+void threadlocals_init(void) {
+  pthread_once(&key_once, make_key);
+  pthread_once(&init_once, init_thread);
 }
 
 threadlocals_t* threadlocals_get(void) {
