@@ -26,9 +26,9 @@ struct RandomFunctions {
 bool chi_square_distribution_test(const RandomFunctions &funcs) {
   const uint64_t n = 10000000;
   uint64_t frequency[kClasses];
-  const double expected_frequency = static_cast<double>(n) / classes;
+  const double expected_frequency = static_cast<double>(n) / kClasses;
 
-  for (uint64_t i = 0; i < classes; i++) {
+  for (uint64_t i = 0; i < kClasses; i++) {
     frequency[i] = 0;
   }
 
@@ -36,10 +36,10 @@ bool chi_square_distribution_test(const RandomFunctions &funcs) {
   for (uint64_t i = 0; i < n; i++) {
     switch (funcs.type) {
     case 0:
-      rand = funcs.rand1() % classes;
+      rand = funcs.rand1() % kClasses;
       break;
     case 1:
-      rand = funcs.rand2(0, classes);
+      rand = funcs.rand2(0, kClasses);
       break;
     default:
       abort();
@@ -48,7 +48,7 @@ bool chi_square_distribution_test(const RandomFunctions &funcs) {
   }
 
   double chi_square = 0;
-  for (uint64_t i = 0; i < classes; i++) {
+  for (uint64_t i = 0; i < kClasses; i++) {
     chi_square += ((frequency[i] - expected_frequency) * 
                    (frequency[i] - expected_frequency)) / expected_frequency;
   }
