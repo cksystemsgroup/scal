@@ -7,7 +7,29 @@
 
 #include <stdint.h>
 
-uint64_t pseudorand(void);
-uint64_t hwrand(void);
+
+uint64_t pseudorand();
+uint64_t pseudorandrange(uint32_t min, uint32_t max);
+uint64_t hwrand();
+
+namespace scal {
+
+const uint32_t kRandMax = 2147483647;
+
+inline uint64_t rand() {
+  return pseudorand();
+}
+
+inline uint64_t randrange(uint32_t min, uint32_t max) {
+  return pseudorandrange(min, max);
+}
+
+void srand(uint32_t seed);
+
+inline uint64_t hwrand() {
+  return ::hwrand();
+}
+
+}  // namespace scal
 
 #endif  // SCAL_UTIL_RANDOM_H_
