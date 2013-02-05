@@ -5,39 +5,54 @@
 #include "linearizer.h"
 #include <stdlib.h>
 #include <time.h>
+#include <assert.h>
+#include <string.h>
 
 void print_op(Operation* op) {
 
+  assert(op != NULL);
   if (op->type() == Operation::INSERT) {
-    printf("enqueue %"PRId64"\n", op->value());
+    printf("+ %"PRId64"\n", op->value());
   } else {
-    printf("              %"PRId64" dequeue\n", op->value());
+    printf("- %"PRId64"\n", op->value());
   } 
 }
 
 int main(int argc, char** argv) {
 
-  clock_t start = clock();
-  if (argc < 3) {
-    fprintf(stderr, "usage: .analyzer <operations> <logfilename>\n");
+  if (argc < 4) {
+    fprintf(stderr, "usage: ./linearizer <mode> <operations> <logfilename>\n");
     exit(3);
   }
 
-  int num_ops = atoi(argv[1]);
-  char* filename = argv[2];
+  char* mode = argv[1];
+  int num_ops = atoi(argv[2]);
+  char* filename = argv[3];
 
-  Operation** ops = parse(filename, num_ops);
+  Operation** ops = parse_logfile(filename, num_ops);
   
   Order** linearization;
-  linearization = linearize_by_min_max(ops, num_ops);
-//  linearization = linearize_by_invocation(ops, num_ops);
-//  linearization = linearize_by_lin_point(ops, num_ops);
-//  linearization = linearize_by_min_sum(ops, num_ops, linearization);
-  for (int i = 0; i < 40; i++) {
+
+  if (strcmp(mode, "max") == 0) {
+    linearization = linearize_by_min_max(ops, num_ops);
+  } else if (strcmp(mode, "invocation") == 0) {
+    linearization = linearize_by_invocation(ops, num_ops);
+  } else if (strcmp(mode, "lin_point") == 0) {
+    linearization = linearize_by_lin_point(ops, num_ops);
+  } else if (strcmp(mode, "response") == 0) {
+    linearization = linearize_by_response(ops, num_ops);
+  } else if (strcmp(mode, "sum") == 0) {
+    // First we use the lin_point linearization as the initial linearization.
+    linearization = linearize_by_lin_point(ops, num_ops);
+    linearization = linearize_by_min_sum(ops, num_ops, linearization);
+  } else {
+    fprintf(stderr, "The mode %s does not exist, use either 'max', 'invocation', 'lin_point', 'response', or 'sum'\n", mode);
+    exit(11);
+  }
+
+  for (int i = 0; i < num_ops; i++) {
+    assert(linearization[i] != NULL);
     print_op(linearization[i]->operation);
   }
-  printf("runtime: %lu\n", (clock() - start));
-
-  printf("%d operations.\n", num_ops);
   return 0;
 }

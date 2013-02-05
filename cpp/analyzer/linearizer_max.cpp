@@ -48,11 +48,10 @@ void match_operations(Operations* operations);
 void create_insert_and_remove_array(Operations* operations, Operation** ops, int num_ops);
 void create_doubly_linked_lists(Node* head, Node** ops, int num_ops);
 void initialize(Operations* operations, Operation** ops, int num_ops);
-Node* linearize_remove_ops(Operations* operations);
-Node* linearize_insert_ops(Operations* operations);
-void next_order(Order** order, Operation* operation, uint64_t* next_index);
-Order** merge_linearizations(Node* insert_linearization, 
-    Node* remove_linearization, int num_ops);
+void linearize_remove_ops(Operations* operations);
+void linearize_insert_ops(Operations* operations);
+void next_order(Order** order, Operation* operation, int* next_index);
+Order** merge_linearizations(Operations* operations);
 
 int compare_operations_by_start_time(const void* left, const void* right) {
   return (*(Node**) left)->operation->start() > (*(Node**) right)->operation->start();
@@ -76,26 +75,44 @@ void insert_to_list(Node* node, Node* predecessor) {
   predecessor->next = node;
 }
 
-Order** merge_linearizations(Node* insert_linearization, Node* remove_linearization, int num_ops) {
+int compare_operations_by_order(const void* left, const void* right) {
+  return (*(Node**) left)->order > (*(Node**) right)->order;
+}
 
-  Order** result = new Order*[num_ops];
-  uint64_t next_index = 0;
+Order** merge_linearizations(Operations* operations) {
 
-  Node* next_insert = insert_linearization->next;
-  Node* next_remove = remove_linearization->next;
+  Order** result = new Order*[operations->num_insert_ops + operations->num_remove_ops];
 
-  while (next_insert != insert_linearization) {
+  qsort(operations->insert_ops, operations->num_insert_ops, sizeof(Node*), compare_operations_by_order);
+  qsort(operations->remove_ops, operations->num_remove_ops, sizeof(Node*), compare_operations_by_order);
 
-    if (next_remove != remove_linearization && next_remove->insert_added &&
-        next_remove->operation->start() < next_insert->latest_lin_point) {
+  int next_index = 0;
 
-      next_order(result, next_remove->operation, &next_index);
-      next_remove = next_remove->next;
+  int j = 0;
+  int i = 0;
+  while (i < operations->num_insert_ops || j < operations->num_remove_ops) {
 
+    if (i >= operations->num_insert_ops) {
+      Node* remove_op = operations->remove_ops[j];
+      next_order(result, remove_op->operation, &next_index);
+      j++;
+    } else if (j >= operations->num_remove_ops) {
+      Node* insert_op = operations->insert_ops[i];
+      next_order(result, insert_op->operation, &next_index);
+      insert_op->matching_op->insert_added = true;
+      i++;
     } else {
-      next_order(result, next_insert->operation, &next_index);
-      next_insert->matching_op->insert_added = true;
-      next_insert = next_insert->next;
+      Node* remove_op = operations->remove_ops[j];
+      Node* insert_op = operations->insert_ops[i];
+      if (remove_op->insert_added && 
+          remove_op->operation->start() < insert_op->latest_lin_point) {
+        next_order(result, remove_op->operation, &next_index);
+        j++;
+      } else {
+        next_order(result, insert_op->operation, &next_index);
+        insert_op->matching_op->insert_added = true;
+        i++;
+      }
     }
   }
 
@@ -108,12 +125,10 @@ Order** linearize_by_min_max(Operation** ops, int num_ops) {
 
   initialize(operations, ops, num_ops);
 
-  Node* remove_linearization = linearize_remove_ops(operations);
-  Node* insert_linearization = linearize_insert_ops(operations);
+  linearize_remove_ops(operations);
+  linearize_insert_ops(operations);
 
-  printf("linearizations finished\n");
-
-  return merge_linearizations(insert_linearization, remove_linearization, num_ops);
+  return merge_linearizations(operations);
 
 }
 
@@ -141,26 +156,21 @@ int get_insert_costs(Operations* operations, Node* insert_op,
   return costs;
 }
 
-void next_order(Order** order, Operation* operation, uint64_t* next_index) {
+void next_order(Order** order, Operation* operation, int* next_index) {
 
   Order* new_order = new Order();
   new_order->operation = operation;
-  new_order->order = *next_index;
+  new_order->order = (uint64_t)(*next_index);
   order[*next_index] = new_order;
   (*next_index)++;
 }
 
-Node* linearize_insert_ops(Operations* operations) {
+void linearize_insert_ops(Operations* operations) {
 
   operations->insert_list = new Node();
   operations->insert_list->operation = NULL;
   create_doubly_linked_lists(operations->insert_list,
       operations->insert_ops, operations->num_insert_ops);
-
-  Node* insert_linearization = new Node();
-  insert_linearization->next = insert_linearization;
-  insert_linearization->prev = insert_linearization;
-  Node* last_selected = NULL;
 
   int next_order = 0;
 
@@ -189,14 +199,14 @@ Node* linearize_insert_ops(Operations* operations) {
     // Selectable bound: operations which respond after the selectable bound
     // cannot be selected. The selectable bound is the invocation of the first
     // operation after the first overlap group whose matching remove operation
-    // precedes all remove which match with an insert operation in the first
+    // precedes all remove operation which match with an insert operation in the first
     // overlap group.
     uint64_t selectable_bound = (uint64_t)-1;
 
     // There is no need to calculate the costs of operations which respond
     // before the last_end because its costs cannot be lower than the costs of
     // already calculated operations.
-    uint64_t last_end = 0;
+//    uint64_t last_end = 0;
 
     Node* maximal_costs_op = op;
     int maximal_costs = -1;
@@ -205,9 +215,9 @@ Node* linearize_insert_ops(Operations* operations) {
     
       if (op->operation->end() < selectable_bound) {
 
-        if (op->operation->end() > last_end) {
+  //      if (op->operation->end() > last_end) {
         
-          last_end = op->operation->end();
+  //        last_end = op->operation->end();
           int costs = get_insert_costs(operations, op, minimal_order,
               first_end, &selectable_bound);
 
@@ -220,7 +230,7 @@ Node* linearize_insert_ops(Operations* operations) {
 
             maximal_costs_op = op;
           }
-        }
+//        }
       }
       op = op->next;
     }
@@ -230,19 +240,9 @@ Node* linearize_insert_ops(Operations* operations) {
     next_order++;
     maximal_costs_op->latest_lin_point = first_end;
 
-    if (last_selected == NULL) {
-      insert_to_list(maximal_costs_op, insert_linearization);
-    } else {
-      insert_to_list(maximal_costs_op, last_selected);
-    }
-
-    last_selected = maximal_costs_op;
-
   }
   delete(operations->insert_list);
   operations->insert_list = NULL;
-
-  return insert_linearization;
 }
 
 ///
@@ -274,14 +274,7 @@ int get_remove_costs(Operations* operations, Node* remove_op) {
   return costs;
 }
 
-Node* linearize_remove_ops(Operations* operations) {
-
-  Node* last_selected = NULL;
-  // The resulting remove linearization.
-  Node* remove_linearization = new Node();
-  // Initialize an empty doubly-linked list.
-  remove_linearization->next = remove_linearization;
-  remove_linearization->prev = remove_linearization;
+void linearize_remove_ops(Operations* operations) {
 
   operations->insert_list = new Node();
   operations->insert_list->operation = NULL;
@@ -292,7 +285,7 @@ Node* linearize_remove_ops(Operations* operations) {
   operations->remove_list->operation = NULL;
   create_doubly_linked_lists(operations->remove_list,
       operations->remove_ops, operations->num_remove_ops);
-
+  
   int next_order = 0;
 
   while (operations->remove_list->next != operations->remove_list) {
@@ -358,22 +351,12 @@ Node* linearize_remove_ops(Operations* operations) {
     if (minimal_costs_op != minimal_costs_op->matching_op) {
       remove_from_list(minimal_costs_op->matching_op);
     }
-
-    if (last_selected == NULL) {
-      insert_to_list(minimal_costs_op, remove_linearization);
-    } else {
-      insert_to_list(minimal_costs_op, last_selected);
-    }
-
-    last_selected = minimal_costs_op;
   }
 
   delete(operations->remove_list);
   operations->remove_list = NULL;
   delete(operations->insert_list);
   operations->insert_list = NULL;
-
-  return remove_linearization;
 }
 
 void initialize(Operations* operations, Operation** ops, int num_ops) {
@@ -393,7 +376,6 @@ void match_operations(Operations* operations) {
   int insert_index = 0;
 
   int i = 0;
-  printf("Number of remove ops: %d\n", operations->num_remove_ops);
   for (int remove_index = 0; remove_index < operations->num_remove_ops; remove_index++) {
 
     int64_t value = operations->remove_ops[remove_index]->operation->value();
@@ -435,7 +417,6 @@ void match_operations(Operations* operations) {
     }
   }
 
-  printf("matching operations: %d\n", i);
 }
 
 void create_insert_and_remove_array(Operations* operations, Operation** ops, int num_ops) {
@@ -463,8 +444,6 @@ void create_insert_and_remove_array(Operations* operations, Operation** ops, int
   assert(next_insert + next_remove == num_ops);
   operations->num_insert_ops = next_insert;
   operations->num_remove_ops = next_remove;
-  printf("Arrays created; %d insert operations and %d remove operations\n",
-      next_insert, next_remove);
 
 }
 
@@ -485,7 +464,5 @@ void create_doubly_linked_lists(Node* head, Node** ops, int num_ops) {
 
   head->next = ops[0];
   head->prev = ops[num_ops - 1];
-
-  printf("list created\n");
 }
 

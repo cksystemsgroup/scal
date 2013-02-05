@@ -4,9 +4,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include "operation.h"
+#include "element.h"
 
-
-Operation** parse(char* filename, int num_ops) {
+Operation** parse_logfile(char* filename, int num_ops) {
 
   FILE* input = fopen(filename, "r");
 
@@ -57,4 +57,36 @@ Operation** parse(char* filename, int num_ops) {
   fclose(input);
 
   return ops;
+}
+
+Element** parse_linearization(FILE* input, int num_ops) {
+
+  Element** result = new Element*[num_ops];
+
+  for (int i = 0; i < num_ops; i++) {
+   
+    char type;
+    Element::ElementType element_type;
+    int value;
+
+    if (fscanf(input, "%c %d\n", &type, &value) == EOF) {
+
+      fprintf(stderr, "ERROR11: could not read all %d elements, abort after %d\n",
+          num_ops, i);
+      exit(11);
+    }
+    
+    if (type == '+') {
+      element_type = Element::INSERT;
+    } else if (type == '-') {
+      element_type = Element::REMOVE;
+    } else {
+      fprintf(stderr, "ERROR2: Invalid operaton type: %d\n", type);
+      exit(2);
+    }
+
+    result[i] = new Element();
+    result[i]->initialize(i, element_type, value);
+  }
+  return result;
 }

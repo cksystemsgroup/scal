@@ -700,7 +700,6 @@ Order** merge_linearizations(Operations* operations) {
     }
   }
 
-//  printf("merging done\n");
   return result;
 }
 
@@ -719,7 +718,7 @@ bool fixed_point_reached(Order** left, Order** right, int num_ops) {
 
     if (left[i]->operation != right[i]->operation) {
       
-      printf("Difference at position %d, %"PRIu64" != %"PRIu64"\n", i,
+      fprintf(stderr, "Difference at position %d, %"PRIu64" != %"PRIu64"\n", i,
           left[i]->operation->id(), right[i]->operation->id());
       return false;
     }

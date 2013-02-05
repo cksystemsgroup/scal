@@ -1,7 +1,7 @@
 #ifndef OPERATION_H
 #define OPERATION_H
 
-#include <stdint.h>
+#include <inttypes.h>
 
 class Operation {
 

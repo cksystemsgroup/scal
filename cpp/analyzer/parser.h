@@ -1,8 +1,12 @@
-#include <inttypes.h>
-
 #ifndef PARSER_H
 #define PARSER_H
 
-Operation** parse(char* filename, int num_ops);
+#include <stdio.h>
+#include "operation.h"
+#include "element.h"
+
+Operation** parse_logfile(char* filename, int num_ops);
+
+Element** parse_linearization(FILE* input, int num_ops);
 
 #endif // PARSER_H

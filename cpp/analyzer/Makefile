@@ -3,12 +3,15 @@ CPPFLAGS = -Wall -ggdb
 #CPPFLAGS = -Wall -Werror -O3
 LDFLAGS = 
 
-all: analyzer
+all: linearizer analyzer
 
-%.o: %.cpp *.h Makefile
+%.o: %.cpp *.h
 	g++ ${CPPFLAGS} -c $< -o $@
 
-analyzer: analyzer.o operation.o parser.o linearizer_max.o linearizer_invocation.o linearizer_sum.o linearizer_point.o
+analyzer: analyzer.o operation.o parser.o age.o
+	g++ ${CPPFLAGS} ${LDFLAGS} $^ -o $@
+
+linearizer: linearizer.o operation.o parser.o linearizer_max.o linearizer_invocation.o linearizer_sum.o linearizer_point.o linearizer_response.o
 	g++ ${CPPFLAGS} ${LDFLAGS} $^ -o $@
 
 .PHONY: clean

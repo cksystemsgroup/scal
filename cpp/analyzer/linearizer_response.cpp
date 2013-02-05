@@ -7,12 +7,12 @@
 #include "linearizer.h"
 #include <limits.h>
 
-int compare_orders_by_end()(const void* left, const void* right) {
+int compare_orders_by_end(const void* left, const void* right) {
   return (*(Order**) left)->operation->end() > 
          (*(Order**) right)->operation->end();
 }
 
-Order** linearize_by_end(Operation** ops, int num_ops) {
+Order** linearize_by_response(Operation** ops, int num_ops) {
 
   Order** result = new Order*[num_ops];
   
