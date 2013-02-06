@@ -28,13 +28,14 @@ inline uint64_t rdtsc(void) {
 // Schrage minimum standard PRNG. Assumes int to be 32 bits.
 // Range: [0,kM]
 uint64_t pseudorand() {
-  int32_t &seed = threadlocals_get()->random_seed;
+  int32_t seed = scal::ThreadContext::get().random_seed();
   uint32_t hi = seed / kQ;
   uint32_t lo = seed % kQ;
   seed = kA * lo - kR * hi;
   if (seed < 0) {
     seed += kM;
   }
+  scal::ThreadContext::get().set_random_seed(seed);
   return seed;
 }
 
@@ -53,7 +54,7 @@ uint64_t hwrand(void) {
 namespace scal {
 
 void srand(uint32_t seed) {
-  threadlocals_get()->random_seed = seed;
+  ThreadContext::get().set_random_seed(seed);
 }
 
 }  // namespace scal

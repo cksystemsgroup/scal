@@ -28,7 +28,7 @@ class BalancerPartitionedRoundRobin : public BalancerInterface {
   }
 
   uint64_t get(uint64_t num_queues, MSQueue<uint64_t> **queues, bool enqueue) {
-    uint64_t thread_id = threadlocals_get()->thread_id;
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
     if (enqueue) {
       return __sync_fetch_and_add(enqueue_rrs_[thread_id % partitions_], 1)
           % num_queues;

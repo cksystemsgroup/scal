@@ -10,25 +10,13 @@
 
 #include "src/util/random.h"
 
-struct threadlocals_t {
-  uint64_t thread_id;
-  int32_t random_seed;
-  void *data;
-};
-
-void threadlocals_init(void);
-threadlocals_t* threadlocals_get(void);
-threadlocals_t* threadlocals_get(uint64_t);
-uint64_t threadlocals_num_threads(void);
-
 namespace scal {
 
-// Eventually this context will replace the threadlocals_<func> api.
 class ThreadContext {
  public:
   static ThreadContext& get();
   static void prepare(uint64_t num_threads);
-  static bool try_assign_context();
+  static void assign_context();
 
   inline uint64_t thread_id() {
     return thread_id_;
@@ -41,6 +29,10 @@ class ThreadContext {
 
   inline void set_random_seed(uint32_t seed) {
     random_seed_ = seed;
+  }
+
+  inline int32_t random_seed() {
+    return random_seed_;
   }
 
   inline void set_data(void *data) {

@@ -102,7 +102,7 @@ KStack<T>::KStack(uint64_t k, uint64_t num_threads) {
 template<typename T>
 bool KStack<T>::is_empty(KSegment* segment) {
   // Distributed Queue style empty check.
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   uint64_t random_index = pseudorand() % k_;
   uint64_t index;
   AtomicValue<T> item_old;

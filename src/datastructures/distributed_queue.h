@@ -57,7 +57,7 @@ bool DistributedQueue<T, P>::put(T item) {
 template<typename T, class P>
 bool DistributedQueue<T, P>::get(T *item) {
   size_t i;
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   uint64_t start = balancer_->get(num_queues_, NULL, false);
   size_t index;
   while (true) {

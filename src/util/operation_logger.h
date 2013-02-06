@@ -111,7 +111,7 @@ class OperationLogger {
     if (!active_) {
       return noop_logger_;
     }
-    uint64_t thread_id = threadlocals_get()->thread_id;
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
     return *(tl_loggers_[thread_id]);
   }
 

@@ -94,7 +94,7 @@ void FlatCombiningQueue<T>::scan_combine_apply(void) {
 
 template<typename T>
 bool FlatCombiningQueue<T>::enqueue(T item) {
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   set_op(thread_id, Opcode::Enqueue, item);
   while (true) {
     if (!__sync_bool_compare_and_swap(global_lock_, false, true)) {
@@ -111,7 +111,7 @@ bool FlatCombiningQueue<T>::enqueue(T item) {
 
 template<typename T>
 bool FlatCombiningQueue<T>::dequeue(T *item) {
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   set_op(thread_id, Opcode::Dequeue, (T)NULL);
   while (true) {
     if (!__sync_bool_compare_and_swap(global_lock_, false, true)) {

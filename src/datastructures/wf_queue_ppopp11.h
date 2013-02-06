@@ -175,7 +175,7 @@ template<typename T>
 bool WaitfreeQueue<T>::enqueue(T item) {
   assert(item != (T)NULL);
   int64_t phase = max_phase() + 1;
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   Node *node = scal::tlget<Node>(kPtrAlignment);
   node->init(item, thread_id);
   OperationDescriptor *opdesc = scal::tlget<OperationDescriptor>(kPtrAlignment);
@@ -237,7 +237,7 @@ void WaitfreeQueue<T>::help_finish_enqueue(void) {
 template<typename T>
 bool WaitfreeQueue<T>::dequeue(T *item) {
   int64_t phase = max_phase() + 1;
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   OperationDescriptor *opdesc = scal::tlget<OperationDescriptor>(kPtrAlignment);
   opdesc->init(phase, true, OperationDescriptor::Type::kDequeue, NULL);
   AtomicPointer<OperationDescriptor*> new_state(opdesc,

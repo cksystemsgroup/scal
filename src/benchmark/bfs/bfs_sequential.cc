@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
   uint64_t tlsize = scal::human_size_to_pages(FLAGS_prealloc_size.c_str(),
                                               FLAGS_prealloc_size.size());
   scal::tlalloc_init(tlsize, true /* touch pages */);
-  threadlocals_init();
+  scal::ThreadContext::prepare(1);
 
   SingleList<uint64_t> *q = new SingleList<uint64_t>();
   Graph *g = Graph::from_graph_file(graph_file);

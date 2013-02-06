@@ -223,7 +223,7 @@ WaitfreeQueue<T>::WaitfreeQueue(uint64_t num_threads,
 
 template<typename T>
 void WaitfreeQueue<T>::help_if_needed() {
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   volatile HelpRecord *rec = records_[thread_id];
   if (rec->do_next_check()) {
     OperationDescriptor *desc = state_[rec->cur_thread_id()]->value();
@@ -314,7 +314,7 @@ bool WaitfreeQueue<T>::dequeue(T *item) {
 
 template<typename T>
 void WaitfreeQueue<T>::wf_enq(Node *node) {
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   int64_t phase = state_[thread_id]->value()->phase + 1;
   node->enq_tid = thread_id;
   OperationDescriptor *opdesc = scal::tlget<OperationDescriptor>(kPtrAlignment);
@@ -379,7 +379,7 @@ void WaitfreeQueue<T>::help_finish_enq() {
 
 template<typename T>
 bool WaitfreeQueue<T>::wf_deq(T *item) {
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   int64_t phase = state_[thread_id]->value()->phase + 1;
   OperationDescriptor *opdesc = scal::tlget<OperationDescriptor>(kPtrAlignment);
   opdesc->init(phase, true, OperationDescriptor::Type::kDequeue, NULL);

@@ -113,7 +113,7 @@ bool Benchmark::can_modify_sched() {
 }
 
 void Benchmark::set_core_affinity() {
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   uint64_t cores = (uint64_t)scal::number_of_cores();
   if (num_threads_ > cores) {
     return;
@@ -135,9 +135,8 @@ void Benchmark::set_core_affinity() {
 
 void Benchmark::startup_thread() {
   scal::tlalloc_init(thread_prealloc_size_, true /* touch pages */);
-  threadlocals_init();
   //set_core_affinity();
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   if (thread_id == 0) {
     fprintf(stderr, "%s: error: thread_id should be main thread. "
                     "Did you forged to init the main thread?\n", __func__);
@@ -155,7 +154,7 @@ void Benchmark::startup_thread() {
 }
 
 uint64_t Benchmark::thread_id(void) {
-  return threadlocals_get()->thread_id;
+  return scal::ThreadContext::get().thread_id();
 }
 
 }  // namespace scal

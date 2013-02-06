@@ -44,6 +44,15 @@ class RandomWrapper {
   random_function2 rand2_;
 };
 
+class RandomEnvironment : public testing::Environment {
+ public:
+  virtual void SetUp() {
+    scal::ThreadContext::prepare(1);
+  }
+};
+
+::testing::Environment* const rand_env = ::testing::AddGlobalTestEnvironment(new RandomEnvironment());
+
 class RandomTest : public testing::Test {
  protected:
   static constexpr uint64_t kN = 1000000;
@@ -52,8 +61,7 @@ class RandomTest : public testing::Test {
   static constexpr double kRunTestQuantile = 1.96;
 
   virtual void SetUp() {
-    threadlocals_init();
-    scal::srand((threadlocals_get()->thread_id + 1) * 100);
+    scal::ThreadContext::get().new_random_seed();
   }
 
   // Perform a chi-square test; alpha: 0.1%, kClasses-1 degrees of freedom

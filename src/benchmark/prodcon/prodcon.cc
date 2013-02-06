@@ -63,9 +63,11 @@ int main(int argc, const char **argv) {
 
   // Init the main program as executing thread (may use rnd generator or tl
   // allocs).
-  scal::tlalloc_init(tlsize, true /* touch pages */);
-  threadlocals_init();
   g_num_threads = FLAGS_producers + FLAGS_consumers;
+  scal::tlalloc_init(tlsize, true /* touch pages */);
+  //threadlocals_init();
+  scal::ThreadContext::prepare(g_num_threads + 1);
+  scal::ThreadContext::assign_context();
 
   if (FLAGS_log_operations) {
     scal::StdOperationLogger::prepare(g_num_threads + 1,
@@ -116,7 +118,7 @@ int main(int argc, const char **argv) {
 
 void ProdConBench::producer(void) {
   Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   uint64_t item;
   // Do not use 0 as value, since there may be datastructures that do not
   // support it.
@@ -135,7 +137,7 @@ void ProdConBench::producer(void) {
 
 void ProdConBench::consumer(void) {
   Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   // Calculate the items each consumer has to collect.
   uint64_t operations = FLAGS_producers * FLAGS_operations / FLAGS_consumers;
   uint64_t rest = (FLAGS_producers * FLAGS_operations) % FLAGS_consumers;
@@ -159,7 +161,7 @@ void ProdConBench::consumer(void) {
 }
 
 void ProdConBench::bench_func(void) {
-  uint64_t thread_id = threadlocals_get()->thread_id;
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
   if (thread_id <= FLAGS_consumers) {
     consumer();
   } else {
