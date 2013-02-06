@@ -111,7 +111,7 @@ class RandomTest : public testing::Test {
       prev = rand;
     }
     double z = (static_cast<double>(runs) - mu)/sigma;
-    return z > -kRunTestQuantile && z < kRunTestQuantile;
+    return z > -1.96 && z < 1.96;
   }
 };
 
