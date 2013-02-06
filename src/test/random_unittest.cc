@@ -46,10 +46,10 @@ class RandomWrapper {
 
 class RandomTest : public testing::Test {
  protected:
-  const uint64_t kN = 1000000;
-  const uint32_t kClasses = 16;
-  const double kChiSquareQuantile = 39.25;  // Depends on kClasses
-  const double kRunTestQuantile = 1.96;
+  static const uint64_t kN = 1000000;
+  static const uint32_t kClasses = 16;
+  static const double kChiSquareQuantile = 39.25;  // Depends on kClasses
+  static const double kRunTestQuantile = 1.96;
 
   virtual void SetUp() {
     threadlocals_init();
