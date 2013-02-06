@@ -39,7 +39,6 @@ std::vector<uint64_t> inline tokenize(const std::string &source,
     if (keep_empty || (next - prev != 0)) {
       num = atol(source.substr(prev, next - prev).c_str());
       if (num == 0) {
-        printf("1asdfasf\n");
         invalid_graph_file(__func__);
       }
       // We use zero based indices and node ids.
@@ -50,7 +49,6 @@ std::vector<uint64_t> inline tokenize(const std::string &source,
   if (prev < source.size()) {
     num = atol(source.substr(prev).c_str());
     if (num == 0) {
-        printf("2asdfasf\n");
       invalid_graph_file(__func__);
     }
     // Again, we use zero based indices and node ids.
