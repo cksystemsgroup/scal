@@ -15,7 +15,7 @@
 #include "util/time.h"
 
 DEFINE_string(prealloc_size, "1g", "tread local space that is initialized");
-DEFINE_int64(root, -1, "root for BFS; -1: pseudorandom");
+DEFINE_int64(root, -1, "root for BFS; -1: pseudorandom (time-based seed)");
 
 namespace {
 
@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
                                               FLAGS_prealloc_size.size());
   scal::tlalloc_init(tlsize, true /* touch pages */);
   scal::ThreadContext::prepare(1);
+  scal::ThreadContext::assign_context();
 
   SingleList<uint64_t> *q = new SingleList<uint64_t>();
   Graph *g = Graph::from_graph_file(graph_file);
@@ -48,7 +49,7 @@ int main(int argc, char **argv) {
  
   uint64_t root_index;
   if (FLAGS_root == -1) {
-    root_index = pseudorand() % g->size();
+    root_index = scal::rand_range(0, g->size());
   } else {
     root_index = static_cast<uint64_t>(FLAGS_root);
   }
