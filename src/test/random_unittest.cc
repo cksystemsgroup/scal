@@ -125,7 +125,7 @@ TEST_F(RandomTest, PseudoRandomDistribution) {
 
 TEST_F(RandomTest, PseudoRandomRangeDistribution) {
   RandomWrapper rw;
-  rw.set_rand2(scal::randrange);
+  rw.set_rand2(scal::rand_range);
   EXPECT_TRUE(chi_square(rw));
 }
 

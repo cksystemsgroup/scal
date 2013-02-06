@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-
+// Deprecated: Use variants in scal namespace.
 uint64_t pseudorand();
 uint64_t pseudorandrange(uint32_t min, uint32_t max);
 uint64_t hwrand();
@@ -20,7 +20,7 @@ inline uint64_t rand() {
   return pseudorand();
 }
 
-inline uint64_t randrange(uint32_t min, uint32_t max) {
+inline uint64_t rand_range(uint32_t min, uint32_t max) {
   return pseudorandrange(min, max);
 }
 
