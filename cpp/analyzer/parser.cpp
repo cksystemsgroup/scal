@@ -32,7 +32,7 @@ Operation** parse_logfile(char* filename, int num_ops) {
     } else if (type == 1) {
       op_type = Operation::REMOVE;
     } else {
-      fprintf(stderr, "ERROR2: Invalid operaton type: %d\n", type);
+      fprintf(stderr, "ERROR2: Invalid operation type: %d\n", type);
       exit(2);
     }
 
@@ -81,7 +81,7 @@ Element** parse_linearization(FILE* input, int num_ops) {
     } else if (type == '-') {
       element_type = Element::REMOVE;
     } else {
-      fprintf(stderr, "ERROR2: Invalid operaton type: %d\n", type);
+      fprintf(stderr, "ERROR2: Invalid operation type: %d\n", type);
       exit(2);
     }
 
