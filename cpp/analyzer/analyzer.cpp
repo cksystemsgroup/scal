@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     input = fopen(argv[2], "r");
   }
   
-  Element** elements = parse_linearization(stdin, num_ops);
+  Element** elements = parse_linearization(input, num_ops);
  
   if (input != stdin) {
     fclose(input);
