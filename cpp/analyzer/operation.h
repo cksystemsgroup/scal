@@ -18,7 +18,7 @@ class Operation {
     void adjust_start(uint64_t new_start);
     void adjust_end(uint64_t new_end);
     bool is_null_return() {
-      return value_ == -1;
+      return value_ < 0;
     }
 
     uint64_t id() const {

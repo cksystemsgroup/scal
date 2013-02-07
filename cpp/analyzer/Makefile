@@ -3,7 +3,10 @@ CPPFLAGS = -Wall -ggdb
 #CPPFLAGS = -Wall -Werror -O3
 LDFLAGS = 
 
-all: linearizer analyzer
+all: linearizer analyzer test
+
+test: test.o operation.o parser.o linearizer_max.o linearizer_invocation.o linearizer_sum.o linearizer_point.o linearizer_response.o
+	g++ ${CPPFLAGS} ${LDFLAGS} $^ -o $@
 
 %.o: %.cpp *.h
 	g++ ${CPPFLAGS} -c $< -o $@

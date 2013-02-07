@@ -68,8 +68,9 @@ Element** parse_linearization(FILE* input, int num_ops) {
     char type;
     Element::ElementType element_type;
     int value;
+    uint64_t start;
 
-    if (fscanf(input, "%c %d\n", &type, &value) == EOF) {
+    if (fscanf(input, "%c %d   %"PRIu64"\n", &type, &value, &start) == EOF) {
 
       fprintf(stderr, "ERROR11: could not read all %d elements, abort after %d\n",
           num_ops, i);

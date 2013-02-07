@@ -79,6 +79,28 @@ int compare_operations_by_order(const void* left, const void* right) {
   return (*(Node**) left)->order > (*(Node**) right)->order;
 }
 
+Order** naive_merge(Operations* operations) {
+ 
+  Order** result = new Order*[operations->num_insert_ops + operations->num_remove_ops];
+
+  qsort(operations->insert_ops, operations->num_insert_ops, sizeof(Node*), compare_operations_by_order);
+  qsort(operations->remove_ops, operations->num_remove_ops, sizeof(Node*), compare_operations_by_order);
+
+  int next_index = 0;
+
+  for (int i = 0; i < operations->num_insert_ops; i++) {
+    Node* insert_op = operations->insert_ops[i];
+    next_order(result, insert_op->operation, &next_index);
+  }
+
+  for (int i = 0; i < operations->num_remove_ops; i++) {
+    Node* remove_op = operations->remove_ops[i];
+    next_order(result, remove_op->operation, &next_index);
+  }
+
+  return result;
+}
+
 Order** merge_linearizations(Operations* operations) {
 
   Order** result = new Order*[operations->num_insert_ops + operations->num_remove_ops];
@@ -287,8 +309,10 @@ void linearize_remove_ops(Operations* operations) {
       operations->remove_ops, operations->num_remove_ops);
   
   int next_order = 0;
+  uint64_t latest_selected_invocation = 0;
 
   while (operations->remove_list->next != operations->remove_list) {
+
 
     Node* op = operations->remove_list->next;
     uint64_t first_end = op->operation->end();
@@ -298,6 +322,12 @@ void linearize_remove_ops(Operations* operations) {
     // Only operations which start before the first remove operation ends are
     // within the first overlap group.
     while (op != operations->remove_list && op->operation->start() <= first_end) {
+
+      if (op->operation->is_null_return()) {
+        if (op->operation->start() < latest_selected_invocation) {
+          op->operation->adjust_start(latest_selected_invocation);
+        }
+      }
 
       int minimal_costs = -1;
       if (op->operation->end() < first_end) {
@@ -335,9 +365,14 @@ void linearize_remove_ops(Operations* operations) {
       op = op->next;
     }
 
+    if (latest_selected_invocation < minimal_costs_op->operation->start()) {
+      latest_selected_invocation = minimal_costs_op->operation->start();
+    }
+
     // Remove the operation with minimal costs from the list of unselected
     // operations.
     remove_from_list(minimal_costs_op);
+
 
     // Assign the order index to the removed operation.
     minimal_costs_op-> order = next_order;

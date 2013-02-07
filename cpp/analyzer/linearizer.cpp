@@ -12,9 +12,9 @@ void print_op(Operation* op) {
 
   assert(op != NULL);
   if (op->type() == Operation::INSERT) {
-    printf("+ %"PRId64"\n", op->value());
+    printf("+ %"PRId64"   %"PRIu64"\n", op->value(), op->start());
   } else {
-    printf("- %"PRId64"\n", op->value());
+    printf("- %"PRId64"   %"PRIu64"\n", op->value(), op->start());
   } 
 }
 
