@@ -163,6 +163,17 @@ prodcon_wf_ppopp12_SOURCES = \
 	src/benchmark/std_glue/glue_wf_ppopp12.cc
 
 #
+# SPF benchmark
+#
+
+bin_PROGRAMS += spf-sequential
+spf_sequential_SOURCES = \
+	$(UTIL_OBJS) \
+        src/benchmark/bfs/spf_sequential.cc \
+	src/benchmark/bfs/graph.h \
+        src/benchmark/bfs/graph.cc
+
+#
 # Tests -- currenctly only the atomic containers
 #
 
