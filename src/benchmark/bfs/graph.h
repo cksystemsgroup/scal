@@ -11,10 +11,12 @@
 
 struct Vertex {
   static const uint64_t no_distance = std::numeric_limits<uint64_t>::max();
+  static const uint64_t no_parent = std::numeric_limits<uint64_t>::max();
 
   uint64_t *neighbors;
   uint64_t len_neighbors;
   uint64_t distance;
+  uint64_t parent;
 };
 
 class Graph {

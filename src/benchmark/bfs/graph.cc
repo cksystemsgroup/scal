@@ -92,6 +92,7 @@ Graph* Graph::from_graph_file(const char* graph_file) {
       for (uint64_t i = 0; i < tokens[0]; i++) {
         g->vertices_[i] = scal::get<Vertex>(4 * 128);
         g->vertices_[i]->distance = Vertex::no_distance;
+        g->vertices_[i]->parent = Vertex::no_parent;
       }
       continue;
     } 
