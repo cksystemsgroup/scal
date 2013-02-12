@@ -33,13 +33,13 @@ void analyze(uint64_t root_index, uint64_t end_index, Graph *g, SingleList<uint6
         neighbor.distance = cur_vertex.distance + 1;
         neighbor.parent = vertex_index;
         if (cur_vertex.neighbors[i] == end_index) {
-          goto AFTER_LOOP;
+          goto AFTER_LOOP_ANALYZE;
         }
         q->enqueue(cur_vertex.neighbors[i]);
       }
     }
   }
-AFTER_LOOP:
+AFTER_LOOP_ANALYZE:
   *execution_time = get_utime() - start_time;
   return;
 }
@@ -54,13 +54,13 @@ void performance(uint64_t root_index, uint64_t end_index, Graph *g, SingleList<u
       if (neighbor.distance == Vertex::no_distance) {
         neighbor.distance = cur_vertex.distance + 1;
         if (cur_vertex.neighbors[i] == end_index) {
-          goto AFTER_LOOP;
+          goto AFTER_LOOP_PERFORMANCE;
         }
         q->enqueue(cur_vertex.neighbors[i]);
       }
     }
   }
-AFTER_LOOP:
+AFTER_LOOP_PERFORMANCE:
   *execution_time = get_utime() - start_time;
   return;
 }
