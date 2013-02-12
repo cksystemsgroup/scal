@@ -16,7 +16,7 @@ class BalancerId : public BalancerInterface {
     if (num_queues == 1) {
       return 0;
     }
-    uint64_t thread_id = ThreadContext::get()->thread_id();
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
     return thread_id % num_queues;
   }
 };
