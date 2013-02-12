@@ -18,9 +18,57 @@ DEFINE_string(prealloc_size, "1g", "tread local space that is initialized");
 DEFINE_int64(root, -1, "root for BFS; -1: pseudorandom");
 DEFINE_int64(end, -1, "end node; -1: pseudorandom");
 DEFINE_bool(description, false, "print description");
+DEFINE_bool(backtrace, false, "print backtrace");
+
+namespace {
+
+void analyze(uint64_t root_index, uint64_t end_index, Graph *g, SingleList<uint64_t> *q, uint64_t *execution_time) {
+  uint64_t start_time = get_utime();
+  uint64_t vertex_index;
+  while (q->dequeue(&vertex_index)) {
+    Vertex& cur_vertex = g->get(vertex_index);  
+    for (uint64_t i = 0; i < cur_vertex.len_neighbors; i++) {
+      Vertex& neighbor = g->get(cur_vertex.neighbors[i]);
+      if (neighbor.distance == Vertex::no_distance) {
+        neighbor.distance = cur_vertex.distance + 1;
+        neighbor.parent = vertex_index;
+        if (cur_vertex.neighbors[i] == end_index) {
+          goto AFTER_LOOP;
+        }
+        q->enqueue(cur_vertex.neighbors[i]);
+      }
+    }
+  }
+AFTER_LOOP:
+  *execution_time = get_utime() - start_time;
+  return;
+}
+
+void performance(uint64_t root_index, uint64_t end_index, Graph *g, SingleList<uint64_t> *q, uint64_t *execution_time) {
+  uint64_t start_time = get_utime();
+  uint64_t vertex_index;
+  while (q->dequeue(&vertex_index)) {
+    Vertex& cur_vertex = g->get(vertex_index);  
+    for (uint64_t i = 0; i < cur_vertex.len_neighbors; i++) {
+      Vertex& neighbor = g->get(cur_vertex.neighbors[i]);
+      if (neighbor.distance == Vertex::no_distance) {
+        neighbor.distance = cur_vertex.distance + 1;
+        if (cur_vertex.neighbors[i] == end_index) {
+          goto AFTER_LOOP;
+        }
+        q->enqueue(cur_vertex.neighbors[i]);
+      }
+    }
+  }
+AFTER_LOOP:
+  *execution_time = get_utime() - start_time;
+  return;
+}
+
+}  // namespace
 
 int main(int argc, char **argv) {
-  std::string usage("sfp-sequential [options] graph_file");
+  std::string usage("sfp-analyzer [options] graph_file");
   google::SetUsageMessage(usage);
   uint32_t cmd_index = google::ParseCommandLineFlags(&
       argc, const_cast<char***>(&argv), true);
@@ -53,31 +101,33 @@ int main(int argc, char **argv) {
 
   Vertex& cur_vertex = g->get(root_index);
   cur_vertex.distance = 0;
+  cur_vertex.parent = Vertex::no_parent;
   q->enqueue(root_index);
 
-  uint64_t start_time = get_utime();
-  uint64_t vertex_index;
-  while (q->dequeue(&vertex_index)) {
-    cur_vertex = g->get(vertex_index);  
-    for (uint64_t i = 0; i < cur_vertex.len_neighbors; i++) {
-      Vertex& neighbor = g->get(cur_vertex.neighbors[i]);
-      if (neighbor.distance == Vertex::no_distance) {
-        neighbor.distance = cur_vertex.distance + 1;
-        if (cur_vertex.neighbors[i] == end_index) {
-          goto AFTER_LOOP;
-        }
-        q->enqueue(cur_vertex.neighbors[i]);
-      }
-    }
+  uint64_t execution_time;
+  if (FLAGS_backtrace) {
+    analyze(root_index, end_index, g, q, &execution_time);
+  } else {
+    performance(root_index, end_index, g, q, &execution_time);
   }
-AFTER_LOOP:
-  uint64_t execution_time = get_utime() - start_time;
+
   if (FLAGS_description) {
     printf("      size       root        end    sp  time [us]\n");
-
   }
   printf("%10" PRIu64 " %10" PRIu64 " %10" PRIu64 " %5" PRIu64 " %10" PRIu64 "\n",
       g->size(), root_index, end_index, g->get(end_index).distance, execution_time);
+  if (FLAGS_backtrace) {
+    Vertex& cur_vertex = g->get(end_index);
+    printf("%lu ", end_index);
+    while (true) {
+      printf("-> %lu ", cur_vertex.parent);
+      if (cur_vertex.parent == root_index) {
+        break;
+      }
+      cur_vertex = g->get(cur_vertex.parent);
+    }
+    printf("\n");
+  }
 
   return EXIT_SUCCESS;
 }
