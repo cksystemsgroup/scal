@@ -8,13 +8,17 @@
 #include <stdint.h>
 
 #include <limits>
+#include <vector>
 
 struct Vertex {
   static const uint64_t no_distance = std::numeric_limits<uint64_t>::max();
   static const uint64_t no_parent = std::numeric_limits<uint64_t>::max();
 
+  std::vector<uint64_t> neighbors;
+  /*
   uint64_t *neighbors;
   uint64_t len_neighbors;
+  */
   uint64_t distance;
   uint64_t parent;
 };
@@ -22,6 +26,7 @@ struct Vertex {
 class Graph {
  public:
   static Graph* from_graph_file(const char* graph_file);
+  static Graph* from_mtx_file(const char* graph_file);
   
   inline uint64_t size() {
     return num_vertices_;

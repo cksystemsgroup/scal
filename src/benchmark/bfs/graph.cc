@@ -4,6 +4,7 @@
 
 #include "benchmark/bfs/graph.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include <algorithm>
@@ -18,6 +19,11 @@ namespace {
 
 void invalid_graph_file(const char *fn) {
   fprintf(stderr, "%s: invalid graph file\n", fn);
+  exit(EXIT_FAILURE);
+}
+
+void invalid_mtx_file(const char* fn) {
+  fprintf(stderr, "%s: invalid matrix market format file\n", fn);
   exit(EXIT_FAILURE);
 }
 
@@ -59,6 +65,54 @@ std::vector<uint64_t> inline tokenize(const std::string &source,
 
 }  // namespace
 
+// We assume a correctly formated mtx file o type:
+// matrix coordinate pattern general
+Graph* Graph::from_mtx_file(const char* graph_file) {
+  Graph *g = new Graph();
+  FILE* infile;
+  char line_buffer[BUFSIZ];
+
+  infile = fopen(graph_file, "rt");
+  if (!infile) {
+    fprintf(stderr, "%s: unable to open file %s\n", __func__, graph_file);
+    exit(EXIT_FAILURE);
+  }
+
+  bool firstline = true;
+  while (fgets(line_buffer, sizeof(line_buffer), infile)) {
+    std::string line(line_buffer);
+    line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+    if (is_comment(line)) {
+      continue;
+    }
+    if (firstline) {
+      // syntax of first line:
+      // #rows #cols #entries
+      // for our case it should be #rows=#cols
+      firstline = false;
+      std::vector<uint64_t> tokens = tokenize(line, " ");
+      if (tokens.size() < 1) {
+        invalid_mtx_file(__func__);
+      }
+      g->vertices_ = new Vertex*[tokens[0]];
+      g->num_vertices_ = tokens[0];
+      for (uint64_t i = 0; i < tokens[0]; i++) {
+        g->vertices_[i] = scal::get<Vertex>(4 * 128);
+        g->vertices_[i]->distance = Vertex::no_distance;
+        g->vertices_[i]->parent = Vertex::no_parent;
+      }
+      continue;
+    }
+    std::vector<uint64_t> tokens = tokenize(line, " ");
+    assert((tokens[0] - 1) < g->num_vertices_);
+    Vertex *v = g->vertices_[tokens[0] - 1];
+    v->neighbors.push_back(tokens[1] - 1);
+  }
+
+  fclose(infile);
+  return g;
+}
+
 Graph* Graph::from_graph_file(const char* graph_file) {
   Graph *g = new Graph();
   FILE* infile;
@@ -96,11 +150,14 @@ Graph* Graph::from_graph_file(const char* graph_file) {
       }
       continue;
     } 
-    std::vector<uint64_t> tokens = tokenize(line, " ");
+    //std::vector<uint64_t> tokens = tokenize(line, " ");
     Vertex *v = g->vertices_[id];
+    v->neighbors = tokenize(line, " ");
+
+    /*
     if (tokens.size() > 0) {
-      v->neighbors = static_cast<uint64_t*>(scal::calloc_aligned(
-          tokens.size(), sizeof(uint64_t), 128));
+      v->neighbors = static_cast<uint64_t*>(calloc(
+          tokens.size(), sizeof(uint64_t)));
       v->len_neighbors = tokens.size();
       for (uint64_t i = 0; i < tokens.size(); i++) {
         v->neighbors[i] = tokens[i];
@@ -109,10 +166,10 @@ Graph* Graph::from_graph_file(const char* graph_file) {
       v->len_neighbors = 0;
       v->neighbors = NULL;
     }
+    */
     id++;
   }
 
   fclose(infile);
-
   return g;
 }
