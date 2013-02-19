@@ -27,7 +27,7 @@ void analyze(uint64_t root_index, uint64_t end_index, Graph *g, SingleList<uint6
   uint64_t vertex_index;
   while (q->dequeue(&vertex_index)) {
     Vertex& cur_vertex = g->get(vertex_index);  
-    for (uint64_t i = 0; i < cur_vertex.len_neighbors; i++) {
+    for (uint64_t i = 0; i < cur_vertex.neighbors.size(); i++) {
       Vertex& neighbor = g->get(cur_vertex.neighbors[i]);
       if (neighbor.distance == Vertex::no_distance) {
         neighbor.distance = cur_vertex.distance + 1;
@@ -49,7 +49,7 @@ void performance(uint64_t root_index, uint64_t end_index, Graph *g, SingleList<u
   uint64_t vertex_index;
   while (q->dequeue(&vertex_index)) {
     Vertex& cur_vertex = g->get(vertex_index);  
-    for (uint64_t i = 0; i < cur_vertex.len_neighbors; i++) {
+    for (uint64_t i = 0; i < cur_vertex.neighbors.size(); i++) {
       Vertex& neighbor = g->get(cur_vertex.neighbors[i]);
       if (neighbor.distance == Vertex::no_distance) {
         neighbor.distance = cur_vertex.distance + 1;

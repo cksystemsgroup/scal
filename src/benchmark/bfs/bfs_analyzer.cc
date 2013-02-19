@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     if (debug_levels == cur_vertex.distance) {
       debug_levels++;
     }
-    for (uint64_t i = 0; i < cur_vertex.len_neighbors; i++) {
+    for (uint64_t i = 0; i < cur_vertex.neighbors.size(); i++) {
       Vertex& neighbor = g->get(cur_vertex.neighbors[i]);
       if (neighbor.distance == Vertex::no_distance) {
         neighbor.distance = cur_vertex.distance + 1;
