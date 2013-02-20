@@ -2,6 +2,7 @@
 #include "element.h"
 #include <inttypes.h>
 #include "analyzer.h"
+#include <stdio.h>
 
 struct Node {
 
@@ -80,6 +81,11 @@ Result* calculate_age(Element** elements, int num_ops) {
           break;
         } else {
           // Costs increase by one.
+
+//          if (next->element->is_null_return()) {
+//            printf("-%d precedes -%d but should not\n", next->element->value(), tmp->element->value());
+//            exit(0);
+//          }
           costs++;
           tmp = tmp->next;
         }
