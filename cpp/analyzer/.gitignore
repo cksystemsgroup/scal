@@ -2,3 +2,6 @@
 *.txt
 analyzer
 linearizer
+test
+nondet
+
