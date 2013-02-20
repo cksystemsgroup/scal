@@ -306,7 +306,7 @@ void linearize_insert_ops(Operations* operations) {
       op = op->next;
     }
 
-    int costs = get_insert_costs(operations, minimal_costs_op);
+//    int costs = get_insert_costs(operations, minimal_costs_op);
 //    if (costs != 0) {
 //      fprintf(stderr, "Costs for +%"PRIu64": %d\n", minimal_costs_op->operation->value(), costs);
 //    }
@@ -451,7 +451,7 @@ void linearize_remove_ops(Operations* operations) {
       latest_selected_invocation = minimal_costs_op->operation->start();
     }
 
-    int costs = get_remove_costs(operations, minimal_costs_op);
+//    int costs = get_remove_costs(operations, minimal_costs_op);
 //    if (costs != 0) {
 //      fprintf(stderr, "Costs for +%"PRIu64": %d\n", minimal_costs_op->operation->value(), costs);
 //    }
