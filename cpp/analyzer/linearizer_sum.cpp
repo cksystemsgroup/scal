@@ -130,6 +130,10 @@ bool is_selectable_insert (Operations* operations, Node* insert_op, uint64_t fir
 
 bool is_selectable_remove (Operations* operations, Node* remove_op, uint64_t first_end) {
 
+  if (remove_op->operation->is_null_return()) {
+    return true;
+  }
+
   int left_index = 0;
   int right_index = 0;
 
@@ -174,13 +178,23 @@ int get_insert_costs(Operations* operations, Node* insert_op) {
   Node* next_op = operations->remove_list->next;
   while (next_op != operations->remove_list) {
 
-    if (next_op->order < matching_remove->order) {
-      costs++;
-    } else {
-      break;
-    }
+    if(!next_op->operation->is_null_return()) {
 
-    next_op = next_op->next;
+      if (next_op->order < matching_remove->order) {
+        costs++;
+      } else {
+        break;
+      }
+
+      next_op = next_op->next;
+    } else {
+      // Null returns do not affect the costs of insert operations. We remove
+      // them from the list.
+      next_op->prev->next = next_op->next;
+      next_op->next->prev = next_op->prev;
+
+      next_op = next_op->next;
+    }
   }
   assert(costs >= 0);
   return costs;
@@ -292,6 +306,12 @@ void linearize_insert_ops(Operations* operations) {
       op = op->next;
     }
 
+    int costs = get_insert_costs(operations, minimal_costs_op);
+    if (costs != 0) {
+      fprintf(stderr, "Costs for +%"PRIu64": %d\n", minimal_costs_op->operation->value(), costs);
+    }
+
+
     tmp = operations->insert_order->next;
     while (tmp != operations->insert_order) {
 
@@ -350,6 +370,11 @@ void linearize_remove_ops(Operations* operations) {
   create_doubly_linked_lists(operations->remove_order,
       operations->remove_ops_order, operations->num_remove_ops);
 
+  // We need to adjust the start time of null-return remove operations to be
+  // able to calculate the cost-function for these operations correctly. See
+  // test case "test_null_return_start_time".
+  uint64_t latest_selected_invocation = 0;
+
   int next_order = 0;
   while (operations->remove_list->next != operations->remove_list) {
 
@@ -377,6 +402,14 @@ void linearize_remove_ops(Operations* operations) {
     // within the first overlap group.
     while (op != operations->remove_list && op->operation->start() <= first_end) {
 
+      // We adjust the invocation time of null-return operations.
+      if (op->operation->is_null_return()) {
+        if (op->operation->start() < latest_selected_invocation) {
+          
+          op->operation->adjust_start(latest_selected_invocation);
+        }
+      }
+
       if (op == minimal_costs_op) {
         // This op is already the minimal_costs_op.
       } else if (op->matching_op->operation->start() >
@@ -399,6 +432,11 @@ void linearize_remove_ops(Operations* operations) {
 
           minimal_costs = costs;
           minimal_costs_op = op;
+        } else if (costs == minimal_costs && op->operation->is_null_return()) {
+          minimal_costs = costs;
+          minimal_costs_op = op;
+        } else if (costs == minimal_costs && minimal_costs_op->operation->is_null_return()) {
+          // Do nothing. We prefer null-returns.
         } else if (costs == minimal_costs &&
             op->matching_op->operation->end() <
             minimal_costs_op->matching_op->operation->end()) {
@@ -407,6 +445,15 @@ void linearize_remove_ops(Operations* operations) {
         }
       }
       op = op->next;
+    }
+
+    if (latest_selected_invocation < minimal_costs_op->operation->start()) {
+      latest_selected_invocation = minimal_costs_op->operation->start();
+    }
+
+    int costs = get_remove_costs(operations, minimal_costs_op);
+    if (costs != 0) {
+      fprintf(stderr, "Costs for +%"PRIu64": %d\n", minimal_costs_op->operation->value(), costs);
     }
 
     tmp = operations->remove_order->next;
@@ -689,7 +736,7 @@ Order** merge_linearizations(Operations* operations) {
       Node* remove_op = operations->remove_ops[j];
       Node* insert_op = operations->insert_ops[i];
       if (remove_op->insert_added && 
-          remove_op->operation->start() < insert_op->latest_lin_point) {
+          remove_op->operation->start() <= insert_op->latest_lin_point) {
         next_order(result, remove_op->operation, &next_index);
         j++;
       } else {
