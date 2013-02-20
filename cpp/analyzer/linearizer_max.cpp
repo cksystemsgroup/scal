@@ -309,10 +309,13 @@ void linearize_remove_ops(Operations* operations) {
       operations->remove_ops, operations->num_remove_ops);
   
   int next_order = 0;
+
+  // We need to adjust the start time of null-return remove operations to be
+  // able to calculate the cost-function for these operations correctly. See
+  // test case "test_null_return_start_time".
   uint64_t latest_selected_invocation = 0;
 
   while (operations->remove_list->next != operations->remove_list) {
-
 
     Node* op = operations->remove_list->next;
     uint64_t first_end = op->operation->end();
@@ -325,6 +328,7 @@ void linearize_remove_ops(Operations* operations) {
 
       if (op->operation->is_null_return()) {
         if (op->operation->start() < latest_selected_invocation) {
+          
           op->operation->adjust_start(latest_selected_invocation);
         }
       }
@@ -355,11 +359,17 @@ void linearize_remove_ops(Operations* operations) {
 
           minimal_costs = costs;
           minimal_costs_op = op;
-        } else if (costs == minimal_costs &&
+        } else if (costs == minimal_costs && op->operation->is_null_return()) {
+          minimal_costs_op = op;
+        } else if (costs == minimal_costs && minimal_costs_op->operation->is_null_return()){
+          // We prefer null-returns
+        }
+        else if (costs == minimal_costs &&
             op->matching_op->operation->start() <
             minimal_costs_op->matching_op->operation->start()) {
 
           minimal_costs_op = op;
+        } else {
         }
       }
       op = op->next;
@@ -368,6 +378,10 @@ void linearize_remove_ops(Operations* operations) {
     if (latest_selected_invocation < minimal_costs_op->operation->start()) {
       latest_selected_invocation = minimal_costs_op->operation->start();
     }
+
+//    if (get_remove_costs(operations, minimal_costs_op) != 0) {
+//      fprintf(stderr, "Operation -%"PRId64" has costs > 0\n", minimal_costs_op->operation->value());
+//    }
 
     // Remove the operation with minimal costs from the list of unselected
     // operations.
