@@ -21,6 +21,14 @@ class Operation {
       return value_ < 0;
     }
 
+    bool is_insert() {
+      return type_ == Operation::INSERT;
+    }
+
+    bool is_remove() {
+      return type_ == Operation::REMOVE;
+    }
+
     uint64_t id() const {
       return id_;
     }
