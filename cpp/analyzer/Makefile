@@ -1,5 +1,5 @@
-CPPFLAGS = -Wall -ggdb
-#CPPFLAGS = -Wall -Werror -ggdb
+#CPPFLAGS = -Wall -ggdb
+CPPFLAGS = -Wall -Werror -ggdb
 #CPPFLAGS = -Wall -Werror -O3
 LDFLAGS = 
 
