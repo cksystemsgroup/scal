@@ -70,9 +70,9 @@ void test_selectable_insert() {
 
   i1.initialize( 1, 0,  9, Operation::INSERT, 1);
   i2.initialize( 2, 0,  3, Operation::INSERT, 2);
-  n1.initialize( 8, 0, 10, Operation::REMOVE, -1);
   r1.initialize( 4, 0,  5, Operation::REMOVE, 1);
   r2.initialize( 6, 0,  7, Operation::REMOVE, 2);
+  n1.initialize( 8, 0, 10, Operation::REMOVE, -1);
 
   Order** linearization;
   linearization = linearize_by_min_sum(ops, num_ops, linearize_by_invocation(ops, num_ops));
@@ -340,7 +340,7 @@ int main(int argc, char** argv) {
   test_null_return1();
   test_null_return2();
   test_null_return3();
-  test_null_return5();
   test_null_return4();
+  test_null_return5();
 }
 
