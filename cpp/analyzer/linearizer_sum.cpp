@@ -64,6 +64,7 @@ void create_insert_and_remove_array(Operations* operations, Operation** ops, int
 void create_doubly_linked_lists(Node* head, Node** ops, int num_ops);
 void initialize(Operations* operations, Operation** ops, int num_ops, Order** order);
 void create_orders (Operations* operations, Order** order, int num_ops);
+int get_remove_costs(Operations* operations, Node* remove_op);
 
 int compare_orders_by_start_time(const void* left, const void* right) {
   return (*(Order**) left)->operation->start() > (*(Order**) right)->operation->start();
@@ -143,39 +144,91 @@ bool is_selectable_insert (Operations* operations, Node* insert_op, uint64_t fir
 bool is_selectable_remove (Operations* operations, Node* remove_op, uint64_t first_end) {
 
   if (remove_op->operation->is_null_return()) {
-    return true;
-  }
 
-  int left_index = 0;
-  int right_index = 0;
+    int costs = get_remove_costs(operations, remove_op);
 
-  Node* op = operations->remove_order->next;
+    if (costs == 0) {
+      return true;
+    }
+    
+    int possible_costs = costs;
 
-  while (op != operations->remove_order) {
+    Node* op = operations->remove_order->next;
 
-    if (op == remove_op) {
-      // Do nothing.
-    } else if (op->operation->start() > remove_op->operation->end()) {
-      // Upper bound for the calculation.
-      break;
-    } else if(op->matching_op->operation->start() >
-        remove_op->matching_op->operation->end()) {
+    Node* insert_op = operations->insert_order->next;
+    bool done = false;
 
-      left_index++;
-    } else if (op->operation->start() > first_end &&
-        op->matching_op->operation->end() <
-        remove_op->matching_op->operation->start()) {
+    while (!done && op != operations->remove_order) {
 
-      right_index++;
-      if (right_index >= left_index) {
-        return false;
+      while (insert_op != operations->insert_order && insert_op->order < op->order) {
+
+        if (insert_op->operation->end() < remove_op->operation->start()) {
+          // This insert operation is already considered in the costs by the
+          // cost function.
+        } else if (insert_op->operation->start() > remove_op->operation->end()) {
+          // This insert operation does not overlap with the remove operation
+          // anymore. We are done.
+          done = true;
+          break;
+        } else {
+          possible_costs++;
+        }
+        insert_op = insert_op->next;
+      }
+
+      if (done) {
+        break;
+      }
+
+      if (op == remove_op) {
+        // Do nothing.
+      } else if (op->operation->start() > remove_op->operation->end()) {
+        // This remove operation does not overlap with the remove operation
+        // anymore. We are done.
+        break;
+      } else {
+
+        possible_costs--;
+        if (possible_costs < costs) {
+          return false;
+        }
       }
     }
 
-    op = op->next;
-  }
+    return true;
+  } else {
 
-  return true;
+    int cost_increase = 0;
+    int cost_decrease = 0;
+
+    Node* op = operations->remove_order->next;
+
+    while (op != operations->remove_order) {
+
+      if (op == remove_op) {
+        // Do nothing.
+      } else if (op->operation->start() > remove_op->operation->end()) {
+        // Upper bound for the calculation.
+        break;
+      } else if(op->matching_op->operation->start() >
+          remove_op->matching_op->operation->end()) {
+
+        cost_increase++;
+      } else if (op->operation->start() > first_end &&
+          op->matching_op->operation->end() <
+          remove_op->matching_op->operation->start()) {
+
+        cost_decrease++;
+        if (cost_decrease >= cost_increase) {
+          return false;
+        }
+      }
+
+      op = op->next;
+    }
+
+    return true;
+  }
 }
 
 ///
@@ -389,6 +442,11 @@ void linearize_remove_ops(Operations* operations) {
   create_doubly_linked_lists(operations->remove_order,
       operations->remove_ops_order, operations->num_remove_ops);
 
+  operations->insert_order = new Node();
+  operations->insert_order->operation = NULL;
+  create_doubly_linked_lists(operations->insert_order,
+      operations->insert_ops_order, operations->num_insert_ops_order);
+
   // We need to adjust the start time of null-return remove operations to be
   // able to calculate the cost-function for these operations correctly. See
   // test case "test_null_return_start_time".
@@ -482,6 +540,7 @@ void linearize_remove_ops(Operations* operations) {
 
         tmp->order = next_order;
         remove_from_list(tmp);
+        remove_from_list(tmp->matching_op);
         break;
       }
       tmp = tmp->next;
@@ -511,6 +570,8 @@ void linearize_remove_ops(Operations* operations) {
   operations->insert_list = NULL;
   delete(operations->remove_order);
   operations->remove_order = NULL;
+  delete(operations->insert_order);
+  operations->insert_order = NULL;
 }
 
 void adjust_start_times(Operations* operations) {
