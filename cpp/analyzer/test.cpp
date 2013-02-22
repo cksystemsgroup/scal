@@ -44,7 +44,7 @@ void test_null_return1() {
   assert (linearization[2]->operation == &r1);
   assert (linearization[3]->operation == &r2);
   assert (linearization[4]->operation == &n1);
-  printf("test_null_return1() passed!\n");
+  printf("%s passed!\n", __func__);
 }
 
 void test_null_return2() {
@@ -79,7 +79,7 @@ void test_null_return2() {
   assert (linearization[4]->operation == &r2);
   assert (linearization[5]->operation == &r3);
   assert (linearization[6]->operation == &r1);
-  printf("test_null_return2() passed!\n");
+  printf("%s passed!\n", __func__);
 }
 
 void test_null_return3() {
@@ -132,13 +132,110 @@ void test_null_return3() {
   assert (linearization[8]->operation == &r5);
   assert (linearization[9]->operation == &r3);
   assert (linearization[10]->operation == &r1);
-  printf("test_null_return3() passed!\n");
+  printf("%s passed!\n", __func__);
+}
+
+void test_null_return4() {
+  Operation i1, i2, i3, r1, r2, r3, n1;
+
+  const int num_ops = 7;
+  Operation* ops[num_ops] = {
+      &i1
+    , &r1
+    , &n1
+    , &i2
+    , &r2
+    , &i3
+    , &r3
+  };
+
+  i1.initialize( 1, 0,  2, Operation::INSERT, 1);
+  i2.initialize( 3, 0,  5, Operation::INSERT, 2);
+  n1.initialize( 4, 0, 14, Operation::REMOVE, -1);
+  i3.initialize( 6, 0,  7, Operation::INSERT, 3);
+  r3.initialize( 8, 0,  9, Operation::REMOVE, 3);
+  r1.initialize(10, 0, 11, Operation::REMOVE, 1);
+  r2.initialize(12, 0, 13, Operation::REMOVE, 2);
+
+  Order** linearization;
+  linearization = linearize_by_min_sum(ops, num_ops, linearize_by_invocation(ops, num_ops));
+  
+  assert (linearization[0]->operation == &i1);
+  assert (linearization[1]->operation == &i2);
+  assert (linearization[2]->operation == &i3);
+  assert (linearization[3]->operation == &r3);
+  assert (linearization[4]->operation == &r1);
+  assert (linearization[5]->operation == &r2);
+  assert (linearization[6]->operation == &n1);
+  printf("%s passed!\n", __func__);
+}
+
+void test_equal_time_stamp_max() {
+  Operation i1, i2, r1, r2, n1;
+
+  const int num_ops = 5;
+  Operation* ops[num_ops] = {
+      &i1
+    , &r1
+    , &n1
+    , &i2
+    , &r2
+  };
+
+  i1.initialize( 1, 0,  2, Operation::INSERT, 1);
+  n1.initialize( 2, 0,  4, Operation::REMOVE, -1);
+  r1.initialize( 3, 0,  5, Operation::REMOVE, 1);
+  i2.initialize( 6, 0,  7, Operation::INSERT, 2);
+  r2.initialize( 8, 0,  9, Operation::REMOVE, 2);
+
+  Order** linearization;
+  linearization = linearize_by_min_max(ops, num_ops);
+  
+  assert (linearization[0]->operation == &n1);
+  assert (linearization[1]->operation == &i1);
+  assert (linearization[2]->operation == &r1);
+  assert (linearization[3]->operation == &i2);
+  assert (linearization[4]->operation == &r2);
+  printf("%s passed!\n", __func__);
+}
+
+void test_equal_time_stamp_sum() {
+  Operation i1, i2, r1, r2, n1;
+
+  const int num_ops = 5;
+  Operation* ops[num_ops] = {
+      &i1
+    , &r1
+    , &n1
+    , &i2
+    , &r2
+  };
+
+  i1.initialize( 1, 0,  2, Operation::INSERT, 1);
+  n1.initialize( 2, 0,  4, Operation::REMOVE, -1);
+  r1.initialize( 3, 0,  5, Operation::REMOVE, 1);
+  i2.initialize( 6, 0,  7, Operation::INSERT, 2);
+  r2.initialize( 8, 0,  9, Operation::REMOVE, 2);
+
+  Order** linearization;
+  linearization = linearize_by_min_sum(ops, num_ops, linearize_by_invocation(ops, num_ops));
+  
+  assert (linearization[0]->operation == &n1);
+  assert (linearization[1]->operation == &i1);
+  assert (linearization[2]->operation == &r1);
+  assert (linearization[3]->operation == &i2);
+  assert (linearization[4]->operation == &r2);
+  printf("%s passed!\n", __func__);
 }
 
 int main(int argc, char** argv) {
 
+  test_equal_time_stamp_max();
+  test_equal_time_stamp_sum();
   test_null_return1();
   test_null_return2();
   test_null_return3();
+  test_null_return3();
+  test_null_return4();
 }
 
