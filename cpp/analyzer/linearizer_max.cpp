@@ -127,7 +127,7 @@ Order** merge_linearizations(Operations* operations) {
       Node* remove_op = operations->remove_ops[j];
       Node* insert_op = operations->insert_ops[i];
       if (remove_op->insert_added && 
-          remove_op->operation->start() < insert_op->latest_lin_point) {
+          remove_op->operation->start() <= insert_op->latest_lin_point) {
         next_order(result, remove_op->operation, &next_index);
         j++;
       } else {
