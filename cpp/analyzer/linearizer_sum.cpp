@@ -107,13 +107,15 @@ bool is_selectable_insert (Operations* operations, Node* insert_op, uint64_t fir
 
     if (op == insert_op) {
       // Do nothing.
-    } else if (op->operation->is_null_return() && op->operation->start() > first_end) {
-      
+    } else if (op->operation->is_null_return() 
+        && op->operation->start() > first_end
+        && op->matching_op->order < insert_op->matching_op->order
+        ) {
+
       right_index++;
       if (right_index >= left_index) {
         return false;
       }
-
     } else if (op->operation->start() > insert_op->operation->end()) {
       // Upper bound for the calculation.
       break;
@@ -599,6 +601,17 @@ void match_operations(Node** insert_ops, int num_insert_ops,
   }
 }
 
+void destroy_insert_and_remove_array(Operations* operations) {
+  for (int i = 0; i < operations->num_insert_ops; i++) {
+    delete (operations->insert_ops[i]);
+  }
+  for (int i = 0; i < operations->num_remove_ops; i++) {
+    delete (operations->remove_ops[i]);
+  }
+  delete (operations->insert_ops);
+  delete (operations->remove_ops);
+}
+
 void create_insert_and_remove_array(Operations* operations, Operation** ops, int num_ops) {
   // Create two arrays which contain the insert operations and the remove
   // operations.
@@ -642,28 +655,48 @@ int compare_operations_by_selectable_order(const void* left, const void* right) 
   return (*(Node**) left)->selectable_order > (*(Node**) right)->selectable_order;
 }
 
+void destroy_orders (Operations* operations) {
+
+  for (int i = 0; i < operations->num_remove_ops; i++) {
+    delete (operations->remove_ops_order[i]);
+    operations->remove_ops_order[i] = NULL;
+  }
+  for (int i = 0; i < operations->num_insert_ops_order; i++) {
+    delete (operations->insert_ops_order[i]);
+    operations->insert_ops_order[i] = NULL;
+  }
+
+  delete (operations->remove_ops_order);
+  delete (operations->insert_ops_order);
+}
+
 /// Precondition: operations->insert_ops and operations->remove_ops exists
 // already and insert and remove operations are already matched.
 void create_orders (Operations* operations, Order** order, int num_ops) {
 
-  operations->insert_ops_order = new Node*[operations->num_insert_ops];
+  operations->insert_ops_order = new Node*[operations->num_insert_ops + operations->num_remove_ops];
   operations->remove_ops_order = new Node*[operations->num_remove_ops];
 
   int insert_position = 0;
 
   for (int i = 0; i < operations->num_remove_ops; i++) {
+
     Node* remove_node = new Node();
     operations->remove_ops_order[i] = remove_node;
     remove_node->operation = operations->remove_ops[i]->operation;
+
     if (remove_node->operation->is_null_return()) {
-      remove_node->matching_op = remove_node;
+
       // Add an additional node in the insert_ops_order, because null-returns
       // have to be considered in the order of insert operations.
+    
       Node* null_return_node = new Node();
       operations->insert_ops_order[insert_position] = null_return_node;
       insert_position++;
       null_return_node->operation =remove_node->operation;
-      null_return_node->matching_op = null_return_node;
+      null_return_node->matching_op = remove_node; 
+      remove_node->matching_op = null_return_node;
+
     } else {
 
       Node* matching_op = operations->remove_ops[i]->matching_op;
@@ -675,7 +708,6 @@ void create_orders (Operations* operations, Order** order, int num_ops) {
       insert_node->matching_op = remove_node;
     }
   }
-
   operations->num_insert_ops_order = insert_position;
 
   qsort(order, num_ops, sizeof(Order*), compare_orders_by_id);
@@ -687,6 +719,7 @@ void create_orders (Operations* operations, Order** order, int num_ops) {
   int insert_index = 0;
   int remove_index = 0;
   for (int i = 0; i < num_ops; i++) {
+ 
     if (order[i]->operation->type() == Operation::INSERT) {
 
       assert (order[i]->operation == operations->insert_ops_order[insert_index]->operation);
@@ -696,6 +729,7 @@ void create_orders (Operations* operations, Order** order, int num_ops) {
 
     } else if (order[i]->operation->is_null_return()){
  
+
       assert (order[i]->operation == operations->insert_ops_order[insert_index]->operation);
       assert (order[i]->operation == operations->remove_ops_order[remove_index]->operation);
  
@@ -821,11 +855,13 @@ Order** linearize_by_min_sum(Operation** ops, int num_ops, Order** order) {
   linearize_remove_ops(operations);
   linearize_insert_ops(operations);
 
-//  qsort(order, num_ops, sizeof(Order*), compare_orders_by_id);
-
 //  printf("linearizations finished\n");
   
   Order** new_order = merge_linearizations(operations);
+
+  destroy_orders(operations);
+  destroy_insert_and_remove_array(operations);
+  delete (operations);
 
   if (fixed_point_reached(order, new_order, num_ops)) {
     return new_order;
