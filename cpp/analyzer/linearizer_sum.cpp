@@ -45,6 +45,8 @@ struct Operations {
   Node* insert_order;
   // Number of insert operations.
   int num_insert_ops;
+  // Number of insert operations + null returns.
+  int num_insert_ops_order;
   // Array of remove operations.
   Node** remove_ops;
   Node** remove_ops_order;
@@ -105,6 +107,13 @@ bool is_selectable_insert (Operations* operations, Node* insert_op, uint64_t fir
 
     if (op == insert_op) {
       // Do nothing.
+    } else if (op->operation->is_null_return() && op->operation->start() > first_end) {
+      
+      right_index++;
+      if (right_index >= left_index) {
+        return false;
+      }
+
     } else if (op->operation->start() > insert_op->operation->end()) {
       // Upper bound for the calculation.
       break;
@@ -124,6 +133,7 @@ bool is_selectable_insert (Operations* operations, Node* insert_op, uint64_t fir
 
     op = op->next;
   }
+
 
   return true;
 }
@@ -245,7 +255,7 @@ void linearize_insert_ops(Operations* operations) {
   operations->insert_order = new Node();
   operations->insert_order->operation = NULL;
   create_doubly_linked_lists(operations->insert_order,
-      operations->insert_ops_order, operations->num_insert_ops);
+      operations->insert_ops_order, operations->num_insert_ops_order);
 
   int next_order = 0;
 
@@ -311,17 +321,24 @@ void linearize_insert_ops(Operations* operations) {
 //      fprintf(stderr, "Costs for +%"PRIu64": %d\n", minimal_costs_op->operation->value(), costs);
 //    }
 
+    Node* temp = operations->insert_order->next;
+    while (temp != operations->insert_order) {
 
-    tmp = operations->insert_order->next;
-    while (tmp != operations->insert_order) {
+      // Remove null-return dequeues from the insert_order list if it does not
+      // influence the selectability of other insert operations anymore.
+      if (temp->operation->is_null_return() && temp->operation->end() < first_end) {
 
-      if (tmp->operation == minimal_costs_op->operation) {
+        Node* next = temp->next;
+        remove_from_list(temp);
+        temp = next;
+      } else if (temp->operation == minimal_costs_op->operation) {
 
-        tmp->order = next_order;
-        remove_from_list(tmp);
+        temp->order = next_order;
+        remove_from_list(temp);
         break;
+      } else {
+        temp = temp->next;
       }
-      tmp = tmp->next;
     }
 
     // Remove the operation with minimal costs from the list of unselected
@@ -519,9 +536,7 @@ void initialize(Operations* operations, Operation** ops, int num_ops, Order** or
   match_operations(operations->insert_ops, operations->num_insert_ops,
                    operations->remove_ops, operations->num_remove_ops);
   adjust_start_times(operations);
-//  printf("before create_orders\n");
   create_orders(operations, order, num_ops);
-//  printf("after create_orders\n");
 
   qsort(operations->insert_ops, operations->num_insert_ops,
       sizeof(Node*), compare_operations_by_start_time);
@@ -549,7 +564,7 @@ void match_operations(Node** insert_ops, int num_insert_ops,
     // If the remove operation is not a null-return.
     if (!remove_ops[remove_index]->operation->is_null_return()) {
       while (insert_ops[insert_index]->operation->value() < value) {
-        printf("insert without remove: %"PRIu64" because of value %"PRIu64"\n",
+        fprintf(stderr, "insert without remove: %"PRIu64" because of value %"PRIu64"\n",
           insert_ops[insert_index]->operation->value(), value);
         insert_ops[insert_index]->matching_op = NULL;
         insert_index++;
@@ -642,6 +657,13 @@ void create_orders (Operations* operations, Order** order, int num_ops) {
     remove_node->operation = operations->remove_ops[i]->operation;
     if (remove_node->operation->is_null_return()) {
       remove_node->matching_op = remove_node;
+      // Add an additional node in the insert_ops_order, because null-returns
+      // have to be considered in the order of insert operations.
+      Node* null_return_node = new Node();
+      operations->insert_ops_order[insert_position] = null_return_node;
+      insert_position++;
+      null_return_node->operation =remove_node->operation;
+      null_return_node->matching_op = null_return_node;
     } else {
 
       Node* matching_op = operations->remove_ops[i]->matching_op;
@@ -654,8 +676,10 @@ void create_orders (Operations* operations, Order** order, int num_ops) {
     }
   }
 
+  operations->num_insert_ops_order = insert_position;
+
   qsort(order, num_ops, sizeof(Order*), compare_orders_by_id);
-  qsort(operations->insert_ops_order, operations->num_insert_ops, sizeof(Node*),
+  qsort(operations->insert_ops_order, operations->num_insert_ops_order, sizeof(Node*),
       compare_operations_by_id);
   qsort(operations->remove_ops_order, operations->num_remove_ops, sizeof(Node*),
       compare_operations_by_id);
@@ -664,18 +688,32 @@ void create_orders (Operations* operations, Order** order, int num_ops) {
   int remove_index = 0;
   for (int i = 0; i < num_ops; i++) {
     if (order[i]->operation->type() == Operation::INSERT) {
-      assert (order[i]->operation ==
-          operations->insert_ops_order[insert_index]->operation);
+
+      assert (order[i]->operation == operations->insert_ops_order[insert_index]->operation);
+
       operations->insert_ops_order[insert_index]->selectable_order = order[i]->order;
       insert_index++;
+
+    } else if (order[i]->operation->is_null_return()){
+ 
+      assert (order[i]->operation == operations->insert_ops_order[insert_index]->operation);
+      assert (order[i]->operation == operations->remove_ops_order[remove_index]->operation);
+ 
+      operations->insert_ops_order[insert_index]->selectable_order = order[i]->order;
+      insert_index++;
+
+      operations->remove_ops_order[remove_index]->selectable_order = order[i]->order;
+      remove_index++;
+
     } else {
-      assert (order[i]->operation ==
-          operations->remove_ops_order[remove_index]->operation);
+
+      assert (order[i]->operation == operations->remove_ops_order[remove_index]->operation);
+
       operations->remove_ops_order[remove_index]->selectable_order = order[i]->order;
       remove_index++;
     }
   }
-  qsort(operations->insert_ops_order, operations->num_insert_ops, sizeof(Node*),
+  qsort(operations->insert_ops_order, operations->num_insert_ops_order, sizeof(Node*),
       compare_operations_by_selectable_order);
   qsort(operations->remove_ops_order, operations->num_remove_ops, sizeof(Node*),
       compare_operations_by_selectable_order);
@@ -765,8 +803,8 @@ bool fixed_point_reached(Order** left, Order** right, int num_ops) {
 
     if (left[i]->operation != right[i]->operation) {
       
-      fprintf(stderr, "Difference at position %d, %"PRIu64" != %"PRIu64"\n", i,
-          left[i]->operation->id(), right[i]->operation->id());
+//      fprintf(stderr, "Difference at position %d, %"PRIu64" != %"PRIu64"\n", i,
+//          left[i]->operation->id(), right[i]->operation->id());
       return false;
     }
   }
