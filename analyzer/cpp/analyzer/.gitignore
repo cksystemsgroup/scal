@@ -1,0 +1,7 @@
+*.o
+*.txt
+analyzer
+linearizer
+test
+nondet
+
