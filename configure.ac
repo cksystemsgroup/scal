@@ -10,7 +10,6 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG([C++])
-AC_LANG_SOURCE([C++])
 
 dnl compiler debugging flags
 AC_ARG_ENABLE([debug],
