@@ -1,3 +1,4 @@
+#define __STDC_FORMAT_MACROS
 #include <stdlib.h>
 #include "element.h"
 #include <inttypes.h>
@@ -35,7 +36,8 @@ Result* calculate_age(Element** elements, int num_ops) {
     if (elements[i]->is_null_return()) {
       Element* imaginary_insert = new Element();
       imaginary_insert->initialize(
-          elements[i]->order(), Element::INSERT, next_imaginary_value);
+          elements[i]->order(), Element::INSERT, next_imaginary_value,
+          elements[i]->start());
       elements[i]->set_imaginary_value(next_imaginary_value);
       next_imaginary_value--;
 
@@ -83,7 +85,9 @@ Result* calculate_age(Element** elements, int num_ops) {
           // Costs increase by one.
 
 //          if (next->element->is_null_return()) {
-//            printf("-%d precedes -%d but should not\n", next->element->value(), tmp->element->value());
+//            printf("-%d (start: %"PRIu64") precedes -%d (start: %"PRIu64") but should not\n", 
+//                next->element->value(), next->element->start(),
+//                tmp->element->value(), tmp->element->start());
 //            exit(0);
 //          }
           costs++;

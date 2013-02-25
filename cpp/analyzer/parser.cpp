@@ -87,7 +87,7 @@ Element** parse_linearization(FILE* input, int num_ops) {
     }
 
     result[i] = new Element();
-    result[i]->initialize(i, element_type, value);
+    result[i]->initialize(i, element_type, value, start);
   }
   return result;
 }
