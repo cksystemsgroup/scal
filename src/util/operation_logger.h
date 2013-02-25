@@ -15,6 +15,9 @@
 #include "util/time.h"
 #include "util/threadlocals.h"
 
+#define OP_LOG_DEQUEUE 0
+#define OP_LOG_ENQUEUE 1
+
 namespace scal {
 
 template<typename T>
@@ -76,11 +79,18 @@ class TLOperationLogger : public TLOperationLoggerInterface<T> {
   }
 
   void print_summary() {
+    char types[2];
+    types[OP_LOG_ENQUEUE] = '+';
+    types[OP_LOG_DEQUEUE] = '-';
+
     for (uint64_t i = 0; i < count_; i++) {
       Operation<T> *op = &operations_[i];
-      printf("%lu %d %lu %lu %lu %lu\n",
-          op->op_type,
-          op->success,
+      if (!op->success) {
+        op->item = 0;
+      }
+
+      printf("%c %lu %lu %lu %lu\n",
+          types[op->op_type],
           op->item,
           op->invocation,
           op->linearization,
