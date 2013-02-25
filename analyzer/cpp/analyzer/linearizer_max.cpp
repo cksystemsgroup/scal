@@ -322,13 +322,25 @@ void linearize_remove_ops(Operations* operations) {
 
     Node* minimal_costs_op = op;
 
+    bool print_selection = false;
+
     // Only operations which start before the first remove operation ends are
     // within the first overlap group.
     while (op != operations->remove_list && op->operation->start() <= first_end) {
 
+      bool print_op = (op->operation->real_start() == 7944076711319319);
+      bool print_min = (minimal_costs_op->operation->real_start() == 7944076711319319);
+      
+      if (print_op) {
+        print_selection = true;
+      }
+
       if (op->operation->is_null_return()) {
         if (op->operation->start() < latest_selected_invocation) {
           
+          if (op->operation->real_start() == 7944076711319319) {
+            fprintf(stderr, "adjust start time to %"PRIu64"\n", latest_selected_invocation);
+          }
           op->operation->adjust_start(latest_selected_invocation);
         }
       }
@@ -339,42 +351,78 @@ void linearize_remove_ops(Operations* operations) {
       }
 
       if (op == minimal_costs_op) {
+        if (print_op || print_min) {
+          fprintf(stderr, "1, op: %d; min: %d;\n", print_op, print_min);
+        }
         // This op is already the minimal_costs_op.
       } else if (op->matching_op->operation->start() > 
           minimal_costs_op->matching_op->operation->end()) {
         // This op cannot have lower costs than the minimal_costs_op.
+        if (print_op || print_min) {
+          fprintf(stderr, "2, op: %d; min: %d;\n", print_op, print_min);
+          fprintf(stderr, "min: - %"PRId64"   %"PRIu64"\n", minimal_costs_op->operation->value(), minimal_costs_op->operation->real_start());
+          fprintf(stderr, " op: - %"PRId64"   %"PRIu64"\n", op->operation->value(), op->operation->real_start());
+        }
       } else if (op->matching_op->operation->end() <
           minimal_costs_op->matching_op->operation->start()) {
+        if (print_op || print_min) {
+          fprintf(stderr, "3, op: %d; min: %d;\n", print_op, print_min);
+        }
         minimal_costs_op = op;
         minimal_costs = -1;
         // This op has definitely lower costs than the minimal_costs_op.
       } else {
 
+        if (print_op || print_min) {
+          fprintf(stderr, "4, op: %d; min: %d;\n", print_op, print_min);
+        }
         if (minimal_costs == -1) {
           // We have not yet calculated the minimal costs.
           minimal_costs = get_remove_costs(operations, minimal_costs_op);
         }
         int costs = get_remove_costs(operations, op);
         if (costs < minimal_costs) {
+        if (print_op || print_min) {
+          fprintf(stderr, "5, op: %d; min: %d;\n", print_op, print_min);
+        }
 
           minimal_costs = costs;
           minimal_costs_op = op;
         } else if (costs == minimal_costs && op->operation->is_null_return()) {
+        if (print_op || print_min) {
+          fprintf(stderr, "6, op: %d; min: %d;\n", print_op, print_min);
+        }
           minimal_costs_op = op;
         } else if (costs == minimal_costs && minimal_costs_op->operation->is_null_return()){
           // We prefer null-returns
+        if (print_op || print_min) {
+          fprintf(stderr, "7, op: %d; min: %d;\n", print_op, print_min);
+        }
         }
         else if (costs == minimal_costs &&
-            op->matching_op->operation->start() <
-            minimal_costs_op->matching_op->operation->start()) {
+            op->matching_op->operation->end() <
+            minimal_costs_op->matching_op->operation->end()) {
+        if (print_op || print_min) {
+          fprintf(stderr, "8, op: %d; min: %d;\n", print_op, print_min);
+        }
 
           minimal_costs_op = op;
         } else {
+        if (print_op || print_min) {
+          fprintf(stderr, "9, op: %d; min: %d;\n", print_op, print_min);
+        }
         }
       }
       op = op->next;
     }
 
+    if (print_selection) {
+      fprintf(stderr, "selection done: %"PRId64" \n", minimal_costs_op->operation->value());
+    }
+
+    if (minimal_costs_op->operation->real_start() == 7944076711319319) {
+      print_selection = false;
+    }
     if (latest_selected_invocation < minimal_costs_op->operation->start()) {
       latest_selected_invocation = minimal_costs_op->operation->start();
     }
@@ -452,10 +500,17 @@ void match_operations(Operations* operations) {
 
       i++;
 
+      
       operations->insert_ops[insert_index]->matching_op =
         operations->remove_ops[remove_index];
       operations->remove_ops[remove_index]->matching_op =
         operations->insert_ops[insert_index];
+
+      if (operations->insert_ops[insert_index]->operation->start() >
+          operations->remove_ops[remove_index]->operation->start()) {
+        operations->remove_ops[remove_index]->operation->adjust_start(
+            operations->insert_ops[insert_index]->operation->start());
+      }
 
       insert_index++;
     }
