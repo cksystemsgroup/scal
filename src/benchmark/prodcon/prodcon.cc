@@ -124,7 +124,7 @@ void ProdConBench::producer(void) {
   // support it.
   for (uint64_t i = 1; i <= FLAGS_operations; i++) {
     item = thread_id * FLAGS_operations + i;
-    scal::StdOperationLogger::get().invoke(1);
+    scal::StdOperationLogger::get().invoke(OP_LOG_ENQUEUE);
     if (!ds->put(item)) {
       // We should always be able to insert an item.
       fprintf(stderr, "%s: error: put operation failed.\n", __func__);
@@ -149,7 +149,7 @@ void ProdConBench::consumer(void) {
   uint64_t ret;
   bool ok;
   while (j < operations) {
-    scal::StdOperationLogger::get().invoke(0);
+    scal::StdOperationLogger::get().invoke(OP_LOG_DEQUEUE);
     ok = ds->get(&ret);
     scal::StdOperationLogger::get().response(ok, ret);
     calculate_pi(FLAGS_c);
@@ -161,10 +161,17 @@ void ProdConBench::consumer(void) {
 }
 
 void ProdConBench::bench_func(void) {
+  // The lower thread indices are assigned to the producer threads.
+  // As the threads with lower indices start slightly earlier, the producer
+  // threads already fill the queue before the consumers start. Assigning the
+  // lower thread indices to the consumer threads leads to an increased number
+  // of null-return dequeues. We do not assign the thread id's in an alternating
+  // fashion because because thread-id based load balancers significantly
+  // benefit from such a thread id assignment.
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  if (thread_id <= FLAGS_consumers) {
-    consumer();
-  } else {
+  if (thread_id <= FLAGS_producers) {
     producer();
+  } else {
+    consumer();
   }
 }
