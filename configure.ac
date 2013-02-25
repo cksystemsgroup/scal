@@ -71,7 +71,7 @@ AC_COMPILE_IFELSE(
 CXXFLAGS="$OLD_CXXFLAGS"
 AS_IF([test "x$compiler_supports_template_alias" = "xyes"], 
   AC_DEFINE([SUPPORTS_TEMPLATE_ALIAS], [1], [Compiler supports template aliasing])
-])
+)
 
 dnl gflags
 PKG_CHECK_MODULES([GFLAGS], [libgflags])
