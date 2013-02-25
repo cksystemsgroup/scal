@@ -13,23 +13,23 @@ Operation** parse_logfile(char* filename, int num_ops) {
   Operation** ops = new Operation*[num_ops];
 
   for (int i = 0; i < num_ops; i++) {
-    int type;
+    char type;
     int64_t op_value;
     uint64_t op_start;
     uint64_t op_end;
     uint64_t lin_time;
     Operation::OperationType op_type;
 
-    if (fscanf(input, "%d %"PRId64" %"PRIu64" %"PRIu64" %"PRIu64"\n", 
+    if (fscanf(input, "%c %"PRId64" %"PRIu64" %"PRIu64" %"PRIu64"\n", 
           &type, &op_value, &op_start, &lin_time, &op_end) == EOF) {
       fprintf(stderr, "ERROR1: could not read all %d elements, abort after %d\n",
           num_ops, i);
       exit(1);
     }
 
-    if (type == 0) {
+    if (type == '+') {
       op_type = Operation::INSERT;
-    } else if (type == 1) {
+    } else if (type == '-') {
       op_type = Operation::REMOVE;
     } else {
       fprintf(stderr, "ERROR2: Invalid operation type: %d\n", type);
