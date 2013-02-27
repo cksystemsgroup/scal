@@ -21,6 +21,7 @@
 #include "datastructures/single_list.h"
 #include "util/malloc.h"
 #include "util/threadlocals.h"
+#include "util/operation_logger.h"
 
 namespace fc_details {
 
@@ -77,9 +78,11 @@ template<typename T>
 void FlatCombiningQueue<T>::scan_combine_apply(void) {
   for (uint64_t i = 0; i < num_ops_; i++) {
     if (operations_[i]->opcode == Opcode::Enqueue) {
+      scal::StdOperationLogger::get_specific(i).linearization();
       queue_->enqueue(operations_[i]->data);
       set_op(i, Opcode::Done, (T)NULL);
     } else if (operations_[i]->opcode == Opcode::Dequeue) {
+      scal::StdOperationLogger::get_specific(i).linearization();
       if (!queue_->is_empty()) {
         T item;
         queue_->dequeue(&item);
