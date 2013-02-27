@@ -7,11 +7,12 @@
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "datastructures/flatcombining_queue.h"
 
-DEFINE_uint64(array_size, 100, "operations array size");
+// DEFINE_uint64(array_size, 100, "operations array size");
 
 void* ds_new() {
   FlatCombiningQueue<uint64_t> *fcq =
-      new FlatCombiningQueue<uint64_t>(FLAGS_array_size);
+//     new FlatCombiningQueue<uint64_t>(FLAGS_array_size);
+      new FlatCombiningQueue<uint64_t>(g_num_threads + 1);
   return static_cast<void*>(fcq);
 }
 
