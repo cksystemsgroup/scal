@@ -41,7 +41,7 @@ struct Operation {
 template<typename T>
 class FlatCombiningQueue : public Queue<T> {
  public:
-  explicit FlatCombiningQueue(uint64_t num_ops);
+  explicit FlatCombiningQueue(uint64_t num_threads);
   bool enqueue(T item);
   bool dequeue(T *item);
 
@@ -49,7 +49,7 @@ class FlatCombiningQueue : public Queue<T> {
   typedef fc_details::Opcode Opcode;
   typedef fc_details::Operation<T> Operation;
 
-  uint64_t num_ops_;
+  uint64_t num_threads_;
   volatile fc_details::Operation<T>* *operations_;
   SingleList<T> *queue_;
   bool *global_lock_;
@@ -59,15 +59,19 @@ class FlatCombiningQueue : public Queue<T> {
     operations_[index]->opcode = opcode;
   }
 
+  inline bool is_op_done(uint64_t index) {
+    return (operations_[index]->opcode == Opcode::Done);
+  }
+
   void scan_combine_apply(void);
 };
 
 template<typename T>
-FlatCombiningQueue<T>::FlatCombiningQueue(uint64_t num_ops) {
-  num_ops_ = num_ops;
+FlatCombiningQueue<T>::FlatCombiningQueue(uint64_t num_threads) {
+  num_threads_ = num_threads;
   operations_ = static_cast<volatile Operation**>(calloc(
-      num_ops, sizeof(*operations_)));
-  for (uint64_t i = 0; i < num_ops; i++) {
+      num_threads, sizeof(*operations_)));
+  for (uint64_t i = 0; i < num_threads; i++) {
     operations_[i] = scal::get<Operation>(128);
   }
   queue_ = new SingleList<T>();
@@ -76,7 +80,7 @@ FlatCombiningQueue<T>::FlatCombiningQueue(uint64_t num_ops) {
 
 template<typename T>
 void FlatCombiningQueue<T>::scan_combine_apply(void) {
-  for (uint64_t i = 0; i < num_ops_; i++) {
+  for (uint64_t i = 0; i < num_threads_; i++) {
     if (operations_[i]->opcode == Opcode::Enqueue) {
       scal::StdOperationLogger::get_specific(i).linearization();
       queue_->enqueue(operations_[i]->data);
@@ -101,7 +105,8 @@ bool FlatCombiningQueue<T>::enqueue(T item) {
   set_op(thread_id, Opcode::Enqueue, item);
   while (true) {
     if (!__sync_bool_compare_and_swap(global_lock_, false, true)) {
-      if (operations_[thread_id]->opcode == Opcode::Done) {
+//      if (operations_[thread_id]->opcode == Opcode::Done) {
+      if (is_op_done(thread_id)) {
         return true;
       }
     } else {
@@ -118,7 +123,8 @@ bool FlatCombiningQueue<T>::dequeue(T *item) {
   set_op(thread_id, Opcode::Dequeue, (T)NULL);
   while (true) {
     if (!__sync_bool_compare_and_swap(global_lock_, false, true)) {
-      if (operations_[thread_id]->opcode == Opcode::Done) {
+//      if (operations_[thread_id]->opcode == Opcode::Done) {
+      if (is_op_done(thread_id)) {
         break;
       }
     } else {
