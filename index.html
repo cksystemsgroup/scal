@@ -56,9 +56,6 @@
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li class="active"><a href="#"><i class="icon-home icon-white"></i> Home</a></li>
-              <li><a href="#people">People</a></li>
-              <li><a href="#code">Code</a></li>
-              <li><a href="#publications">Publications</a></li>
             </ul>
             <ul class="nav pull-right">
               <ul class="nav">
@@ -83,53 +80,51 @@
     </div>
 
     <div class="container">
-      <div class="content">
-        <div class="page-header">
-          <h1>Scal: High-performance & Scalable Computing</h1>
-        </div>
-
-        <p> We study the design, implementation, performance, and scalability of
+      <div class="hero-unit">
+        <h1>Scal<img src="assets/img/skull.png" style="margin-left: 5px; margin-top: -10px;"/> <small>High-performance & Scalable Computing</small></h1>
+        <p>We study the design, implementation, performance, and scalability of
         concurrent objects on multicore systems by analyzing the apparent
         trade-off between adherence to concurrent data structure semantics and
-        scalability.  </p>
-        
-        <a name="people"><h2>People</h2></a>
-        <div style="z-index:900; position:relative;">
-        <h3>University of Salzburg</h3>
-        <ul>
-          <li><a href="//cs.uni-salzburg.at/~ahaas">Andreas Haas</a>
-          <li><a href="//cs.uni-salzburg.at/~ck">Christoph Kirsch</a>
-          <li><a href="//cs.uni-salzburg.at/~mlippautz">Michael Lippautz</a>
-          <li><a href="//cs.uni-salzburg.at/~hpayer">Hannes Payer</a>
-          <li><a href="//cs.uni-salzburg.at/~hroeck">Harald R&ouml;ck</a>
-          <li><a href="//cs.uni-salzburg.at/~anas">Ana Sokolova</a>
-        </ul>
-        <h3>IST Austria</h3>
-        <ul>
-          <li><a href="http://pub.ist.ac.at/~tah/">Thomas A. Henzinger</a>
-          <li><a href="http://pub.ist.ac.at/~asezgin/">Ali Sezgin</a>
-        </ul>
-        </div>
-
-        <a name="code">
-          <h2>Code
-            <a class="nolink" href="https://drone.io/github.com/cksystemsgroup/scal/latest">
-              <img src="https://drone.io/github.com/cksystemsgroup/scal/status.png" />
-            </a>
-          </h2>
-        </a>
-        <p> All code is released under a <a
-          href="https://github.com/cksystemsgroup/scal/blob/master/LICENSE">BSD
-          style license</a> and can be found on <a
-          href="https://github.com/cksystemsgroup/scal">github</a>. Consult the
-        <a
-          href="https://github.com/cksystemsgroup/scal/blob/master/README.md">README</a>
-        file for instructions on how to build and run the benchmarks.</p>
-
-        <a name="publications"><h2>Publications&nbsp;<small><a href="scal.bib">bibtex</a></small></h2></a>
-        <div id="pubs"></div>
-
+        scalability.</p>
       </div>
+
+      <div class="row">
+        <div class="span3">
+          <h2>People</h2>
+          <strong>University of Salzburg:</strong>
+          <ul>
+            <li><a href="//cs.uni-salzburg.at/~ahaas">Andreas Haas</a>
+            <li><a href="//cs.uni-salzburg.at/~ck">Christoph Kirsch</a>
+            <li><a href="//cs.uni-salzburg.at/~mlippautz">Michael Lippautz</a>
+            <li><a href="//cs.uni-salzburg.at/~hpayer">Hannes Payer</a>
+            <li><a href="//cs.uni-salzburg.at/~hroeck">Harald R&ouml;ck</a>
+            <li><a href="//cs.uni-salzburg.at/~anas">Ana Sokolova</a>
+          </ul>
+
+          <strong>IST Austria:</strong>
+          <ul>
+            <li><a href="http://pub.ist.ac.at/~tah/">Thomas A. Henzinger</a>
+            <li><a href="http://pub.ist.ac.at/~asezgin/">Ali Sezgin</a>
+          </ul>
+        </div>
+        <div class="span3">
+          <h2>Code</h2>
+
+          <p> All code is released under a <a href="https://github.com/cksystemsgroup/scal/blob/master/LICENSE">BSD style license</a>
+          and can be found on <a href="https://github.com/cksystemsgroup/scal">github</a>. Consult
+          the <a href="https://github.com/cksystemsgroup/scal/blob/master/README.md">README</a>
+          file for instructions on how to build and run the benchmarks.</p>
+
+          <a class="nolink" href="https://drone.io/github.com/cksystemsgroup/scal/latest">
+            <img src="https://drone.io/github.com/cksystemsgroup/scal/status.png" />
+          </a>
+        </div>
+        <div class="span6">
+          <h2>Publications&nbsp;<small><a href="scal.bib">bibtex</a></small></h2>
+          <div id="pubs"></div>
+        </div>
+      </div>
+
       <footer>
         <p> &copy; <a href="http://cs.uni-salzburg.at/~ck">Computational Systems
           Group</a> 2013. Website built with <a
