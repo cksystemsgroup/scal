@@ -1,4 +1,3 @@
-// Copyright (c) 2012-2013, the Scal Project Authors.  All rights reserved.
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
@@ -37,11 +36,9 @@ class ProdConBench : public Benchmark {
  public:
   ProdConBench(uint64_t num_threads,
                uint64_t thread_prealloc_size,
-               uint64_t histogram_size,
                void *data)
                    : Benchmark(num_threads,
                                thread_prealloc_size,
-                               histogram_size,
                                data) {}
  protected:
   void bench_func(void);
@@ -79,7 +76,6 @@ int main(int argc, const char **argv) {
   ProdConBench *benchmark = new ProdConBench(
       g_num_threads,
       tlsize,
-      FLAGS_operations * (g_num_threads + 1),
       ds);
   benchmark->run();
 
