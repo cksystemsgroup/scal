@@ -89,6 +89,80 @@ bfs_sequential_SOURCES = \
         src/benchmark/bfs/graph.cc
 
 #
+# Shortest Path benchmark
+#
+
+SHORTESTPATH_BASE_OBJS = \
+	$(UTIL_OBJS) \
+        src/benchmark/common.cc \
+        src/benchmark/shortest_path/shortest_path.cc
+
+bin_PROGRAMS += shortest-path-bskfifo
+shortest_path_bskfifo_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_bskfifo.cc
+
+bin_PROGRAMS += shortest-path-fc
+shortest_path_fc_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_fc_queue.cc
+
+bin_PROGRAMS += shortest-path-lb
+shortest_path_lb_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_lb_queue.cc
+
+bin_PROGRAMS += shortest-path-kstack
+shortest_path_kstack_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_kstack.cc
+
+bin_PROGRAMS += shortest-path-ms
+shortest_path_ms_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ms_queue.cc
+
+bin_PROGRAMS += shortest-path-dq-1random
+shortest_path_dq_1random_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_1random.cc
+
+bin_PROGRAMS += shortest-path-dq-1random-tstack
+shortest_path_dq_1random_tstack_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_1random_tstack.cc
+
+bin_PROGRAMS += shortest-path-dq-partrr
+shortest_path_dq_partrr_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_partrr.cc
+
+bin_PROGRAMS += shortest-path-rd
+shortest_path_rd_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_rd_queue.cc
+
+bin_PROGRAMS += shortest-path-tstack
+shortest_path_tstack_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_treiber_stack.cc
+
+bin_PROGRAMS += shortest-path-uskfifo
+shortest_path_uskfifo_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_uskfifo.cc
+
+bin_PROGRAMS += shortest-path-wf-ppopp11
+shortest_path_wf_ppopp11_SOURCES = \
+				$(SHORTESTPATH_BASE_OBJS) \
+				src/benchmark/std_glue/glue_wf_ppopp11.cc
+
+bin_PROGRAMS += shortest-path-wf-ppopp12
+shortest_path_wf_ppopp12_SOURCES = \
+				$(SHORTESTPATH_BASE_OBJS) \
+				src/benchmark/std_glue/glue_wf_ppopp12.cc
+
+#
 # Producer/Consumer benchmark
 #
 
