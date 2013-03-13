@@ -102,7 +102,7 @@ int main(int argc, const char **argv) {
   if (FLAGS_print_summary) {
     uint64_t exec_time = benchmark->execution_time();
     char buffer[1024] = {0};
-    uint32_t n = snprintf(buffer, sizeof(buffer), "%" PRIu64 " %" PRIu64 " %d",
+    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " runtime: %" PRIu64 " costs: %d ds_stats: ",
         FLAGS_threads,
         exec_time,
         g_marking[FLAGS_end]);
