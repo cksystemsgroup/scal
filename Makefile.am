@@ -19,6 +19,7 @@ LDADD = @GFLAGS_LIBS@
 
 DATASTRUCTURE_INCLUDES = \
 	src/datastructures/balancer_1random.h \
+	src/datastructures/balancer_2random.h \
 	src/datastructures/balancer.h \
 	src/datastructures/balancer_id.h \
 	src/datastructures/balancer_partrr.h \
@@ -127,6 +128,11 @@ shortest_path_dq_1random_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
         src/benchmark/std_glue/glue_dq_1random.cc
 
+bin_PROGRAMS += shortest-path-dq-2random
+shortest_path_dq_2random_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_2random.cc
+
 bin_PROGRAMS += shortest-path-dq-1random-tstack
 shortest_path_dq_1random_tstack_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
@@ -200,6 +206,11 @@ bin_PROGRAMS += prodcon-dq-1random
 prodcon_dq_1random_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_dq_1random.cc
+
+bin_PROGRAMS += prodcon-dq-2random
+prodcon_dq_2random_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_2random.cc
 
 bin_PROGRAMS += prodcon-dq-1random-tstack
 prodcon_dq_1random_tstack_SOURCES = \

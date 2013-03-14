@@ -50,7 +50,10 @@ DistributedQueue<T, P>::DistributedQueue(
 
 template<typename T, class P>
 bool DistributedQueue<T, P>::put(T item) {
-  uint64_t index = balancer_->get(num_queues_, NULL, true);
+  // The cast of backend_ to MSQueue is not correct in all cases but is done
+  // here because the parameter in only used by the 2-random balancer which is
+  // used currently only in combination with a MSQueue. 
+  uint64_t index = balancer_->get(num_queues_, (MSQueue<T>**)(backend_), true);
   return backend_[index]->put(item);
 }
 
@@ -58,7 +61,10 @@ template<typename T, class P>
 bool DistributedQueue<T, P>::get(T *item) {
   size_t i;
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  uint64_t start = balancer_->get(num_queues_, NULL, false);
+  // The cast of backend_ to MSQueue is not correct in all cases but is done
+  // here because the parameter in only used by the 2-random balancer which is
+  // used currently only in combination with a MSQueue. 
+  uint64_t start = balancer_->get(num_queues_, (MSQueue<T>**)(backend_), false);
   size_t index;
   while (true) {
     for (i = 0; i < num_queues_; i++) {
