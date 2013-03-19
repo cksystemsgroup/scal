@@ -7,12 +7,12 @@
 
 #include <stdint.h>
 
-#include "datastructures/ms_queue.h"
+#include "datastructures/partial_pool_interface.h"
 
 class BalancerInterface {
  public:
   virtual uint64_t get(uint64_t num_queues,
-                       MSQueue<uint64_t> **queues,
+                       PartialPoolInterface **queues,
                        bool enqueue) = 0;
   virtual ~BalancerInterface() {}
 };

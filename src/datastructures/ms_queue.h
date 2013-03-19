@@ -16,6 +16,7 @@
 #include <new>
 
 #include "datastructures/distributed_queue_interface.h"
+#include "datastructures/partial_pool_interface.h"
 #include "datastructures/queue.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
@@ -34,7 +35,7 @@ struct Node {
 }  // namespace ms_details
 
 template<typename T>
-class MSQueue : public Queue<T>, public DistributedQueueInterface<T> {
+class MSQueue : public Queue<T>, public DistributedQueueInterface<T>, public PartialPoolInterface {
  public:
   /*
    * Correct size would need to check consistency of state and fix tail ptr.

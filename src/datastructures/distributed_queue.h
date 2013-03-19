@@ -9,6 +9,7 @@
 
 #include "datastructures/balancer.h"
 #include "datastructures/distributed_queue_interface.h"
+#include "datastructures/partial_pool_interface.h"
 #include "datastructures/ms_queue.h"
 #include "datastructures/pool.h"
 #include "util/malloc.h"
@@ -50,10 +51,7 @@ DistributedQueue<T, P>::DistributedQueue(
 
 template<typename T, class P>
 bool DistributedQueue<T, P>::put(T item) {
-  // The cast of backend_ to MSQueue is not correct in all cases but is done
-  // here because the parameter in only used by the 2-random balancer which is
-  // used currently only in combination with a MSQueue. 
-  uint64_t index = balancer_->get(num_queues_, (MSQueue<T>**)(backend_), true);
+  uint64_t index = balancer_->get(num_queues_, reinterpret_cast<PartialPoolInterface**>(backend_), true);
   return backend_[index]->put(item);
 }
 
@@ -61,10 +59,7 @@ template<typename T, class P>
 bool DistributedQueue<T, P>::get(T *item) {
   size_t i;
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  // The cast of backend_ to MSQueue is not correct in all cases but is done
-  // here because the parameter in only used by the 2-random balancer which is
-  // used currently only in combination with a MSQueue. 
-  uint64_t start = balancer_->get(num_queues_, (MSQueue<T>**)(backend_), false);
+  uint64_t start = balancer_->get(num_queues_, reinterpret_cast<PartialPoolInterface**>(backend_), false);
   size_t index;
   while (true) {
     for (i = 0; i < num_queues_; i++) {
