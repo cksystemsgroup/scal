@@ -11,6 +11,7 @@
 #include "datastructures/ms_queue.h"
 #include "util/random.h"
 #include <stdint.h>
+#include <stdio.h>
 
 class Balancer2Random : public BalancerInterface {
  public:
@@ -36,11 +37,9 @@ class Balancer2Random : public BalancerInterface {
 
     uint64_t size1 = queues[index1]->approx_size();
     uint64_t size2 = queues[index2]->approx_size();
-//    uint64_t size1 = 10; 
-//    uint64_t size2 = 12;
 
     if ((enqueue && (size1 < size2)) ||
-       !(!enqueue && (size1 > size2))) {
+       (!enqueue && (size1 > size2))) {
       return index1;
     }
     return index2;
