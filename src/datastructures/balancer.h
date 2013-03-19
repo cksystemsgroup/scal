@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 #include "datastructures/partial_pool_interface.h"
-#include "datastructures/ms_queue.h"
 
 class BalancerInterface {
  public:

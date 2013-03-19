@@ -26,6 +26,7 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/boundedsize_kfifo.h \
 	src/datastructures/distributed_queue.h \
 	src/datastructures/distributed_queue_interface.h \
+	src/datastructures/partial_pool_interface.h \
 	src/datastructures/flatcombining_queue.h \
 	src/datastructures/kstack.h \
 	src/datastructures/lockbased_queue.h \
