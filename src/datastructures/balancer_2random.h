@@ -7,6 +7,7 @@
 #ifndef SCAL_DATASTRUCTURES__BALANCER_2RANDOM_H_
 #define SCAL_DATASTRUCTURES__BALANCER_2RANDOM_H_
 
+#include "datastructures/partial_pool_interface.h"
 #include "datastructures/balancer.h"
 #include "datastructures/ms_queue.h"
 #include "util/random.h"
@@ -18,7 +19,7 @@ class Balancer2Random : public BalancerInterface {
     use_hw_random_ = use_hw_random;
   }
 
-  uint64_t get(uint64_t num_queues, MSQueue<uint64_t> **queues, bool enqueue) {
+  uint64_t get(uint64_t num_queues, PartialPoolInterface **queues, bool enqueue) {
     if (num_queues == 1) {
       return 0;
     }
