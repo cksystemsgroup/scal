@@ -124,7 +124,7 @@ void ProdConBench::producer(void) {
   // support it.
   for (uint64_t i = 1; i <= FLAGS_operations; i++) {
     item = thread_id * FLAGS_operations + i;
-    scal::StdOperationLogger::get().invoke(OP_LOG_ENQUEUE);
+    scal::StdOperationLogger::get().invoke(scal::LogType::kEnqueue);
     if (!ds->put(item)) {
       // We should always be able to insert an item.
       fprintf(stderr, "%s: error: put operation failed.\n", __func__);
@@ -149,7 +149,7 @@ void ProdConBench::consumer(void) {
   uint64_t ret;
   bool ok;
   while (j < operations) {
-    scal::StdOperationLogger::get().invoke(OP_LOG_DEQUEUE);
+    scal::StdOperationLogger::get().invoke(scal::LogType::kDequeue);
     ok = ds->get(&ret);
     scal::StdOperationLogger::get().response(ok, ret);
     calculate_pi(FLAGS_c);
