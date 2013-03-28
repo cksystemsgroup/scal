@@ -18,6 +18,7 @@
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
+#include <assert.h>
 
 namespace ts_internal {
 
@@ -39,6 +40,7 @@ class TreiberStack : public Stack<T>, public PartialPoolInterface {
   // Satisfy the PartialPoolInterface
 
   inline uint64_t approx_size(void) const {
+    assert(false);
     return 0;
   }
 
