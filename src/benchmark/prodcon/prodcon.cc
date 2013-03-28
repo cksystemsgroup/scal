@@ -29,6 +29,9 @@ DEFINE_uint64(c, 5000, "computational workload");
 DEFINE_bool(print_summary, true, "print execution summary");
 DEFINE_bool(log_operations, false, "log invocation/response/linearization "
                                    "of all operations");
+DEFINE_bool(barrier, false, "uses a barrier between the enqueues and dequeues"
+                            "such that first all elements are enqueued, then"
+                            "all elements are dequeued");
 
 using scal::Benchmark;
 
@@ -39,13 +42,20 @@ class ProdConBench : public Benchmark {
                void *data)
                    : Benchmark(num_threads,
                                thread_prealloc_size,
-                               data) {}
+                               data) {
+    if (pthread_barrier_init(&prod_con_barrier_, NULL, num_threads)) {
+      fprintf(stderr, "%s: error: Unable to init start barrier.\n", __func__);
+      abort();
+    }
+  }
  protected:
   void bench_func(void);
 
  private:
   void producer(void);
   void consumer(void);
+
+  pthread_barrier_t prod_con_barrier_;
 };
 
 uint64_t g_num_threads;
@@ -167,7 +177,21 @@ void ProdConBench::bench_func(void) {
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
   if (thread_id <= FLAGS_producers) {
     producer();
+    if (FLAGS_barrier) {
+      int rc = pthread_barrier_wait(&prod_con_barrier_);
+      if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
+        abort();
+      }
+    }
   } else {
+    if (FLAGS_barrier) {
+      int rc = pthread_barrier_wait(&prod_con_barrier_);
+      if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
+        abort();
+  }
+    }
     consumer();
   }
 }
