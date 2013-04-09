@@ -145,10 +145,10 @@ void ShortestPathBench::bench_func(void) {
     int neighbor_below = node + FLAGS_width;
     int neighbor_right = node + 1;
 
-    if (neighbor_below < FLAGS_width * FLAGS_height) {
-      if (g_marking[neighbor_below] == 0) {
-        g_marking[neighbor_below] = distance + 1;
-        if (!ds->put(neighbor_below)) {
+    if (neighbor_right % FLAGS_width != 0) {
+      if (g_marking[neighbor_right] == 0) {
+        g_marking[neighbor_right] = distance + 1;
+        if (!ds->put(neighbor_right)) {
           // We should always be able to insert an item.
           fprintf(stderr, "%s: error: put operation failed.\n", __func__);
           abort();
@@ -156,10 +156,10 @@ void ShortestPathBench::bench_func(void) {
       }
     }
 
-    if (neighbor_right % FLAGS_width != 0) {
-      if (g_marking[neighbor_right] == 0) {
-        g_marking[neighbor_right] = distance + 1;
-        if (!ds->put(neighbor_right)) {
+    if (neighbor_below < FLAGS_width * FLAGS_height) {
+      if (g_marking[neighbor_below] == 0) {
+        g_marking[neighbor_below] = distance + 1;
+        if (!ds->put(neighbor_below)) {
           // We should always be able to insert an item.
           fprintf(stderr, "%s: error: put operation failed.\n", __func__);
           abort();
