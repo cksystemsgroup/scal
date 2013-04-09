@@ -78,7 +78,7 @@ int main(int argc, const char **argv) {
 
   if (FLAGS_log_operations) {
     scal::StdOperationLogger::prepare(g_num_threads + 1,
-                                      FLAGS_operations +100000);
+                                      g_num_threads * FLAGS_operations);
   }
 
   void *ds = ds_new();
