@@ -35,7 +35,13 @@ DEFINE_bool(print_summary, true, "print execution summary");
 DEFINE_bool(log_operations, false, "log invocation/response/linearization "
                                    "of all operations");
 
+#define CACHE_FACTOR 16 
+
 using scal::Benchmark;
+
+inline int get_index(int index) {
+  return index * CACHE_FACTOR;
+}
 
 class ShortestPathBench : public Benchmark {
  public:
@@ -52,7 +58,7 @@ class ShortestPathBench : public Benchmark {
 };
 
 uint64_t g_num_threads;
-int* g_marking;
+uint64_t *g_marking;
 
 int main(int argc, const char **argv) {
   std::string usage("Shortest path micro benchmark.");
@@ -78,11 +84,11 @@ int main(int argc, const char **argv) {
   void *ds = ds_new();
   Pool<uint64_t> *queue = static_cast<Pool<uint64_t>*>(ds);
 
-  g_marking = static_cast<int*>(scal::malloc_aligned(
-        FLAGS_height * FLAGS_width * sizeof(int), scal::kPageSize));
-  memset(g_marking, 0, FLAGS_height * FLAGS_width * sizeof(int));
+  g_marking = static_cast<uint64_t*>(scal::malloc_aligned(
+        FLAGS_height * FLAGS_width * sizeof(uint64_t) * CACHE_FACTOR, scal::kPageSize));
+  memset(g_marking, 0, FLAGS_height * FLAGS_width * sizeof(uint64_t) * CACHE_FACTOR);
 
-  g_marking[FLAGS_start] = 1;
+  g_marking[get_index(FLAGS_start)] = 1;
   queue->put(FLAGS_start);
 
   if (FLAGS_end < 0) {
@@ -102,10 +108,10 @@ int main(int argc, const char **argv) {
   if (FLAGS_print_summary) {
     uint64_t exec_time = benchmark->execution_time();
     char buffer[1024] = {0};
-    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " runtime: %" PRIu64 " costs: %d ds_stats: ",
+    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " runtime: %" PRIu64 " costs: %" PRIu64 " ds_stats: ",
         FLAGS_threads,
         exec_time,
-        g_marking[FLAGS_end]);
+        g_marking[get_index(FLAGS_end)]);
 
     if (n != strlen(buffer)) {
       fprintf(stderr, "%s: error: failed to create summary string\n", __func__);
@@ -132,22 +138,22 @@ void ShortestPathBench::bench_func(void) {
   uint64_t node;
   bool ok;
 
-  while (g_marking[FLAGS_end] == 0) {
+  while (g_marking[get_index(FLAGS_end)] == 0) {
 
     ok = ds->get(&node);
     if (!ok) {
       continue;
     }
 
-    int distance = g_marking[node];
+    int distance = g_marking[get_index(node)];
 
     int neighbor_above = node - FLAGS_width;
     int neighbor_below = node + FLAGS_width;
     int neighbor_right = node + 1;
 
     if (neighbor_right % FLAGS_width != 0) {
-      if (g_marking[neighbor_right] == 0) {
-        g_marking[neighbor_right] = distance + 1;
+      if (g_marking[get_index(neighbor_right)] == 0) {
+        g_marking[get_index(neighbor_right)] = distance + 1;
         if (!ds->put(neighbor_right)) {
           // We should always be able to insert an item.
           fprintf(stderr, "%s: error: put operation failed.\n", __func__);
@@ -157,8 +163,8 @@ void ShortestPathBench::bench_func(void) {
     }
 
     if (neighbor_below < FLAGS_width * FLAGS_height) {
-      if (g_marking[neighbor_below] == 0) {
-        g_marking[neighbor_below] = distance + 1;
+      if (g_marking[get_index(neighbor_below)] == 0) {
+        g_marking[get_index(neighbor_below)] = distance + 1;
         if (!ds->put(neighbor_below)) {
           // We should always be able to insert an item.
           fprintf(stderr, "%s: error: put operation failed.\n", __func__);
@@ -168,8 +174,8 @@ void ShortestPathBench::bench_func(void) {
     }
 
     if (neighbor_above > 0) {
-      if (g_marking[neighbor_above] == 0) {
-        g_marking[neighbor_above] = distance + 1;
+      if (g_marking[get_index(neighbor_above)] == 0) {
+        g_marking[get_index(neighbor_above)] = distance + 1;
         if (!ds->put(neighbor_above)) {
           // We should always be able to insert an item.
           fprintf(stderr, "%s: error: put operation failed.\n", __func__);
