@@ -3,7 +3,7 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 TESTS = 
 
-AM_CPPFLAGS = -Werror -mcx16 -m64  -std=c++0x \
+AM_CPPFLAGS = -Werror -mcx16 -m64  -std=c++11 \
         @CC_OPTIMIZATION@ \
         -I${top_srcdir}/src \
         -ffast-math \
