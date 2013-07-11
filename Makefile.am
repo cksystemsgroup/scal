@@ -31,6 +31,7 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/kstack.h \
 	src/datastructures/lockbased_queue.h \
 	src/datastructures/ms_queue.h \
+	src/datastructures/ah_queue.h \
 	src/datastructures/segment_queue.h \
 	src/datastructures/pool.h \
 	src/datastructures/queue.h \
@@ -130,6 +131,11 @@ shortest_path_sq_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
         src/benchmark/std_glue/glue_s_queue.cc
 
+bin_PROGRAMS += shortest-path-ah
+shortest_path_ah_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ah_queue.cc
+
 bin_PROGRAMS += shortest-path-dq-1random
 shortest_path_dq_1random_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
@@ -193,6 +199,11 @@ bin_PROGRAMS += prodcon-fc
 prodcon_fc_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_fc_queue.cc
+
+bin_PROGRAMS += prodcon-ah
+prodcon_ah_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ah_queue.cc
 
 bin_PROGRAMS += prodcon-lb
 prodcon_lb_SOURCES = \
