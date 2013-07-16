@@ -128,27 +128,32 @@ bool AHQueue<T>::dequeue(T *element) {
   //    then we successfully dequeued the oldest element. Otherwise we
   //    have to try again to find a new oldest element.
 
+  ah_details::Item<T> *oldest = find_oldest_item();
   while (true) {
-    ah_details::Item<T> *oldest = find_oldest_item();
     if (oldest == NULL) {
+      oldest = find_oldest_item();
       // We do not provide an emptiness check at the moment.
       continue;
     }
     ah_details::Item<T> *check = find_oldest_item();
     if (check == NULL) {
+      oldest = find_oldest_item();
       continue;
     }
     if (oldest->timestamp != check->timestamp) {
+      oldest = check;
       continue;
     }
     uint64_t expected = 0;
-//    if (oldest->taken.compare_exchange_strong(expected, 1,
-//          std::memory_order_acq_rel, std::memory_order_relaxed)) {
+    if (oldest->taken.compare_exchange_strong(expected, 1,
+          std::memory_order_acq_rel, std::memory_order_relaxed)) {
 
-      oldest->taken.store(1, std::memory_order_relaxed);
+//      oldest->taken.store(1, std::memory_order_relaxed);
       *element = oldest->data;
       return true;
-//    }
+    }
+    
+    oldest = find_oldest_item();
   }
 }
 
