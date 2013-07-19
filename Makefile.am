@@ -200,6 +200,11 @@ seqalt_fc_SOURCES = \
         $(SEQALT_BASE_OBJS) \
         src/benchmark/std_glue/glue_fc_queue.cc
 
+bin_PROGRAMS += seqalt-ah
+seqalt_ah_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ah_queue.cc
+
 bin_PROGRAMS += seqalt-lb
 seqalt_lb_SOURCES = \
         $(SEQALT_BASE_OBJS) \
