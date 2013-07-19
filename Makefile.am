@@ -179,6 +179,90 @@ shortest_path_wf_ppopp12_SOURCES = \
 # Producer/Consumer benchmark
 #
 
+SEQALT_BASE_OBJS = \
+	$(UTIL_OBJS) \
+        src/benchmark/common.cc \
+        src/benchmark/seqalt/seqalt.cc
+
+bin_PROGRAMS += seqalt-bskfifo
+seqalt_bskfifo_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_bskfifo.cc
+
+bin_PROGRAMS += seqalt-fc
+seqalt_fc_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_fc_queue.cc
+
+bin_PROGRAMS += seqalt-lb
+seqalt_lb_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_lb_queue.cc
+
+bin_PROGRAMS += seqalt-kstack
+seqalt_kstack_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_kstack.cc
+
+bin_PROGRAMS += seqalt-ms
+seqalt_ms_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ms_queue.cc
+
+bin_PROGRAMS += seqalt-sq
+seqalt_sq_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_s_queue.cc
+
+bin_PROGRAMS += seqalt-dq-1random
+seqalt_dq_1random_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_1random.cc
+
+bin_PROGRAMS += seqalt-dq-2random
+seqalt_dq_2random_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_2random.cc
+
+bin_PROGRAMS += seqalt-dq-1random-tstack
+seqalt_dq_1random_tstack_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_1random_tstack.cc
+
+bin_PROGRAMS += seqalt-dq-partrr
+seqalt_dq_partrr_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_partrr.cc
+
+bin_PROGRAMS += seqalt-rd
+seqalt_rd_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_rd_queue.cc
+
+bin_PROGRAMS += seqalt-tstack
+seqalt_tstack_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_treiber_stack.cc
+
+bin_PROGRAMS += seqalt-uskfifo
+seqalt_uskfifo_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_uskfifo.cc
+
+bin_PROGRAMS += seqalt-wf-ppopp11
+seqalt_wf_ppopp11_SOURCES = \
+	$(SEQALT_BASE_OBJS) \
+	src/benchmark/std_glue/glue_wf_ppopp11.cc
+
+bin_PROGRAMS += seqalt-wf-ppopp12
+seqalt_wf_ppopp12_SOURCES = \
+	$(SEQALT_BASE_OBJS) \
+	src/benchmark/std_glue/glue_wf_ppopp12.cc
+
+#
+# Producer/Consumer benchmark
+#
+
 PRODCON_BASE_OBJS = \
 	$(UTIL_OBJS) \
         src/benchmark/common.cc \
