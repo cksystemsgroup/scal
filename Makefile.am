@@ -32,6 +32,7 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/lockbased_queue.h \
 	src/datastructures/ms_queue.h \
 	src/datastructures/ah_queue.h \
+	src/datastructures/enq_pool.h \
 	src/datastructures/segment_queue.h \
 	src/datastructures/pool.h \
 	src/datastructures/queue.h \
@@ -136,6 +137,11 @@ shortest_path_ah_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
         src/benchmark/std_glue/glue_ah_queue.cc
 
+bin_PROGRAMS += shortest-path-enq
+shortest_path_enq_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_enq_pool.cc
+
 bin_PROGRAMS += shortest-path-dq-1random
 shortest_path_dq_1random_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
@@ -204,6 +210,11 @@ bin_PROGRAMS += seqalt-ah
 seqalt_ah_SOURCES = \
         $(SEQALT_BASE_OBJS) \
         src/benchmark/std_glue/glue_ah_queue.cc
+
+bin_PROGRAMS += seqalt-enq
+seqalt_enq_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_enq_pool.cc
 
 bin_PROGRAMS += seqalt-lb
 seqalt_lb_SOURCES = \
@@ -293,6 +304,11 @@ bin_PROGRAMS += prodcon-ah
 prodcon_ah_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_ah_queue.cc
+
+bin_PROGRAMS += prodcon-enq
+prodcon_enq_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_enq_pool.cc
 
 bin_PROGRAMS += prodcon-lb
 prodcon_lb_SOURCES = \
