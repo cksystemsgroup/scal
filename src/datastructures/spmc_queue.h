@@ -9,6 +9,8 @@
 #include "util/platform.h"
 #include "datastructures/queue.h"
 #include "util/threadlocals.h"
+#include "datastructures/partial_pool_interface.h"
+#include "util/atomic_value.h"
 
 #define BUFFERSIZE 1000000
 
@@ -24,11 +26,23 @@ namespace spmc_details {
 }
 
 template<typename T>
-class SPMCQueue : public Queue<T> {
+class SPMCQueue : public Queue<T>, PartialPoolInterface {
  public:
   explicit SPMCQueue();
   bool enqueue(T item);
   bool dequeue(T *item);
+
+  inline uint64_t approx_size(void) const {
+    return 0;
+  }
+
+  inline bool get_return_empty_state(T *item, AtomicRaw *state) {
+    return dequeue_return_tail(item, state);
+  }
+
+  inline AtomicRaw empty_state() {
+   return (AtomicRaw)(remove_.load());
+  }
 
  private:
   typedef spmc_details::Node<T> Node;
@@ -37,6 +51,8 @@ class SPMCQueue : public Queue<T> {
   std::atomic<Node*> insert_;
   // The remove pointers of the thread-local queues.
   std::atomic<Node*> remove_;
+
+  bool dequeue_return_tail(T *item, AtomicRaw *tail_raw);
 
   inline Node* node_new(T item) const {
     Node *node = scal::tlget_aligned<Node>(scal::kCachePrefetch);
@@ -90,6 +106,38 @@ bool SPMCQueue<T>::dequeue(T *element) {
   if (remove != node) {
     remove_.compare_exchange_weak(remove, node);
   }
+  if (*element == 0) {
+    return false;
+  }
+  return true;
+}
+
+template<typename T>
+bool SPMCQueue<T>::dequeue_return_tail(T *element, AtomicRaw *tail_raw) { *element = 0;
+  Node *remove = remove_.load();
+  Node *node = remove;
+
+  while (true) {
+    if (node->taken.load() == 0) {
+      uint64_t expected = 0;
+      if (node->taken.compare_exchange_weak(expected, 1)) {
+        *element = node->value;
+        node = node->next.load();
+        break;
+      }
+    }
+    
+    Node* next = node->next.load();
+    if (next == node) {
+      break;
+    }
+    node = next;
+  }
+
+  if (remove != node) {
+    remove_.compare_exchange_weak(remove, node);
+  }
+  *tail_raw = (AtomicRaw)node;
   if (*element == 0) {
     return false;
   }

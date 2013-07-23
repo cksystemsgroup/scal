@@ -20,6 +20,7 @@ LDADD = @GFLAGS_LIBS@
 DATASTRUCTURE_INCLUDES = \
 	src/datastructures/balancer_1random.h \
 	src/datastructures/balancer_2random.h \
+	src/datastructures/balancer_random_id.h \
 	src/datastructures/balancer.h \
 	src/datastructures/balancer_id.h \
 	src/datastructures/balancer_partrr.h \
@@ -168,6 +169,11 @@ shortest_path_dq_partrr_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
         src/benchmark/std_glue/glue_dq_partrr.cc
 
+bin_PROGRAMS += shortest-path-dq-rid
+shortest_path_dq_rid_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_rid.cc
+
 bin_PROGRAMS += shortest-path-rd
 shortest_path_rd_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
@@ -267,6 +273,11 @@ seqalt_dq_partrr_SOURCES = \
         $(SEQALT_BASE_OBJS) \
         src/benchmark/std_glue/glue_dq_partrr.cc
 
+bin_PROGRAMS += seqalt-dq-rid
+seqalt_dq_rid_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_rid.cc
+
 bin_PROGRAMS += seqalt-rd
 seqalt_rd_SOURCES = \
         $(SEQALT_BASE_OBJS) \
@@ -365,6 +376,11 @@ bin_PROGRAMS += prodcon-dq-partrr
 prodcon_dq_partrr_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_dq_partrr.cc
+
+bin_PROGRAMS += prodcon-dq-rid
+prodcon_dq_rid_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_rid.cc
 
 bin_PROGRAMS += prodcon-rd
 prodcon_rd_SOURCES = \
