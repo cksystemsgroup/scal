@@ -83,6 +83,7 @@ class TLOperationLogger : public TLOperationLoggerInterface<T> {
   }
 
   void print_summary() {
+
     for (uint64_t i = 0; i < count_; i++) {
       Operation<T> *op = &operations_[i];
       if (!op->success) {

@@ -5,6 +5,7 @@
 #ifndef SCAL_DATASTRUCTURES_BALANCER_ID_H_
 #define SCAL_DATASTRUCTURES_BALANCER_ID_H_
 
+#include "datastructures/partial_pool_interface.h"
 #include "datastructures/balancer.h"
 #include "util/threadlocals.h"
 
@@ -12,7 +13,7 @@ class BalancerId : public BalancerInterface {
  public:
   BalancerId() { }
 
-  uint64_t get(uint64_t num_queues, MSQueue<uint64_t> **queues, bool enqueue) {
+  uint64_t get(uint64_t num_queues, PartialPoolInterface **queues, bool enqueue) {
     if (num_queues == 1) {
       return 0;
     }

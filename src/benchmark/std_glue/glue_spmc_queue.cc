@@ -5,15 +5,12 @@
 #include <gflags/gflags.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
-#include "datastructures/flatcombining_queue.h"
-
-// DEFINE_uint64(array_size, 100, "operations array size");
+#include "datastructures/spmc_queue.h"
 
 void* ds_new() {
-  FlatCombiningQueue<uint64_t> *fcq =
-//     new FlatCombiningQueue<uint64_t>(FLAGS_array_size);
-      new FlatCombiningQueue<uint64_t>(g_num_threads + 1);
-  return static_cast<void*>(fcq);
+  SPMCQueue<uint64_t> *spmcq =
+      new SPMCQueue<uint64_t>();
+  return static_cast<void*>(spmcq);
 }
 
 char* ds_get_stats(void) {

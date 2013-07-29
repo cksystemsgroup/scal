@@ -10,11 +10,15 @@
 #ifndef SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 #define SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 
+#include <stdint.h>
+
 #include "datastructures/distributed_queue_interface.h"
+#include "datastructures/partial_pool_interface.h"
 #include "datastructures/stack.h"
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
+#include <assert.h>
 
 namespace ts_internal {
 
@@ -27,11 +31,18 @@ struct Node {
 }  // namespace ts_internal
 
 template<typename T>
-class TreiberStack : public Stack<T> {
+class TreiberStack : public Stack<T>, public PartialPoolInterface {
  public:
   TreiberStack();
   bool push(T item);
   bool pop(T *item);
+
+  // Satisfy the PartialPoolInterface
+
+  inline uint64_t approx_size(void) const {
+    assert(false);
+    return 0;
+  }
 
   // Satisfy the DistributedQueueInterface
 

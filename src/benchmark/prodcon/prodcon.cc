@@ -1,4 +1,3 @@
-// Copyright (c) 2012-2013, the Scal Project Authors.  All rights reserved.
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
@@ -30,6 +29,9 @@ DEFINE_uint64(c, 5000, "computational workload");
 DEFINE_bool(print_summary, true, "print execution summary");
 DEFINE_bool(log_operations, false, "log invocation/response/linearization "
                                    "of all operations");
+DEFINE_bool(barrier, false, "uses a barrier between the enqueues and dequeues"
+                            "such that first all elements are enqueued, then"
+                            "all elements are dequeued");
 
 using scal::Benchmark;
 
@@ -37,18 +39,23 @@ class ProdConBench : public Benchmark {
  public:
   ProdConBench(uint64_t num_threads,
                uint64_t thread_prealloc_size,
-               uint64_t histogram_size,
                void *data)
                    : Benchmark(num_threads,
                                thread_prealloc_size,
-                               histogram_size,
-                               data) {}
+                               data) {
+    if (pthread_barrier_init(&prod_con_barrier_, NULL, num_threads)) {
+      fprintf(stderr, "%s: error: Unable to init start barrier.\n", __func__);
+      abort();
+    }
+  }
  protected:
   void bench_func(void);
 
  private:
   void producer(void);
   void consumer(void);
+
+  pthread_barrier_t prod_con_barrier_;
 };
 
 uint64_t g_num_threads;
@@ -71,7 +78,7 @@ int main(int argc, const char **argv) {
 
   if (FLAGS_log_operations) {
     scal::StdOperationLogger::prepare(g_num_threads + 1,
-                                      FLAGS_operations +100000);
+                                      g_num_threads * FLAGS_operations);
   }
 
   void *ds = ds_new();
@@ -79,7 +86,6 @@ int main(int argc, const char **argv) {
   ProdConBench *benchmark = new ProdConBench(
       g_num_threads,
       tlsize,
-      FLAGS_operations * (g_num_threads + 1),
       ds);
   benchmark->run();
 
@@ -90,7 +96,7 @@ int main(int argc, const char **argv) {
   if (FLAGS_print_summary) {
     uint64_t exec_time = benchmark->execution_time();
     char buffer[1024] = {0};
-    uint32_t n = snprintf(buffer, sizeof(buffer), "%" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "",
+    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " ;producers: %" PRIu64 " /consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 ";ds_stats: ",
         FLAGS_producers + FLAGS_consumers,
         FLAGS_producers,
         FLAGS_consumers,
@@ -171,7 +177,21 @@ void ProdConBench::bench_func(void) {
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
   if (thread_id <= FLAGS_producers) {
     producer();
+    if (FLAGS_barrier) {
+      int rc = pthread_barrier_wait(&prod_con_barrier_);
+      if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
+        abort();
+      }
+    }
   } else {
+    if (FLAGS_barrier) {
+      int rc = pthread_barrier_wait(&prod_con_barrier_);
+      if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
+        abort();
+      }
+    }
     consumer();
   }
 }

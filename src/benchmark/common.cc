@@ -20,7 +20,6 @@ namespace scal {
 
 Benchmark::Benchmark(uint64_t num_threads,
                      uint64_t thread_prealloc_size,
-                     uint64_t histogram_size,
                      void *data) {
   num_threads_ = num_threads;
   data_ = data;
@@ -99,7 +98,9 @@ bool Benchmark::can_modify_sched() {
     if (s == EPERM) {
       fprintf(stderr, "warning: unable to modify scheduler policy and "
                       "priority for worker threads. consider running "
-                      "the benchmark with sufficient priviliges.\n");
+                      "the benchmark with sufficient priviliges.\n"
+                      "Turn off using realtime priority by using the "
+                      "parameter -noset_rt_priority\n");
       return false;
     } else {
       handle_pthread_error(s, "pthread_create");

@@ -18,6 +18,7 @@
 #include "util/malloc.h"
 #include "util/platform.h"
 #include "util/threadlocals.h"
+#include "util/operation_logger.h"
 
 namespace lb_details {
 
@@ -63,7 +64,7 @@ class LockBasedQueue : Queue<T> {
   inline void check_error(const char *std, int rc) {
     if (rc != 0) {
       char err[256];
-      strerror_r(rc, err, 256);
+      char* result = strerror_r(rc, err, 256);
       fprintf(stderr, "error: %s: %s\n", std, err);
       abort();
     }
@@ -95,6 +96,7 @@ bool LockBasedQueue<T>::enqueue(T item) {
   Node *node = scal::tlget<Node>(kPtrAlignment);
   node->value = item;
   int rc = pthread_mutex_lock(global_lock_);
+  scal::StdOperationLogger::get().linearization();
   check_error("pthread_mutex_lock", rc);
   Node *tail_old = tail_;
   tail_old->next = node;
@@ -109,6 +111,7 @@ bool LockBasedQueue<T>::enqueue(T item) {
 template<typename T>
 bool LockBasedQueue<T>::dequeue_default(T *item) {
   int rc = pthread_mutex_lock(global_lock_);
+  scal::StdOperationLogger::get().linearization();
   check_error("pthread_mutex_lock", rc);
   if (head_ == tail_) {
     pthread_mutex_unlock(global_lock_);
@@ -127,6 +130,7 @@ bool LockBasedQueue<T>::dequeue_blocking(T *item) {
   int rc;
   while (true) {
     rc = pthread_mutex_lock(global_lock_);
+    scal::StdOperationLogger::get().linearization();
     check_error("pthread_mutex_lock", rc);
     while (head_ == tail_) {
       pthread_cond_wait(enqueue_cond_, global_lock_);
@@ -162,6 +166,7 @@ bool LockBasedQueue<T>::dequeue_timeout(T *item, uint64_t timeout_ms) {
 
   while (true) {
     rc =pthread_mutex_lock(global_lock_);
+    scal::StdOperationLogger::get().linearization();
     check_error("pthread_mutex_lock", rc);
     while (head_ == tail_) {
       rc = pthread_cond_timedwait(enqueue_cond_, global_lock_, &ts);

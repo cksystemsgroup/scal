@@ -5,6 +5,7 @@
 #ifndef SRC_DATASTRUCTURES_BALANCER_PARTRR_H_
 #define SRC_DATASTRUCTURES_BALANCER_PARTRR_H_
 
+#include "datastructures/partial_pool_interface.h"
 #include "datastructures/balancer.h"
 #include "util/malloc.h"
 #include "util/platform.h"
@@ -27,7 +28,7 @@ class BalancerPartitionedRoundRobin : public BalancerInterface {
     }
   }
 
-  uint64_t get(uint64_t num_queues, MSQueue<uint64_t> **queues, bool enqueue) {
+  uint64_t get(uint64_t num_queues, PartialPoolInterface **queues, bool enqueue) {
     uint64_t thread_id = scal::ThreadContext::get().thread_id();
     if (enqueue) {
       return __sync_fetch_and_add(enqueue_rrs_[thread_id % partitions_], 1)
