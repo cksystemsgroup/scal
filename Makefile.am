@@ -29,6 +29,7 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/distributed_queue_interface.h \
 	src/datastructures/partial_pool_interface.h \
 	src/datastructures/flatcombining_queue.h \
+	src/datastructures/flatcombining_deque.h \
 	src/datastructures/kstack.h \
 	src/datastructures/lockbased_queue.h \
 	src/datastructures/ms_queue.h \
@@ -38,10 +39,13 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/segment_queue.h \
 	src/datastructures/pool.h \
 	src/datastructures/queue.h \
+	src/datastructures/deque.h \
 	src/datastructures/random_dequeue_queue.h \
 	src/datastructures/single_list.h \
+	src/datastructures/single_deque.h \
 	src/datastructures/stack.h \
 	src/datastructures/treiber_stack.h \
+	src/datastructures/elimination_backoff_stack.h \
 	src/datastructures/unboundedsize_kfifo.h \
 	src/datastructures/wf_queue_ppopp11.h \
 	src/datastructures/wf_queue_ppopp12.h 
@@ -114,6 +118,11 @@ shortest_path_fc_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
         src/benchmark/std_glue/glue_fc_queue.cc
 
+bin_PROGRAMS += shortest-path-fcd
+shortest_path_fcd_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_fc_deque.cc
+
 bin_PROGRAMS += shortest-path-lb
 shortest_path_lb_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
@@ -184,6 +193,11 @@ shortest_path_tstack_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
         src/benchmark/std_glue/glue_treiber_stack.cc
 
+bin_PROGRAMS += shortest-path-ebstack
+shortest_path_ebstack_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_eb_stack.cc
+
 bin_PROGRAMS += shortest-path-uskfifo
 shortest_path_uskfifo_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
@@ -217,6 +231,11 @@ bin_PROGRAMS += seqalt-fc
 seqalt_fc_SOURCES = \
         $(SEQALT_BASE_OBJS) \
         src/benchmark/std_glue/glue_fc_queue.cc
+
+bin_PROGRAMS += seqalt-fcd
+seqalt_fcd_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_fc_deque.cc
 
 bin_PROGRAMS += seqalt-ah
 seqalt_ah_SOURCES = \
@@ -288,6 +307,11 @@ seqalt_tstack_SOURCES = \
         $(SEQALT_BASE_OBJS) \
         src/benchmark/std_glue/glue_treiber_stack.cc
 
+bin_PROGRAMS += seqalt-ebstack
+seqalt_ebstack_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_eb_stack.cc
+
 bin_PROGRAMS += seqalt-uskfifo
 seqalt_uskfifo_SOURCES = \
         $(SEQALT_BASE_OBJS) \
@@ -321,6 +345,11 @@ bin_PROGRAMS += prodcon-fc
 prodcon_fc_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_fc_queue.cc
+
+bin_PROGRAMS += prodcon-fcd
+prodcon_fcd_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_fc_deque.cc
 
 bin_PROGRAMS += prodcon-ah
 prodcon_ah_SOURCES = \
@@ -391,6 +420,11 @@ bin_PROGRAMS += prodcon-tstack
 prodcon_tstack_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_treiber_stack.cc
+
+bin_PROGRAMS += prodcon-ebstack
+prodcon_ebstack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_eb_stack.cc
 
 bin_PROGRAMS += prodcon-uskfifo
 prodcon_uskfifo_SOURCES = \
