@@ -19,10 +19,10 @@ namespace scal {
 
 enum LogType {
   kDequeue = 0,
-  kEnqueue
+  kEnqueue = 1
 };
 
-char const kLogTypeSymbols[] = { '+', '-' };
+char const kLogTypeSymbols[] = { '-', '+' };
 
 template<typename T>
 struct Operation {
