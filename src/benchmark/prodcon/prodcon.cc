@@ -178,6 +178,7 @@ void ProdConBench::bench_func(void) {
   if (thread_id <= FLAGS_producers) {
     producer();
     if (FLAGS_barrier) {
+      global_start_time_ = 0;
       int rc = pthread_barrier_wait(&prod_con_barrier_);
       if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
         fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
@@ -190,6 +191,10 @@ void ProdConBench::bench_func(void) {
       if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
         fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
         abort();
+      }
+
+      if (global_start_time_ == 0) {
+        __sync_bool_compare_and_swap(&global_start_time_, 0, get_utime());
       }
     }
     consumer();
