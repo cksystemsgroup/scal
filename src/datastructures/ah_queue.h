@@ -47,7 +47,7 @@ class AHQueue : public Queue<T> {
   // The remove pointers of the thread-local queues.
   std::atomic<uint64_t>* *remove_;
 
-  uint64_t find_oldest_item(Item* *result, uint64_t *remove_index, uint64_t start);
+  uint64_t find_oldest_item(Item* *result, uint64_t *remove_index, uint64_t start, uint64_t timestamp);
   uint64_t get_oldest_item(uint64_t index, Item* *result);
 
 };
@@ -75,6 +75,7 @@ AHQueue<T>::AHQueue(uint64_t num_threads) {
     insert_[i] = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
     remove_[i] = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
     clocks_[i] = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+    clocks_[i]->store(1);
   }
 
 //  clocks_ = static_cast<std::atomic<uint64_t>*>(
@@ -157,18 +158,18 @@ bool AHQueue<T>::dequeue(T *element) {
   Item *oldest;
   uint64_t remove_index;
   uint64_t start = pseudorand() % num_threads_;
-  uint64_t index = find_oldest_item(&oldest, &remove_index, start);
+  uint64_t index = find_oldest_item(&oldest, &remove_index, start, 0);
   while (true) {
     if (oldest == NULL) {
-      index = find_oldest_item(&oldest, &remove_index, start);
+      index = find_oldest_item(&oldest, &remove_index, start, 0);
       // We do not provide an emptiness check at the moment.
       continue;
     }
     Item *check;
     uint64_t check_remove;
-    uint64_t check_index = find_oldest_item(&check, &check_remove, start);
+    uint64_t check_index = find_oldest_item(&check, &check_remove, start, oldest->timestamp.load());
     if (check == NULL) {
-      index = find_oldest_item(&oldest, &remove_index, start);
+      index = find_oldest_item(&oldest, &remove_index, start, 0);
       continue;
     }
     if (oldest->timestamp.load(std::memory_order_acquire) < check->timestamp.load(std::memory_order_acquire)) {
@@ -176,18 +177,18 @@ bool AHQueue<T>::dequeue(T *element) {
       index = check_index;
       remove_index = check_remove;
       continue;
-    }
-    uint64_t expected = 0;
-//    if (oldest->taken.compare_exchange_strong(expected, 1,
-//          std::memory_order_acq_rel, std::memory_order_relaxed)) {
-    if (remove_[check_index]->compare_exchange_weak(
-            check_remove, check_remove + 1, 
-            std::memory_order_acq_rel, std::memory_order_relaxed)) {
+    } else {
+//    uint64_t expected = 0;
+////    if (oldest->taken.compare_exchange_strong(expected, 1,
+////          std::memory_order_acq_rel, std::memory_order_relaxed)) {
+//    if (remove_[check_index]->compare_exchange_weak(
+//            check_remove, check_remove + 1, 
+//            std::memory_order_acq_rel, std::memory_order_relaxed)) {
       *element = oldest->data.load(std::memory_order_acquire);
       return true;
     }
     
-    index = find_oldest_item(&oldest, &remove_index, start);
+    index = find_oldest_item(&oldest, &remove_index, start, 0);
   }
 }
 
@@ -195,7 +196,7 @@ bool AHQueue<T>::dequeue(T *element) {
 // thread-local queues are accessed exactly once, it an older element is 
 // enqueued in the meantime, then it is ignored.
 template<typename T>
-uint64_t AHQueue<T>::find_oldest_item(Item* *result, uint64_t *remove_index, uint64_t start) {
+uint64_t AHQueue<T>::find_oldest_item(Item* *result, uint64_t *remove_index, uint64_t start, uint64_t t) {
 
   *result = NULL;
   uint64_t index = -1;
@@ -213,6 +214,13 @@ uint64_t AHQueue<T>::find_oldest_item(Item* *result, uint64_t *remove_index, uin
         *remove_index = remove;
         index = (start + i) % num_threads_;
         timestamp = item_timestamp;
+      } 
+      if (t >= timestamp) {
+        if (remove_[index]->compare_exchange_weak(
+                *remove_index, *remove_index + 1, 
+                std::memory_order_acq_rel, std::memory_order_relaxed)) {
+          return index;
+        }
       }
     }
   }
