@@ -47,7 +47,7 @@ class AHQueue : public Queue<T> {
   // The remove pointers of the thread-local queues.
   std::atomic<uint64_t>* *remove_;
 
-  uint64_t find_oldest_item(Item* *result, uint64_t *remove_index);
+  uint64_t find_oldest_item(Item* *result, uint64_t *remove_index, uint64_t start);
   uint64_t get_oldest_item(uint64_t index, Item* *result);
 
 };
@@ -121,19 +121,19 @@ bool AHQueue<T>::enqueue(T element) {
     latest_time = max(latest_time, clocks_[i]->load(std::memory_order_acquire));
   }
 
-  // 2) Create a new item which stores the element and the current time as
+  // 2) Set the thread-local time to the current time + 1.
+  clocks_[thread_id]->store(latest_time + 1, std::memory_order_release);
+
+  // 3) Create a new item which stores the element and the current time as
   //    time stamp.
   Item *new_item = new Item();
   new_item->timestamp.store(latest_time, std::memory_order_release);
   new_item->data.store(element, std::memory_order_release);
 
-  // 3) Insert the new item into the thread-local queue.
+  // 4) Insert the new item into the thread-local queue.
   uint64_t insert = insert_[thread_id]->load(std::memory_order_relaxed);
   queues_[thread_id][insert].store(new_item, std::memory_order_release);
   insert_[thread_id]->store(insert + 1, std::memory_order_release);
-
-  // 4) Set the thread-local time to the current time + 1.
-  clocks_[thread_id]->store(latest_time + 1, std::memory_order_release);
 
   return true;
 }
@@ -156,21 +156,22 @@ bool AHQueue<T>::dequeue(T *element) {
 
   Item *oldest;
   uint64_t remove_index;
-  uint64_t index = find_oldest_item(&oldest, &remove_index);
+  uint64_t start = pseudorand() % num_threads_;
+  uint64_t index = find_oldest_item(&oldest, &remove_index, start);
   while (true) {
     if (oldest == NULL) {
-      index = find_oldest_item(&oldest, &remove_index);
+      index = find_oldest_item(&oldest, &remove_index, start);
       // We do not provide an emptiness check at the moment.
       continue;
     }
     Item *check;
     uint64_t check_remove;
-    uint64_t check_index = find_oldest_item(&check, &check_remove);
+    uint64_t check_index = find_oldest_item(&check, &check_remove, start);
     if (check == NULL) {
-      index = find_oldest_item(&oldest, &remove_index);
+      index = find_oldest_item(&oldest, &remove_index, start);
       continue;
     }
-    if (oldest->timestamp.load(std::memory_order_acquire) < check->timestamp.load(std::memory_order_acquire) && oldest != check) {
+    if (oldest->timestamp.load(std::memory_order_acquire) < check->timestamp.load(std::memory_order_acquire)) {
       oldest = check;
       index = check_index;
       remove_index = check_remove;
@@ -186,7 +187,7 @@ bool AHQueue<T>::dequeue(T *element) {
       return true;
     }
     
-    index = find_oldest_item(&oldest, &remove_index);
+    index = find_oldest_item(&oldest, &remove_index, start);
   }
 }
 
@@ -194,7 +195,7 @@ bool AHQueue<T>::dequeue(T *element) {
 // thread-local queues are accessed exactly once, it an older element is 
 // enqueued in the meantime, then it is ignored.
 template<typename T>
-uint64_t AHQueue<T>::find_oldest_item(Item* *result, uint64_t *remove_index) {
+uint64_t AHQueue<T>::find_oldest_item(Item* *result, uint64_t *remove_index, uint64_t start) {
 
   *result = NULL;
   uint64_t index = -1;
@@ -204,27 +205,16 @@ uint64_t AHQueue<T>::find_oldest_item(Item* *result, uint64_t *remove_index) {
 
     Item* item;
     uint64_t remove;
-    remove = get_oldest_item(i, &item);
+    remove = get_oldest_item((start + i) % num_threads_, &item);
     if (item != NULL) {
       uint64_t item_timestamp = item->timestamp.load(std::memory_order_acquire);
       if (timestamp > item_timestamp) {
         *result = item;
         *remove_index = remove;
-        index = i;
+        index = (start + i) % num_threads_;
         timestamp = item_timestamp;
       }
     }
-//    if (*result == NULL) {
-//      *result = item;
-//      *remove_index = remove;
-//      index = i;
-//    } else if (item != NULL) {
-//      if ((*result)->timestamp.load(std::memory_order_acquire) > item->timestamp.load(std::memory_order_acquire)) {
-//        *result = item;
-//        *remove_index = remove;
-//        index = i;
-//      }
-//    }
   }
 
   return index;
