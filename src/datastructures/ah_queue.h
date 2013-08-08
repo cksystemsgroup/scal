@@ -2,7 +2,6 @@
 #define SCAL_DATASTRUCTURES_AH_QUEUE_H_
 
 #define __STDC_LIMIT_MACROS
-
 #include <stdint.h>
 #include <assert.h>
 #include <atomic>
@@ -23,7 +22,6 @@ namespace ah_details {
     struct Item {
       std::atomic<T> data;
       std::atomic<uint64_t> timestamp;
-      std::atomic<uint64_t> taken;
     };
 }
 
@@ -49,8 +47,8 @@ class AHQueue : public Queue<T> {
   // The remove pointers of the thread-local queues.
   std::atomic<uint64_t>* *remove_;
 
-  uint64_t find_oldest_item(Item* *result);
-  Item* get_oldest_item(uint64_t index);
+  uint64_t find_oldest_item(Item* *result, uint64_t *remove_index);
+  uint64_t get_oldest_item(uint64_t index, Item* *result);
 
 };
 
@@ -126,7 +124,6 @@ bool AHQueue<T>::enqueue(T element) {
   // 2) Create a new item which stores the element and the current time as
   //    time stamp.
   Item *new_item = new Item();
-  new_item->taken.store(0, std::memory_order_release);
   new_item->timestamp.store(latest_time, std::memory_order_release);
   new_item->data.store(element, std::memory_order_release);
 
@@ -158,33 +155,38 @@ bool AHQueue<T>::dequeue(T *element) {
   //    have to try again to find a new oldest element.
 
   Item *oldest;
-  uint64_t index = find_oldest_item(&oldest);
+  uint64_t remove_index;
+  uint64_t index = find_oldest_item(&oldest, &remove_index);
   while (true) {
     if (oldest == NULL) {
-      index = find_oldest_item(&oldest);
+      index = find_oldest_item(&oldest, &remove_index);
       // We do not provide an emptiness check at the moment.
       continue;
     }
     Item *check;
-    uint64_t check_index = find_oldest_item(&check);
+    uint64_t check_remove;
+    uint64_t check_index = find_oldest_item(&check, &check_remove);
     if (check == NULL) {
-      index = find_oldest_item(&oldest);
+      index = find_oldest_item(&oldest, &remove_index);
       continue;
     }
-    if (oldest->timestamp != check->timestamp) {
+    if (oldest->timestamp.load(std::memory_order_acquire) < check->timestamp.load(std::memory_order_acquire) && oldest != check) {
       oldest = check;
       index = check_index;
+      remove_index = check_remove;
       continue;
     }
     uint64_t expected = 0;
-    if (oldest->taken.compare_exchange_strong(expected, 1,
-          std::memory_order_acq_rel, std::memory_order_relaxed)) {
-      remove_[index]->fetch_add(1);
+//    if (oldest->taken.compare_exchange_strong(expected, 1,
+//          std::memory_order_acq_rel, std::memory_order_relaxed)) {
+    if (remove_[check_index]->compare_exchange_weak(
+            check_remove, check_remove + 1, 
+            std::memory_order_acq_rel, std::memory_order_relaxed)) {
       *element = oldest->data.load(std::memory_order_acquire);
       return true;
     }
     
-    index = find_oldest_item(&oldest);
+    index = find_oldest_item(&oldest, &remove_index);
   }
 }
 
@@ -192,23 +194,37 @@ bool AHQueue<T>::dequeue(T *element) {
 // thread-local queues are accessed exactly once, it an older element is 
 // enqueued in the meantime, then it is ignored.
 template<typename T>
-uint64_t AHQueue<T>::find_oldest_item(Item* *result) {
+uint64_t AHQueue<T>::find_oldest_item(Item* *result, uint64_t *remove_index) {
 
   *result = NULL;
   uint64_t index = -1;
+  uint64_t timestamp = UINT64_MAX;
 
   for (uint64_t i = 0; i < num_threads_; i++) {
 
-    Item* item = get_oldest_item(i);
-    if (*result == NULL) {
-      *result = item;
-      index = i;
-    } else if (item != NULL) {
-      if ((*result)->timestamp.load(std::memory_order_acquire) > item->timestamp.load(std::memory_order_acquire)) {
+    Item* item;
+    uint64_t remove;
+    remove = get_oldest_item(i, &item);
+    if (item != NULL) {
+      uint64_t item_timestamp = item->timestamp.load(std::memory_order_acquire);
+      if (timestamp > item_timestamp) {
         *result = item;
+        *remove_index = remove;
         index = i;
+        timestamp = item_timestamp;
       }
     }
+//    if (*result == NULL) {
+//      *result = item;
+//      *remove_index = remove;
+//      index = i;
+//    } else if (item != NULL) {
+//      if ((*result)->timestamp.load(std::memory_order_acquire) > item->timestamp.load(std::memory_order_acquire)) {
+//        *result = item;
+//        *remove_index = remove;
+//        index = i;
+//      }
+//    }
   }
 
   return index;
@@ -217,36 +233,34 @@ uint64_t AHQueue<T>::find_oldest_item(Item* *result) {
 // Returns the oldest not-taken item from the thread-local queue indicated by
 // thread_id.
 template<typename T>
-ah_details::Item<T>* AHQueue<T>::get_oldest_item(uint64_t thread_id) {
+inline uint64_t AHQueue<T>::get_oldest_item(uint64_t thread_id, Item* *result) {
 
   uint64_t insert = insert_[thread_id]->load(std::memory_order_relaxed);
   uint64_t remove = remove_[thread_id]->load(std::memory_order_relaxed);
 
   // If the thread-local queue is empty, no element is returned.
   if (insert == remove) {
-    return NULL;
+    *result = NULL;
+    return -1;
+  } else {
+    *result = queues_[thread_id][remove].load(std::memory_order_acquire);
+    return remove;
   }
-
-  Item* result = NULL;
-
-  uint64_t i;
-  for (i = remove; i < insert; i++) {
-
-    Item* item = queues_[thread_id][i].load(std::memory_order_relaxed);
-    // Check if the item has already been taken. Taken items are ignored.
-    if (item->taken.load(std::memory_order_acquire) == 0) {
-      result = item;
-      break;
-    }
-  }
-
-  // Adjust the remove pointer of the thread-local queue. This is only an optimization.
-//  if (i != remove) {
-//    remove_[thread_id]->compare_exchange_weak(remove, i, 
-//        std::memory_order_relaxed, std::memory_order_relaxed);
+//
+//  Item* result = NULL;
+//
+//  uint64_t i;
+//  for (i = remove; i < insert; i++) {
+//
+//    Item* item = queues_[thread_id][i].load(std::memory_order_relaxed);
+//    // Check if the item has already been taken. Taken items are ignored.
+//    if (item->taken.load(std::memory_order_acquire) == 0) {
+//      result = item;
+//      break;
+//    }
 //  }
-
-  return result;
+//
+//  return result;
 }
 
 #endif  // SCAL_DATASTRUCTURES_AH_QUEUE_H_
