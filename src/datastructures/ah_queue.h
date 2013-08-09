@@ -39,6 +39,8 @@ class AHQueue : public Queue<T> {
   uint64_t num_threads_;
   // The thread-local clocks.
   std::atomic<uint64_t>* *clocks_;
+  std::atomic<uint64_t> *clock_;
+  std::atomic<uint64_t> *dequeue_clock_;
   // The thread-local queues, implemented as arrays of size BUFFERSIZE. At the
   // moment buffer overflows are not considered.
   std::atomic<Item*> **queues_;
@@ -78,6 +80,10 @@ AHQueue<T>::AHQueue(uint64_t num_threads) {
     clocks_[i]->store(1);
   }
 
+  clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+  clock_->store(1);
+  dequeue_clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+  dequeue_clock_->store(1);
 //  clocks_ = static_cast<std::atomic<uint64_t>*>(
 //      calloc(num_threads, sizeof(std::atomic<uint64_t>)));
 //  queues_ = static_cast<std::atomic<Item*>**>(
@@ -116,15 +122,16 @@ bool AHQueue<T>::enqueue(T element) {
 
   // 1) Determine the latest time of all clocks, which is considered as the
   //    current time.
-  uint64_t latest_time = 0;
+//  uint64_t latest_time = 0;
+//
+//  for (int i = 0; i < num_threads_; i++) {
+//    latest_time = max(latest_time, clocks_[i]->load(std::memory_order_acquire));
+//  }
+//
+//  // 2) Set the thread-local time to the current time + 1.
+//  clocks_[thread_id]->store(latest_time + 1, std::memory_order_release);
 
-  for (int i = 0; i < num_threads_; i++) {
-    latest_time = max(latest_time, clocks_[i]->load(std::memory_order_acquire));
-  }
-
-  // 2) Set the thread-local time to the current time + 1.
-  clocks_[thread_id]->store(latest_time + 1, std::memory_order_release);
-
+  uint64_t latest_time = clock_->fetch_add(1);
   // 3) Create a new item which stores the element and the current time as
   //    time stamp.
   Item *new_item = new Item();
@@ -155,10 +162,16 @@ bool AHQueue<T>::dequeue(T *element) {
   //    then we successfully dequeued the oldest element. Otherwise we
   //    have to try again to find a new oldest element.
 
+  uint64_t timestamp = dequeue_clock_->fetch_add(1);
+
   Item *oldest;
   uint64_t remove_index;
   uint64_t start = pseudorand() % num_threads_;
-  uint64_t index = find_oldest_item(&oldest, &remove_index, start, 0);
+  uint64_t index = find_oldest_item(&oldest, &remove_index, start, timestamp);
+  if (oldest != NULL && oldest->timestamp.load() <= timestamp) {
+    *element = oldest->data.load();
+    return true;
+  }
   while (true) {
     if (oldest == NULL) {
       index = find_oldest_item(&oldest, &remove_index, start, 0);
@@ -184,7 +197,7 @@ bool AHQueue<T>::dequeue(T *element) {
 //    if (remove_[check_index]->compare_exchange_weak(
 //            check_remove, check_remove + 1, 
 //            std::memory_order_acq_rel, std::memory_order_relaxed)) {
-      *element = oldest->data.load(std::memory_order_acquire);
+      *element = check->data.load(std::memory_order_acquire);
       return true;
     }
     
