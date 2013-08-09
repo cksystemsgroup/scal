@@ -131,7 +131,7 @@ void SeqAltBench::bench_func(void) {
     }
     
     if (i >= FLAGS_prefill) {
-      scal::StdOperationLogger::get().invoke(scal::LogType::kEnqueue);
+      scal::StdOperationLogger::get().invoke(scal::LogType::kDequeue);
       if (!ds->get(&item)) {
         // We should always be able to insert an item.
         fprintf(stderr, "%s: error: get operation failed.\n", __func__);
