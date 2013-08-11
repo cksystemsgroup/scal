@@ -1,6 +1,12 @@
 *.pyc
 *.o
 
+ah.txt
+bh.txt
+bla.txt
+tmp.txt
+lin.txt
+
 # http://www.gnu.org/software/automake
 
 Makefile.in
