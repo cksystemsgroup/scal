@@ -167,9 +167,8 @@ bool AHStack<T>::pop(T *element) {
   uint64_t counter = 0;
   while (!find_oldest_item(&oldest, start, timestamp)) {
     counter++;
-    if (counter > 2000) {
+    if (counter > 20000) {
       printf("no element found\n");
-      exit(887);
       return false;
     }
   }
