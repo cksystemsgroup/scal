@@ -134,7 +134,7 @@ bool AHQueue<T>::enqueue(T element) {
   uint64_t latest_time = clock_->fetch_add(1);
   // 3) Create a new item which stores the element and the current time as
   //    time stamp.
-  Item *new_item = new Item();
+  Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
   new_item->timestamp.store(latest_time, std::memory_order_release);
   new_item->data.store(element, std::memory_order_release);
 
