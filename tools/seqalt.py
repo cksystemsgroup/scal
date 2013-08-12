@@ -4,13 +4,7 @@ import ah_config;
 pParameter = ah_config.pParameter
 executables = ah_config.executables 
 
-def runProdcon(queues
-    , works
-    , threads
-    , maxThreads
-    , prefill = 0
-    , directory=''
-    , performance = True):
+def runSeqalt(queues, works, threads, maxThreads, prefill = 0, directory='', performance = True):
 
   perfParam = '-log_operations -noprint_summary'
   if performance:
@@ -27,7 +21,7 @@ def runProdcon(queues
               if queue in executables:
                 exe = executables[queue]
 
-              template = "../prodcon-{exe} -producers {thread} -consumers {thread} -operations 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {directory}{queue}-t{thread}{partials_param}{partials}-c{work}.txt"
+              template = "../seqalt-{exe} -threads {thread} -elements 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {directory}{queue}-t{thread}{partials_param}{partials}-c{work}.txt"
               filenameTemplate = "{directory}{queue}-t{thread}{partials_param}{partials}-c{work}.txt"
 
               command = ""
@@ -70,5 +64,3 @@ def runProdcon(queues
                 os.remove(filename)
               print command
               os.system(command)
-
-#runSeqalt(queues = ah_config.queues, works = ah_config.works, threads = ah_config.threads, maxThreads = ah_config.maxThreads)
