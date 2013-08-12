@@ -1,5 +1,5 @@
 import ah_config;
-import prodcon;
+import seqalt;
 import os.path;
 import shutil;
 import sys;
@@ -18,14 +18,16 @@ if (not directory.startswith('/')) :
 
 #if os.path.exists(outputDir) :
 #  shutil.rmtree(outputDir)
+
 if not os.path.exists(outputDir):
   os.makedirs(outputDir)
 
-#queues = ah_config.allQueues
-queues = [ 'ahstack']
+queues = ah_config.allQueues
+#queues = ['ah', 'ahstack']
 works = [250, 2000]
 threads = [1, 4, 8, 12, 16, 20, 24]
 maxThreads = ah_config.maxThreadsB7
 
 
-prodcon.runProdcon(queues = queues, works = works, threads = threads, maxThreads = maxThreads, directory = outputDir, prefill = 0, performance = True)
+seqalt.runSeqalt(queues = queues, works = works, threads = threads, maxThreads = maxThreads, directory = outputDir, prefill = 0, performance = True)
+
