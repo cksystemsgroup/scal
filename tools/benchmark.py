@@ -56,9 +56,11 @@ def runBenchmark(
                 filename = filenameTemplate.format(directory = directory
                     , queue = queue
                     , thread = thread
+                    , partials = ''
                     , partials_param = ''
-                    , partials = maxThreads
                     , work = work)
+
+                filename = filename[filename.find('@') + 1:]
 
                 command = template.format(queue=queue,
                                             exe = exe,
