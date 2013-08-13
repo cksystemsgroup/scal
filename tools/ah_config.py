@@ -101,7 +101,7 @@ maxThreadsB7=24
 templates = {
       'prodcon': '@../prodcon-{exe} -producers {thread} -consumers {thread} -operations 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
     , 'enq': '@../prodcon-{exe} -producers {thread} -consumers 0 -operations 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
-    , 'seqalt' : '@../seqalt-{exe} -threads {thread} -elements 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
+    , 'seqalt' : '@../seqalt-{exe} -allow_empty_returns -threads {thread} -elements 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
     , 'shortest-path' : '{work}@../shortest-path-{exe} -threads {thread} -height 100 -width 10000 {partials_param} {partials} -noset_rt_priority > {filename}' 
     }
 
