@@ -95,3 +95,12 @@ maxThreadsB6= 8
 maxThreadsB8=80
 maxThreadsB7=24
 
+templates = {
+      'prodcon': '../prodcon-{exe} -producers {thread} -consumers {thread} -operations 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
+    , 'seqalt' : '../seqalt-{exe} -threads {thread} -elements 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
+    }
+
+filenameTemplates = {
+      'prodcon': '{directory}{queue}-t{thread}{partials_param}{partials}-c{work}.txt'
+    , 'seqalt': '{directory}{queue}-t{thread}{partials_param}{partials}-c{work}.txt'
+    }
