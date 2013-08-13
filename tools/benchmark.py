@@ -38,6 +38,9 @@ def runBenchmark(
                     , partials_param = '-' + pParameter[queue]
                     , partials = maxThreads
                     , work = work)
+
+                # Cut off everything before the @.
+                filename = filename[filename.find('@') + 1:]
                 command = template.format(queue=queue,
                                                  exe=exe,
                                                  thread=thread, 
@@ -70,5 +73,6 @@ def runBenchmark(
 
               if os.path.exists(filename):
                 os.remove(filename)
+              command = command[command.find('@') + 1:]
               print command
-#              os.system(command)
+              os.system(command)
