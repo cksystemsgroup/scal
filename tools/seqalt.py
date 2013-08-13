@@ -63,4 +63,4 @@ def runSeqalt(queues, works, threads, maxThreads, prefill = 0, directory='', per
               if os.path.exists(filename):
                 os.remove(filename)
               print command
-              os.system(command)
+#              os.system(command)

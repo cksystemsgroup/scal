@@ -22,7 +22,7 @@ if not os.path.exists(outputDir):
   os.makedirs(outputDir)
 
 #queues = ah_config.allQueues
-queues = ['ah', 'ahstack']
+queues = ['ahstack', 'kstack']
 works = [250, 2000]
 threads = [1, 5, 10, 15, 20, 25, 30, 35, 40]
 maxThreads = ah_config.maxThreadsB8
