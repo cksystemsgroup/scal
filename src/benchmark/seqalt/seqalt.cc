@@ -30,7 +30,8 @@ DEFINE_uint64(c, 5000, "computational workload");
 DEFINE_bool(print_summary, true, "print execution summary");
 DEFINE_bool(log_operations, false, "log invocation/response/linearization "
                                    "of all operations");
-
+DEFINE_bool(allow_empty_returns, false, "does not stop the execution at an "
+                                   "empty-dequeue");
 using scal::Benchmark;
 
 class SeqAltBench : public Benchmark {
@@ -133,9 +134,11 @@ void SeqAltBench::bench_func(void) {
     if (i >= FLAGS_prefill) {
       scal::StdOperationLogger::get().invoke(scal::LogType::kDequeue);
       if (!ds->get(&item)) {
-        // We should always be able to insert an item.
-        fprintf(stderr, "%s: error: get operation failed.\n", __func__);
-        abort();
+        if (!FLAGS_allow_empty_returns) {
+          // We should always be able to get an item.
+          fprintf(stderr, "%s: error: get operation failed.\n", __func__);
+          abort();
+        }
       }
       scal::StdOperationLogger::get().response(true, item);
       calculate_pi(FLAGS_c);
