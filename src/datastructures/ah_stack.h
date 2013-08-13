@@ -48,8 +48,10 @@ class AHStack : public Stack<T> {
   std::atomic<Item*> **queues_;
   // The insert pointers of the thread-local queues.
   std::atomic<uint64_t>* *insert_;
+  // The pointers for the emptiness check.
+  uint64_t* *emptiness_check_pointers_;
 
-  bool find_oldest_item(Item* *result, uint64_t start, uint64_t timestamp);
+  bool find_youngest_item(Item* *result, uint64_t start, uint64_t *timestamp);
   uint64_t get_youngest_item(uint64_t thread_id, Item* *result);
 
 };
@@ -67,6 +69,10 @@ AHStack<T>::AHStack(uint64_t num_threads) {
   insert_ = static_cast<std::atomic<uint64_t>**>(
       scal::calloc_aligned(num_threads_, sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
 
+
+  emptiness_check_pointers_ = static_cast<uint64_t**>(
+      scal::calloc_aligned(num_threads_, sizeof(uint64_t*), scal::kCachePrefetch * 2));
+
   for (int i = 0; i < num_threads_; i++) {
     queues_[i] = static_cast<std::atomic<Item*>*>(
         calloc(BUFFERSIZE, sizeof(std::atomic<Item*>)));
@@ -81,10 +87,14 @@ AHStack<T>::AHStack(uint64_t num_threads) {
     insert_[i]->store(1);
     clocks_[i] = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
     clocks_[i]->store(1);
+
+    emptiness_check_pointers_[i] = static_cast<uint64_t*> (
+        scal::calloc_aligned(num_threads_, sizeof(uint64_t), scal::kCachePrefetch *2));
   }
 
   clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
-  clock_->store(1);
+  clock_->store(UINT64_MAX - 1);
+//  clock_->store(1);
 }
 
 inline uint64_t max(uint64_t x, uint64_t y) {
@@ -120,7 +130,8 @@ bool AHStack<T>::push(T element) {
 //  // 2) Set the thread-local time to the current time + 1.
 //  clocks_[thread_id]->store(latest_time + 1, std::memory_order_release);
 
-  uint64_t latest_time = clock_->fetch_add(1);
+//  uint64_t latest_time = clock_->fetch_add(1);
+  uint64_t latest_time = get_hwtime();
   // 3) Create a new item which stores the element and the current time as
   //    time stamp.
   Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
@@ -161,28 +172,31 @@ bool AHStack<T>::pop(T *element) {
   //    have to try again to find a new oldest element.
 
   uint64_t timestamp = clock_->load() + 1;
+//  uint64_t timestamp = UINT64_MAX;
 
   Item *oldest;
   uint64_t start = pseudorand() % num_threads_;
   uint64_t counter = 0;
-  while (!find_oldest_item(&oldest, start, timestamp)) {
-    counter++;
-    if (counter > 20000) {
-      printf("no element found\n");
+  while (true) {
+    if (!find_youngest_item(&oldest, start, &timestamp)) {
+      *element = (T)NULL;
       return false;
+    } else if (oldest != NULL) {
+      *element = oldest->data.load();
+      return true;
     }
   }
-
-  *element = oldest->data.load();
-  return true;
 }
 
 // Returns the oldest not-taken item from all thread-local queues. The 
 // thread-local queues are accessed exactly once, it an older element is 
 // enqueued in the meantime, then it is ignored.
 template<typename T>
-bool AHStack<T>::find_oldest_item(Item* *result, uint64_t start, uint64_t t) {
+bool AHStack<T>::find_youngest_item(Item* *result, uint64_t start, uint64_t *t) {
 
+  uint64_t thread_id = scal::ThreadContext::get().thread_id();
+  uint64_t *emptiness_check_pointers = emptiness_check_pointers_[thread_id];
+  bool empty = true;
   uint64_t remove_index = -1;
   *result = NULL;
   uint64_t index = -1;
@@ -196,6 +210,7 @@ bool AHStack<T>::find_oldest_item(Item* *result, uint64_t start, uint64_t t) {
     uint64_t old_remove_index_item = insert_[(start + i) % num_threads_]->load();
     remove = get_youngest_item((start + i) % num_threads_, &item);
     if (item != NULL) {
+      empty = false;
       uint64_t item_timestamp = item->timestamp.load(std::memory_order_acquire);
       if (timestamp < item_timestamp) {
         *result = item;
@@ -204,7 +219,7 @@ bool AHStack<T>::find_oldest_item(Item* *result, uint64_t start, uint64_t t) {
         remove_index = remove;
         old_remove_index = old_remove_index_item;
       } 
-      if (t <= timestamp) {
+      if (*t <= timestamp) {
         uint64_t expected = 0;
         if ((*result)->taken.compare_exchange_weak(
                 expected, 1, 
@@ -214,6 +229,11 @@ bool AHStack<T>::find_oldest_item(Item* *result, uint64_t start, uint64_t t) {
               std::memory_order_acq_rel, std::memory_order_relaxed);
           return true;
         }
+      }
+    } else {
+      if (emptiness_check_pointers[(start + i) % num_threads_] != remove) {
+        empty = false;
+        emptiness_check_pointers[(start + i) % num_threads_] = remove;
       }
     }
   }
@@ -227,11 +247,12 @@ bool AHStack<T>::find_oldest_item(Item* *result, uint64_t start, uint64_t t) {
           std::memory_order_acq_rel, std::memory_order_relaxed);
       return true;
     } else {
+      *t = (*result)->timestamp.load() + 1;
       *result = NULL;
     }
   }
 
-  return false;
+  return !empty;
 }
 
 // Returns the oldest not-taken item from the thread-local queue indicated by
@@ -239,11 +260,12 @@ bool AHStack<T>::find_oldest_item(Item* *result, uint64_t start, uint64_t t) {
 template<typename T>
 uint64_t AHStack<T>::get_youngest_item(uint64_t thread_id, Item* *result) {
 
-  uint64_t remove = insert_[thread_id]->load() - 1;
+  uint64_t remove_index = insert_[thread_id]->load();
+  uint64_t remove = remove_index - 1;
 
   *result = NULL;
   if (remove % ABAOFFSET < 1) {
-    return 0;
+    return remove_index;
   }
 
   while (remove % ABAOFFSET >= 1) {
@@ -256,7 +278,7 @@ uint64_t AHStack<T>::get_youngest_item(uint64_t thread_id, Item* *result) {
 
   if (remove % ABAOFFSET < 1) {
     *result = NULL;
-    return 0;
+    return remove_index;
   }
   return remove;
 }
