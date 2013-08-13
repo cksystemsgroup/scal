@@ -131,7 +131,8 @@ bool AHQueue<T>::enqueue(T element) {
 //  // 2) Set the thread-local time to the current time + 1.
 //  clocks_[thread_id]->store(latest_time + 1, std::memory_order_release);
 
-  uint64_t latest_time = clock_->fetch_add(1);
+//  uint64_t latest_time = clock_->fetch_add(1);
+  uint64_t latest_time = get_hwtime();
   // 3) Create a new item which stores the element and the current time as
   //    time stamp.
   Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
@@ -162,7 +163,8 @@ bool AHQueue<T>::dequeue(T *element) {
   //    then we successfully dequeued the oldest element. Otherwise we
   //    have to try again to find a new oldest element.
 
-  uint64_t timestamp = dequeue_clock_->fetch_add(1);
+//  uint64_t timestamp = dequeue_clock_->fetch_add(1);
+  uint64_t timestamp = 0;
 
   Item *oldest;
   uint64_t remove_index;
