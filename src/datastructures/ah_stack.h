@@ -112,12 +112,9 @@ bool AHStack<T>::push(T element) {
   //    current time.
   // 2) Create a new item which stores the element and the current time as
   //    time stamp.
-  // 3) Insert the new item into the thread-local queue.
-  // 4) Set the thread-local time to the current time + 1.
+  // 3) Insert the new item into the thread-local buffer.
 
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  // Make sure that have no buffer overflow.
-//  assert(insert_[thread_id]->load(std::memory_order_relaxed) < BUFFERSIZE);
 
   // 1) Determine the latest time of all clocks, which is considered as the
   //    current time.
@@ -159,71 +156,91 @@ template<typename T>
 bool AHStack<T>::pop(T *element) {
 
   // Repeat as long as no element is found
-  // 1) Find the oldest element in the queue.
-  //    If no element is found, try again.
-  // 2) Check if in the meantime an even older element has been inserted into
-  //    a thread-local queue. If this is not the case, then there exists a
-  //    linearization point where the oldest element really is the oldest
-  //    element in the queue.
-  //    If no element is found, then the oldest element has already been 
-  //    removed from the queue and we have to find a new oldest element.
-  // 3) Try to mark the oldest element as taken. I the marking succeeds,
-  //    then we successfully dequeued the oldest element. Otherwise we
-  //    have to try again to find a new oldest element.
+  // 1) Find the youngest element in the stack and remove it.
+  //    If no element is found or removing it failed, try again.
+  // 2) Optimization: If we find an element whose push operation
+  //    overlaps with this pop operation, then remove the element.
 
   uint64_t timestamp = clock_->load() + 1;
-//  uint64_t timestamp = UINT64_MAX;
 
   Item *oldest;
+  // Within the same pop operation always start the iteration over all
+  // thread-local buffers at the same location. 
   uint64_t start = pseudorand() % num_threads_;
   uint64_t counter = 0;
   while (true) {
     if (!find_youngest_item(&oldest, start, &timestamp)) {
+      // All thread-local buffers are empty. Return Null.
       *element = (T)NULL;
       return false;
     } else if (oldest != NULL) {
+      // A youngest element was removed successfully from the 
+      // stack. Return it.
       *element = oldest->data.load();
       return true;
     }
   }
 }
 
-// Returns the oldest not-taken item from all thread-local queues. The 
-// thread-local queues are accessed exactly once, it an older element is 
-// enqueued in the meantime, then it is ignored.
+// Finds the youngest item in all thread-local buffers and immediately 
+// removes it. If removing is successful, then a reference to the 
+// removed item is stored in the parameter result. The function returns
+// false if the thread-local buffers are empty, otherwise it returns true.
+// The parameter start defines the thread-local buffer where the iteration
+// over all tread-local buffers should start. The parameter t defines a
+// threshold. Any element younger than t can be removed from the buffer
+// immediately no matter if there exists a younger element or not. 
 template<typename T>
 bool AHStack<T>::find_youngest_item(Item* *result, uint64_t start, uint64_t *t) {
 
+  // Initialize the data needed for the emptiness check.
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
   uint64_t *emptiness_check_pointers = emptiness_check_pointers_[thread_id];
   bool empty = true;
+  // The remove_index stores the index where the element is stored in a 
+  // thread-local buffer.
   uint64_t remove_index = -1;
+  // Initialize the result pointer to NULL, which means that no element has
+  // been removed.
   *result = NULL;
+  // Indicates the index which contains the youngest item.
   uint64_t index = -1;
+  // Stores the time stamp of the youngest item found until now.
   uint64_t timestamp = 0;
+  // Stores the value of the remove pointer of a thead-local buffer before
+  // the buffer is actually accessed.
   uint64_t old_remove_index = 0;
 
+  // We iterate over all thead-local buffers
   for (uint64_t i = 0; i < num_threads_; i++) {
 
     Item* item;
     uint64_t remove;
+    // We get the remove/insert pointer of the current thread-local buffer.
     uint64_t old_remove_index_item = insert_[(start + i) % num_threads_]->load();
+    // We get the youngest element from that thread-local buffer.
     remove = get_youngest_item((start + i) % num_threads_, &item);
+    // If we found an element, we compare it to the youngest element we have
+    // found until now.
     if (item != NULL) {
       empty = false;
       uint64_t item_timestamp = item->timestamp.load(std::memory_order_acquire);
       if (timestamp < item_timestamp) {
+        // We found a new youngest element, so we remember it.
         *result = item;
         index = (start + i) % num_threads_;
         timestamp = item_timestamp;
         remove_index = remove;
         old_remove_index = old_remove_index_item;
       } 
+      // Check if we can remove the element immediately.
       if (*t <= timestamp) {
         uint64_t expected = 0;
         if ((*result)->taken.compare_exchange_weak(
                 expected, 1, 
                 std::memory_order_acq_rel, std::memory_order_relaxed)) {
+          // Try to adjust the remove pointer. It does not matter if this 
+          // CAS fails.
           insert_[index]->compare_exchange_weak(
               old_remove_index, remove_index,
               std::memory_order_acq_rel, std::memory_order_relaxed);
@@ -231,17 +248,24 @@ bool AHStack<T>::find_youngest_item(Item* *result, uint64_t start, uint64_t *t) 
         }
       }
     } else {
-      if (emptiness_check_pointers[(start + i) % num_threads_] != remove) {
-        empty = false;
-        emptiness_check_pointers[(start + i) % num_threads_] = remove;
+      // No element was found, work on the emptiness check.
+      if (empty) {
+        if (emptiness_check_pointers[(start + i) % num_threads_] != remove) {
+          empty = false;
+          emptiness_check_pointers[(start + i) % num_threads_] = remove;
+        }
       }
     }
   }
   if (*result != NULL) {
+    // We found a youngest element which is not younger than the threshold.
+    // We try to remove it.
     uint64_t expected = 0;
     if ((*result)->taken.compare_exchange_weak(
             expected, 1, 
             std::memory_order_acq_rel, std::memory_order_relaxed)) {
+      // Try to adjust the remove pointer. It does not matter if this 
+      // CAS fails.
       insert_[index]->compare_exchange_weak(
           old_remove_index, remove_index,
           std::memory_order_acq_rel, std::memory_order_relaxed);
