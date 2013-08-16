@@ -22,6 +22,7 @@
 #include "util/platform.h"
 #include "util/threadlocals.h"
 #include "util/random.h"
+#include "util/workloads.h"
 
 #define EMPTY 0
 
@@ -220,14 +221,15 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
         him, thread_id)) { 
   }
   if (him != EMPTY) {
+    inc_counter1();
     uint64_t other = location_[him]->load();
-    if (other != 0 && 
-        other == him && 
+    if (other == him && 
         operations_[other]->opcode != opcode) {
       uint64_t expected = thread_id;
       if (location_[thread_id]->compare_exchange_weak(
             expected, EMPTY)) {
         if (try_collision(thread_id, other, item)) {
+      inc_counter2();
          return true;
         } else {
           return false;
@@ -237,11 +239,13 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
           *item = operations_[location_[thread_id]->load()]->data;
           location_[thread_id]->store(0);
         }
+      inc_counter2();
         return true;
       }
     }
   }
 
+  calculate_pi(1500);
   // delay
   //
   
@@ -252,6 +256,7 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
       *item = operations_[location_[thread_id]->load()]->data;
       location_[thread_id]->store(EMPTY);
     }
+      inc_counter2();
     return true;
   }
 
@@ -259,21 +264,18 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
 }
 template<typename T>
 bool EliminationBackoffStack<T>::push(T item) {
-  inc_counter1();
   Node *n = scal::tlget<Node>(0);
   n->data = item;
   AtomicPointer<Node*> top_old;
   AtomicPointer<Node*> top_new;
   top_new.weak_set_value(n);
   while (true) {
-    inc_counter2();
     top_old = *top_;
     n->next.weak_set_value(top_old.value());
     top_new.weak_set_aba(top_old.aba() + 1);
 
     if (!top_->cas(top_old, top_new)) {
       if (backoff(Opcode::Push, &item)) {
-        inc_counter2();
         return true;
       }
     } else {
@@ -285,11 +287,9 @@ bool EliminationBackoffStack<T>::push(T item) {
 
 template<typename T>
 bool EliminationBackoffStack<T>::pop(T *item) {
-  inc_counter1();
   AtomicPointer<Node*> top_old;
   AtomicPointer<Node*> top_new;
   while (true) {
-    inc_counter2();
     top_old = *top_;
     if (top_old.value() == NULL) {
       return false;
@@ -299,7 +299,6 @@ bool EliminationBackoffStack<T>::pop(T *item) {
 
     if (!top_->cas(top_old, top_new)) {
       if (backoff(Opcode::Pop, item)) {
-        inc_counter2();
         return true;
       }
     } else {
@@ -313,11 +312,9 @@ bool EliminationBackoffStack<T>::pop(T *item) {
 template<typename T>
 inline bool EliminationBackoffStack<T>::get_return_empty_state(
     T *item, AtomicRaw *state) {
-  inc_counter1();
   AtomicPointer<Node*> top_old;
   AtomicPointer<Node*> top_new;
   while (true) {
-    inc_counter2();
     top_old = *top_;
     if (top_old.value() == NULL) {
       *state = top_old.raw();
@@ -327,7 +324,6 @@ inline bool EliminationBackoffStack<T>::get_return_empty_state(
     top_new.weak_set_aba(top_old.aba() + 1);
     if (!top_->cas(top_old, top_new)) {
       if (backoff(Opcode::Pop, item)) {
-        inc_counter2();
         return true;
       }
     } else {
