@@ -21,7 +21,7 @@
 #include "util/time.h"
 #include "util/workloads.h"
 
-DEFINE_string(prealloc_size, "1g", "tread local space that is initialized");
+DEFINE_string(prealloc_size, "1g", "thread local space that is initialized");
 DEFINE_uint64(producers, 1, "number of producers");
 DEFINE_uint64(consumers, 1, "number of consumers");
 DEFINE_uint64(operations, 1000, "number of operations per producer");
