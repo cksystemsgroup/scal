@@ -29,9 +29,9 @@ DEFINE_uint64(c, 5000, "computational workload");
 DEFINE_bool(print_summary, true, "print execution summary");
 DEFINE_bool(log_operations, false, "log invocation/response/linearization "
                                    "of all operations");
-DEFINE_bool(barrier, false, "uses a barrier between the enqueues and dequeues"
-                            "such that first all elements are enqueued, then"
-                            "all elements are dequeued");
+DEFINE_bool(barrier, false, "uses a barrier between the enqueues and "
+    "dequeues such that first all elements are enqueued, then all elements"
+    "are dequeued");
 
 using scal::Benchmark;
 
@@ -70,7 +70,15 @@ int main(int argc, const char **argv) {
 
   // Init the main program as executing thread (may use rnd generator or tl
   // allocs).
-  g_num_threads = FLAGS_producers + FLAGS_consumers;
+  if (FLAGS_barrier) {
+    if (FLAGS_producers > FLAGS_consumers) {
+      g_num_threads = FLAGS_producers;
+    } else {
+      g_num_threads = FLAGS_consumers;
+    }
+  } else {
+    g_num_threads = FLAGS_producers + FLAGS_consumers;
+  }
   scal::tlalloc_init(tlsize, true /* touch pages */);
   //threadlocals_init();
   scal::ThreadContext::prepare(g_num_threads + 1);
@@ -78,7 +86,7 @@ int main(int argc, const char **argv) {
 
   if (FLAGS_log_operations) {
     scal::StdOperationLogger::prepare(g_num_threads + 1,
-                                      g_num_threads * FLAGS_operations);
+                                      2 * g_num_threads * FLAGS_operations);
   }
 
   void *ds = ds_new();
@@ -96,13 +104,15 @@ int main(int argc, const char **argv) {
   if (FLAGS_print_summary) {
     uint64_t exec_time = benchmark->execution_time();
     char buffer[1024] = {0};
-    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
-        FLAGS_producers + FLAGS_consumers,
+    uint32_t n = snprintf(buffer, sizeof(buffer), 
+        "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
+        g_num_threads - 1,
         FLAGS_producers,
         FLAGS_consumers,
         exec_time,
         FLAGS_operations,
         FLAGS_c,
+        // TODO Change the calculation.
         (uint64_t)((FLAGS_operations * FLAGS_producers * 2) / (static_cast<double>(exec_time) / 1000)));
     if (n != strlen(buffer)) {
       fprintf(stderr, "%s: error: failed to create summary string\n", __func__);
@@ -145,7 +155,9 @@ void ProdConBench::consumer(void) {
   Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
   // Calculate the items each consumer has to collect.
-  uint64_t operations = FLAGS_producers * FLAGS_operations / FLAGS_consumers;
+  uint64_t operations = 
+    (FLAGS_producers * FLAGS_operations) / FLAGS_consumers;
+
   uint64_t rest = (FLAGS_producers * FLAGS_operations) % FLAGS_consumers;
   // We assume that thread ids are increasing, starting from 1.
   if (rest >= thread_id) {
@@ -160,6 +172,7 @@ void ProdConBench::consumer(void) {
     scal::StdOperationLogger::get().response(ok, ret);
     calculate_pi(FLAGS_c);
     if (!ok) {
+      break;
       continue;
     }
     j++;
@@ -167,36 +180,39 @@ void ProdConBench::consumer(void) {
 }
 
 void ProdConBench::bench_func(void) {
-  // The lower thread indices are assigned to the producer threads.
-  // As the threads with lower indices start slightly earlier, the producer
-  // threads already fill the queue before the consumers start. Assigning the
-  // lower thread indices to the consumer threads leads to an increased number
-  // of null-return dequeues. We do not assign the thread id's in an alternating
-  // fashion because because thread-id based load balancers significantly
-  // benefit from such a thread id assignment.
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  if (thread_id <= FLAGS_producers) {
-    producer();
-    if (FLAGS_barrier) {
-      global_start_time_ = 0;
-      int rc = pthread_barrier_wait(&prod_con_barrier_);
-      if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
-        abort();
-      }
+  if (FLAGS_barrier) {
+    if (thread_id <= FLAGS_producers) {
+      producer();
     }
-  } else {
-    if (FLAGS_barrier) {
-      int rc = pthread_barrier_wait(&prod_con_barrier_);
-      if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
-        abort();
-      }
 
+    global_start_time_ = 0;
+    int rc = pthread_barrier_wait(&prod_con_barrier_);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+      fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
+      abort();
+    }
+
+    if (thread_id <= FLAGS_consumers) {
       if (global_start_time_ == 0) {
         __sync_bool_compare_and_swap(&global_start_time_, 0, get_utime());
       }
+      consumer();
     }
-    consumer();
+
+  }else {
+
+// The lower thread indices are assigned to the producer threads.
+// As the threads with lower indices start slightly earlier, the producer
+// threads already fill the queue before the consumers start. Assigning 
+// the lower thread indices to the consumer threads leads to an increased
+// number of null-return dequeues. We do not assign the thread id's in an
+// alternating fashion because because thread-id based load balancers 
+// significantly benefit from such a thread-id assignment.
+    if (thread_id <= FLAGS_producers) {
+      producer();
+    } else {
+      consumer();
+    }
   }
 }
