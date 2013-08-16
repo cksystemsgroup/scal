@@ -95,19 +95,45 @@ maxThreadsB6= 8
 maxThreadsB8=80
 maxThreadsB7=24
 
-# The @ indicates the beginning of the real template. Everything before the @
-# will be cut away. This is necessary because all templates need to have the
-# same placeholders.
+# The @ indicates the beginning of the real template. Everything before
+# the @ will be cut away. This is necessary because all templates need to
+# have the same placeholders.
 templates = {
-      'prodcon': '@../prodcon-{exe} -producers {thread} -consumers {thread} -operations 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
-    , 'enq': '@../prodcon-{exe} -producers {thread} -consumers 0 -operations 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
-    , 'seqalt' : '@../seqalt-{exe} -allow_empty_returns -threads {thread} -elements 10000 -c {work} {partials_param} {partials} {perfParam} -noset_rt_priority > {filename}'
-    , 'shortest-path' : '{work}@../shortest-path-{exe} -threads {thread} -height 100 -width 10000 {partials_param} {partials} -noset_rt_priority > {filename}' 
+      'prodcon': '@../prodcon-{exe} -producers {thread} ' 
+      + '-consumers {thread} -operations 10000 -c {work} '
+      + '{partials_param} {partials} {perfParam} -noset_rt_priority '
+      + '> {filename}'
+
+    , 'enq': '@../prodcon-{exe} -producers {thread} -consumers 0 '
+    + '-operations 10000 -c {work} {partials_param} {partials} '
+    + '{perfParam} -noset_rt_priority > {filename}'
+
+    , 'deq': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
+    + '-operations 10000 -c {work} {partials_param} {partials} '
+    + '{perfParam} -noset_rt_priority > {filename}'
+
+    , 'seqalt' : '@../seqalt-{exe} -allow_empty_returns -threads {thread} '
+    + '-elements 10000 -c {work} {partials_param} {partials} {perfParam} '
+    + '-noset_rt_priority > {filename}'
+
+    , 'shortest-path' : '{work}@../shortest-path-{exe} -threads {thread} '
+    + '-height 100 -width 10000 {partials_param} {partials} '
+    + '-noset_rt_priority > {filename}' 
     }
 
 filenameTemplates = {
-      'prodcon': '@{directory}{queue}-t{thread}{partials_param}{partials}-c{work}.txt'
-    , 'enq': '@{directory}{queue}-t{thread}{partials_param}{partials}-c{work}.txt'
-    , 'seqalt': '@{directory}{queue}-t{thread}{partials_param}{partials}-c{work}.txt'
-    , 'shortest-path': '{work}@{directory}{queue}-t{thread}{partials_param}{partials}.txt'
+    'prodcon': '@{directory}{queue}-t{thread}{partials_param}{partials}'
+    + '-c{work}.txt'
+
+    , 'enq': '@{directory}{queue}-t{thread}{partials_param}{partials}'
+    + '-c{work}.txt'
+
+    , 'deq': '@{directory}{queue}-t{thread}{partials_param}{partials}'
+    + '-c{work}.txt'
+
+    , 'seqalt': '@{directory}{queue}-t{thread}{partials_param}{partials}'
+    + '-c{work}.txt'
+
+    , 'shortest-path': '{work}@{directory}{queue}-t{thread}'
+    + '{partials_param}{partials}.txt'
     }

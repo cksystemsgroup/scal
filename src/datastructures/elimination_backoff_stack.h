@@ -11,6 +11,8 @@
 #define SCAL_DATASTRUCTURES_ELIMINATION_BACKOFF_STACK_H_
 
 #include <stdint.h>
+#include <assert.h>
+#include <atomic>
 
 #include "datastructures/distributed_queue_interface.h"
 #include "datastructures/partial_pool_interface.h"
@@ -18,9 +20,10 @@
 #include "util/atomic_value.h"
 #include "util/malloc.h"
 #include "util/platform.h"
-#include <assert.h>
 #include "util/threadlocals.h"
 #include "util/random.h"
+
+#define EMPTY 0
 
 namespace ebs_internal {
 
@@ -69,60 +72,124 @@ class EliminationBackoffStack : public Stack<T>, public PartialPoolInterface {
 
   inline bool get_return_empty_state(T *item, AtomicRaw *state);
 
+  char* ds_get_stats(void) {
+
+    int64_t sum1 = 0;
+    int64_t sum2 = 0;
+
+    for (int i = 0; i < num_threads_; i++) {
+      sum1 += *counter1_[i];
+      sum2 += *counter2_[i];
+    }
+
+    char buffer[255] = { 0 };
+    uint32_t n = snprintf(buffer,
+                          sizeof(buffer),
+                          "%ld %ld %ld",
+                          sum1, sum2, sum2 / sum1
+                          );
+    if (n != strlen(buffer)) {
+      fprintf(stderr, "%s: error creating stats string\n", __func__);
+      abort();
+    }
+    char *newbuf = static_cast<char*>(calloc(
+        strlen(buffer) + 1, sizeof(*newbuf)));
+    return strncpy(newbuf, buffer, strlen(buffer));
+  }
+
  private:
   typedef ebs_internal::Node<T> Node;
   typedef ebs_internal::Opcode Opcode;
   typedef ebs_internal::Operation<T> Operation;
 
   AtomicPointer<Node*> *top_;
-  volatile Operation* *operations_;
+  Operation* *operations_;
 
-  volatile AtomicValue<uint64_t>* *location_;
-  volatile AtomicValue<uint64_t>* *collision_;
+  std::atomic<uint64_t>* *location_;
+  std::atomic<uint64_t>* *collision_;
   const uint64_t size_collision_;
+  const uint64_t num_threads_;
+  int64_t* *counter1_;
+  int64_t* *counter2_;
+
   bool try_collision(uint64_t thread_id, uint64_t other, T *item);
   bool backoff(Opcode opcode, T *item);
+
+  inline void inc_counter1() {
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
+    (*counter1_[thread_id])++;
+  }
+
+  inline void inc_counter2() {
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
+    (*counter2_[thread_id])++;
+  }
 };
 
 template<typename T>
-EliminationBackoffStack<T>::EliminationBackoffStack(uint64_t num_threads, uint64_t size_collision) : size_collision_(size_collision) {
-
+EliminationBackoffStack<T>::EliminationBackoffStack(
+    uint64_t num_threads, uint64_t size_collision) 
+  : size_collision_(size_collision), num_threads_(num_threads) {
   top_ = scal::get<AtomicPointer<Node*> >(scal::kCachePrefetch);
 
-  operations_ = static_cast<volatile Operation**>(calloc(
-      num_threads, sizeof(Operation*)));
+  operations_ = static_cast<Operation**>(
+      scal::calloc_aligned(num_threads, 
+          sizeof(Operation*), scal::kCachePrefetch * 2));
 
-  location_ = static_cast<volatile AtomicValue<uint64_t>**>(calloc(
-        num_threads, sizeof(AtomicValue<uint64_t>*)));
+  location_ = static_cast<std::atomic<uint64_t>**>(
+      scal::calloc_aligned(num_threads, 
+          sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
 
-  collision_ = static_cast<volatile AtomicValue<uint64_t>**>(calloc(
-        size_collision_, sizeof(AtomicValue<uint64_t>*)));
+  collision_ = static_cast<std::atomic<uint64_t>**>(
+      scal::calloc_aligned(size_collision_,
+          sizeof(AtomicValue<uint64_t>*), scal::kCachePrefetch * 2));
+  
+  counter1_ = static_cast<int64_t**>(
+      scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
+        scal::kCachePrefetch * 2));
+
+  counter2_ = static_cast<int64_t**>(
+      scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
+        scal::kCachePrefetch * 2));
 
   for (uint64_t i = 0; i < num_threads; i++) {
-    operations_[i] = scal::get<Operation>(scal::kCachePrefetch);
-    location_[i] = scal::get<AtomicValue<uint64_t>>(scal::kCachePrefetch);
+    operations_[i] = scal::get<Operation>(scal::kCachePrefetch * 2);
+  }
+  for (uint64_t i = 0; i < num_threads; i++) {
+    location_[i] = 
+      scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 2);
   }
 
   for (uint64_t i = 0; i < size_collision_; i++) {
-    collision_[i] = scal::get<AtomicValue<uint64_t>>(scal::kCachePrefetch);
+    collision_[i] = 
+      scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 2);
+  }
+
+  for (uint64_t i = 0; i < num_threads; i++) {
+    counter1_[i] = scal::get<int64_t>(scal::kCachePrefetch * 2);
+    *(counter1_[i]) = 0;
+    counter2_[i] = scal::get<int64_t>(scal::kCachePrefetch * 2);
+    *(counter2_[i]) = 0;
   }
 }
 
-uint64_t get_position(uint64_t size) {
-  return pseudorand() % size;
+inline uint64_t get_pos(uint64_t size) {
+  return hwrand() % size;
 }
 
-#define EMPTY 0
 
 template<typename T>
-bool EliminationBackoffStack<T>::try_collision(uint64_t thread_id, uint64_t other, T *item) {
+bool EliminationBackoffStack<T>::try_collision(
+    uint64_t thread_id, uint64_t other, T *item) {
   
   AtomicValue<T> old_value(other, 0);
 
   if (operations_[thread_id]->opcode == Opcode::Push) {
 
+
     AtomicValue<T> new_value(thread_id, 0);
-    if (location_[other]->cas(old_value, new_value)) {
+    if (location_[other]->compare_exchange_weak(
+          other, thread_id)) {
       return true;
     } else {
       return false;
@@ -130,7 +197,8 @@ bool EliminationBackoffStack<T>::try_collision(uint64_t thread_id, uint64_t othe
   } else {
 
     AtomicValue<T> new_value(EMPTY, 0);
-    if (location_[other]->cas(old_value, new_value)) {
+    if (location_[other]->compare_exchange_weak(
+          other, EMPTY)) {
       *item = operations_[other]->data;
       return true;
     } else {
@@ -141,34 +209,35 @@ bool EliminationBackoffStack<T>::try_collision(uint64_t thread_id, uint64_t othe
 
 template<typename T>
 bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
+  inc_counter2();
+  return false;
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
   operations_[thread_id]->opcode = opcode;
   operations_[thread_id]->data = *item;
-
-  location_[thread_id]->set_value(thread_id);
-  uint64_t position = get_position(size_collision_);
-  AtomicValue<uint64_t> him = *collision_[position];
-
-  AtomicValue<T> new_item(thread_id, 0);
-  AtomicValue<T> empty_item(0, 0);
-  while (!collision_[position]->cas(him, new_item)) {
-    him = *collision_[position];
+  location_[thread_id]->store(thread_id);
+  uint64_t position = get_pos(size_collision_);
+  uint64_t him = collision_[position]->load();
+  while (!collision_[position]->compare_exchange_weak(
+        him, thread_id)) { 
   }
-
-  if (him.value() != EMPTY) {
-    AtomicValue<uint64_t> other = *location_[him.value()];
-    if (other.value() != 0 && other.value() == him.value() && operations_[other.value()]->opcode != opcode) {
-      if (location_[thread_id]->cas(new_item, empty_item)) {
-        if (try_collision(thread_id, other.value(), item)) {
+  if (him != EMPTY) {
+    uint64_t other = location_[him]->load();
+    if (other != 0 && 
+        other == him && 
+        operations_[other]->opcode != opcode) {
+      uint64_t expected = thread_id;
+      if (location_[thread_id]->compare_exchange_weak(
+            expected, EMPTY)) {
+        if (try_collision(thread_id, other, item)) {
          return true;
         } else {
           return false;
         }
       } else {
         if (opcode == Opcode::Pop) {
-          *item = operations_[location_[thread_id]->value()]->data;
-          location_[thread_id]->set_value(0);
+          *item = operations_[location_[thread_id]->load()]->data;
+          location_[thread_id]->store(0);
         }
         return true;
       }
@@ -178,10 +247,12 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
   // delay
   //
   
-  if (!location_[thread_id]->cas(new_item, empty_item)) {
+  uint64_t expected = thread_id;
+  if (!location_[thread_id]->compare_exchange_strong(
+        expected, EMPTY)) {
     if (opcode == Opcode::Pop) {
-      *item = operations_[location_[thread_id]->value()]->data;
-      location_[thread_id]->set_value(0);
+      *item = operations_[location_[thread_id]->load()]->data;
+      location_[thread_id]->store(EMPTY);
     }
     return true;
   }
@@ -190,20 +261,22 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
 }
 template<typename T>
 bool EliminationBackoffStack<T>::push(T item) {
+  inc_counter1();
   Node *n = scal::tlget<Node>(0);
   n->data = item;
   AtomicPointer<Node*> top_old;
   AtomicPointer<Node*> top_new;
   top_new.weak_set_value(n);
   while (true) {
+    inc_counter2();
     top_old = *top_;
     n->next.weak_set_value(top_old.value());
     top_new.weak_set_aba(top_old.aba() + 1);
 
     if (!top_->cas(top_old, top_new)) {
-      if (backoff(Opcode::Push, &item)) {
-        return true;
-      }
+//      if (backoff(Opcode::Push, &item)) {
+//        return true;
+//      }
     } else {
       break;
     }
@@ -213,9 +286,11 @@ bool EliminationBackoffStack<T>::push(T item) {
 
 template<typename T>
 bool EliminationBackoffStack<T>::pop(T *item) {
+  inc_counter1();
   AtomicPointer<Node*> top_old;
   AtomicPointer<Node*> top_new;
   while (true) {
+    inc_counter2();
     top_old = *top_;
     if (top_old.value() == NULL) {
       return false;
@@ -224,9 +299,9 @@ bool EliminationBackoffStack<T>::pop(T *item) {
     top_new.weak_set_aba(top_old.aba() + 1);
 
     if (!top_->cas(top_old, top_new)) {
-      if (backoff(Opcode::Pop, item)) {
-        return true;
-      }
+//      if (backoff(Opcode::Pop, item)) {
+//        return true;
+//      }
     } else {
       break;
     }
@@ -236,10 +311,13 @@ bool EliminationBackoffStack<T>::pop(T *item) {
 }
 
 template<typename T>
-inline bool EliminationBackoffStack<T>::get_return_empty_state(T *item, AtomicRaw *state) {
+inline bool EliminationBackoffStack<T>::get_return_empty_state(
+    T *item, AtomicRaw *state) {
+  inc_counter1();
   AtomicPointer<Node*> top_old;
   AtomicPointer<Node*> top_new;
   while (true) {
+    inc_counter2();
     top_old = *top_;
     if (top_old.value() == NULL) {
       *state = top_old.raw();
@@ -248,9 +326,9 @@ inline bool EliminationBackoffStack<T>::get_return_empty_state(T *item, AtomicRa
     top_new.weak_set_value(top_old.value()->next.value());
     top_new.weak_set_aba(top_old.aba() + 1);
     if (!top_->cas(top_old, top_new)) {
-      if (backoff(Opcode::Pop, item)) {
-        return true;
-      }
+//      if (backoff(Opcode::Pop, item)) {
+//        return true;
+//      }
     } else {
       break;
     }
