@@ -209,8 +209,6 @@ bool EliminationBackoffStack<T>::try_collision(
 
 template<typename T>
 bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
-  inc_counter2();
-  return false;
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
   operations_[thread_id]->opcode = opcode;
@@ -274,9 +272,10 @@ bool EliminationBackoffStack<T>::push(T item) {
     top_new.weak_set_aba(top_old.aba() + 1);
 
     if (!top_->cas(top_old, top_new)) {
-//      if (backoff(Opcode::Push, &item)) {
-//        return true;
-//      }
+      if (backoff(Opcode::Push, &item)) {
+        inc_counter2();
+        return true;
+      }
     } else {
       break;
     }
@@ -299,9 +298,10 @@ bool EliminationBackoffStack<T>::pop(T *item) {
     top_new.weak_set_aba(top_old.aba() + 1);
 
     if (!top_->cas(top_old, top_new)) {
-//      if (backoff(Opcode::Pop, item)) {
-//        return true;
-//      }
+      if (backoff(Opcode::Pop, item)) {
+        inc_counter2();
+        return true;
+      }
     } else {
       break;
     }
@@ -326,9 +326,10 @@ inline bool EliminationBackoffStack<T>::get_return_empty_state(
     top_new.weak_set_value(top_old.value()->next.value());
     top_new.weak_set_aba(top_old.aba() + 1);
     if (!top_->cas(top_old, top_new)) {
-//      if (backoff(Opcode::Pop, item)) {
-//        return true;
-//      }
+      if (backoff(Opcode::Pop, item)) {
+        inc_counter2();
+        return true;
+      }
     } else {
       break;
     }
