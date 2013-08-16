@@ -96,7 +96,7 @@ int main(int argc, const char **argv) {
   if (FLAGS_print_summary) {
     uint64_t exec_time = benchmark->execution_time();
     char buffer[1024] = {0};
-    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " ;producers: %" PRIu64 " /consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 ";ds_stats: ",
+    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
         FLAGS_producers + FLAGS_consumers,
         FLAGS_producers,
         FLAGS_consumers,
@@ -178,6 +178,7 @@ void ProdConBench::bench_func(void) {
   if (thread_id <= FLAGS_producers) {
     producer();
     if (FLAGS_barrier) {
+      global_start_time_ = 0;
       int rc = pthread_barrier_wait(&prod_con_barrier_);
       if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
         fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
@@ -190,6 +191,10 @@ void ProdConBench::bench_func(void) {
       if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
         fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
         abort();
+      }
+
+      if (global_start_time_ == 0) {
+        __sync_bool_compare_and_swap(&global_start_time_, 0, get_utime());
       }
     }
     consumer();

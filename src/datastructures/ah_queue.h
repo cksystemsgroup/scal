@@ -1,12 +1,17 @@
 #ifndef SCAL_DATASTRUCTURES_AH_QUEUE_H_
 #define SCAL_DATASTRUCTURES_AH_QUEUE_H_
 
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <assert.h>
 #include <atomic>
+#include <stdio.h>
 
 #include "datastructures/queue.h"
 #include "util/threadlocals.h"
+#include "util/time.h"
+#include "util/malloc.h"
+#include "util/platform.h"
 
 #define BUFFERSIZE 1000000
 
@@ -15,9 +20,8 @@ namespace ah_details {
   // and a flag which indicates if the element has already been dequeued.
   template<typename T>
     struct Item {
-      T data;
-      uint64_t timestamp;
-      std::atomic<uint64_t> taken;
+      std::atomic<T> data;
+      std::atomic<uint64_t> timestamp;
     };
 }
 
@@ -29,20 +33,24 @@ class AHQueue : public Queue<T> {
   bool dequeue(T *item);
 
  private:
+  typedef ah_details::Item<T> Item;
+
   // The number of threads.
   uint64_t num_threads_;
   // The thread-local clocks.
-  std::atomic<uint64_t> *clocks_;
+  std::atomic<uint64_t>* *clocks_;
+  std::atomic<uint64_t> *clock_;
+  std::atomic<uint64_t> *dequeue_clock_;
   // The thread-local queues, implemented as arrays of size BUFFERSIZE. At the
   // moment buffer overflows are not considered.
-  std::atomic<ah_details::Item<T>*> **queues_;
+  std::atomic<Item*> **queues_;
   // The insert pointers of the thread-local queues.
-  std::atomic<uint64_t> *insert_;
+  std::atomic<uint64_t>* *insert_;
   // The remove pointers of the thread-local queues.
-  std::atomic<uint64_t> *remove_;
+  std::atomic<uint64_t>* *remove_;
 
-  ah_details::Item<T>* find_oldest_item();
-  ah_details::Item<T>* get_oldest_item(uint64_t index);
+  uint64_t find_oldest_item(Item* *result, uint64_t *remove_index, uint64_t start, uint64_t timestamp);
+  uint64_t get_oldest_item(uint64_t index, Item* *result);
 
 };
 
@@ -50,18 +58,44 @@ template<typename T>
 AHQueue<T>::AHQueue(uint64_t num_threads) {
   num_threads_ = num_threads;
 
-  clocks_ = static_cast<std::atomic<uint64_t>*>(
-      calloc(num_threads, sizeof(std::atomic<uint64_t>)));
-  queues_ = static_cast<std::atomic<ah_details::Item<T>*>**>(
-      calloc(num_threads, sizeof(std::atomic<ah_details::Item<T>*>*)));
+  clocks_ = static_cast<std::atomic<uint64_t>**>(
+      scal::calloc_aligned(num_threads_, sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
 
-  for (int i = 0; i < num_threads; i++) {
-    queues_[i] = static_cast<std::atomic<ah_details::Item<T>*>*>(
-        calloc(BUFFERSIZE, sizeof(std::atomic<ah_details::Item<T>*>)));
+  queues_ = static_cast<std::atomic<Item*>**>(
+      scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), scal::kCachePrefetch * 2));
+
+  insert_ = static_cast<std::atomic<uint64_t>**>(
+      scal::calloc_aligned(num_threads_, sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
+
+  remove_ = static_cast<std::atomic<uint64_t>**>(
+      scal::calloc_aligned(num_threads_, sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
+
+  for (int i = 0; i < num_threads_; i++) {
+    queues_[i] = static_cast<std::atomic<Item*>*>(
+        calloc(BUFFERSIZE, sizeof(std::atomic<Item*>)));
+
+    insert_[i] = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+    remove_[i] = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+    clocks_[i] = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+    clocks_[i]->store(1);
   }
 
-  insert_ = static_cast<std::atomic<uint64_t>*>(calloc(num_threads, sizeof(std::atomic<uint64_t>)));
-  remove_ = static_cast<std::atomic<uint64_t>*>(calloc(num_threads, sizeof(std::atomic<uint64_t>)));
+  clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+  clock_->store(1);
+  dequeue_clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+  dequeue_clock_->store(1);
+//  clocks_ = static_cast<std::atomic<uint64_t>*>(
+//      calloc(num_threads, sizeof(std::atomic<uint64_t>)));
+//  queues_ = static_cast<std::atomic<Item*>**>(
+//      calloc(num_threads, sizeof(std::atomic<Item*>*)));
+//
+//  for (int i = 0; i < num_threads; i++) {
+//    queues_[i] = static_cast<std::atomic<Item*>*>(
+//        calloc(BUFFERSIZE, sizeof(std::atomic<Item*>)));
+//  }
+//
+//  insert_ = static_cast<std::atomic<uint64_t>*>(calloc(num_threads, sizeof(std::atomic<uint64_t>)));
+//  remove_ = static_cast<std::atomic<uint64_t>*>(calloc(num_threads, sizeof(std::atomic<uint64_t>)));
 }
 
 inline uint64_t max(uint64_t x, uint64_t y) {
@@ -84,30 +118,31 @@ bool AHQueue<T>::enqueue(T element) {
 
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
   // Make sure that have no buffer overflow.
-  assert(insert_[thread_id].load(std::memory_order_relaxed) < BUFFERSIZE);
+  assert(insert_[thread_id]->load(std::memory_order_relaxed) < BUFFERSIZE);
 
   // 1) Determine the latest time of all clocks, which is considered as the
   //    current time.
-  uint64_t latest_time = 0;
+//  uint64_t latest_time = 0;
+//
+//  for (int i = 0; i < num_threads_; i++) {
+//    latest_time = max(latest_time, clocks_[i]->load(std::memory_order_acquire));
+//  }
+//
+//  // 2) Set the thread-local time to the current time + 1.
+//  clocks_[thread_id]->store(latest_time + 1, std::memory_order_release);
 
-  for (int i = 0; i < num_threads_; i++) {
-    latest_time = max(latest_time, clocks_[i].load(std::memory_order_acquire));
-  }
-
-  // 2) Create a new item which stores the element and the current time as
+//  uint64_t latest_time = clock_->fetch_add(1);
+  uint64_t latest_time = get_hwtime();
+  // 3) Create a new item which stores the element and the current time as
   //    time stamp.
-  ah_details::Item<T> *new_item = new ah_details::Item<T>();
-  new_item->taken.store(0, std::memory_order_release);
-  new_item->timestamp = latest_time;
-  new_item->data = element;
+  Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
+  new_item->timestamp.store(latest_time, std::memory_order_release);
+  new_item->data.store(element, std::memory_order_release);
 
-  // 3) Insert the new item into the thread-local queue.
-  uint64_t insert = insert_[thread_id].load(std::memory_order_relaxed);
+  // 4) Insert the new item into the thread-local queue.
+  uint64_t insert = insert_[thread_id]->load(std::memory_order_relaxed);
   queues_[thread_id][insert].store(new_item, std::memory_order_release);
-  insert_[thread_id].store(insert + 1, std::memory_order_release);
-
-  // 4) Set the thread-local time to the current time + 1.
-  clocks_[thread_id].store(latest_time + 1, std::memory_order_release);
+  insert_[thread_id]->store(insert + 1, std::memory_order_release);
 
   return true;
 }
@@ -128,91 +163,117 @@ bool AHQueue<T>::dequeue(T *element) {
   //    then we successfully dequeued the oldest element. Otherwise we
   //    have to try again to find a new oldest element.
 
-  ah_details::Item<T> *oldest = find_oldest_item();
+//  uint64_t timestamp = dequeue_clock_->fetch_add(1);
+  uint64_t timestamp = 0;
+
+  Item *oldest;
+  uint64_t remove_index;
+  uint64_t start = pseudorand() % num_threads_;
+  uint64_t index = find_oldest_item(&oldest, &remove_index, start, timestamp);
+  if (oldest != NULL && oldest->timestamp.load() <= timestamp) {
+    *element = oldest->data.load();
+    return true;
+  }
   while (true) {
     if (oldest == NULL) {
-      oldest = find_oldest_item();
+      index = find_oldest_item(&oldest, &remove_index, start, 0);
       // We do not provide an emptiness check at the moment.
       continue;
     }
-    ah_details::Item<T> *check = find_oldest_item();
+    Item *check;
+    uint64_t check_remove;
+    uint64_t check_index = find_oldest_item(&check, &check_remove, start, oldest->timestamp.load());
     if (check == NULL) {
-      oldest = find_oldest_item();
+      index = find_oldest_item(&oldest, &remove_index, start, 0);
       continue;
     }
-    if (oldest->timestamp != check->timestamp) {
+    if (oldest->timestamp.load(std::memory_order_acquire) < check->timestamp.load(std::memory_order_acquire)) {
       oldest = check;
+      index = check_index;
+      remove_index = check_remove;
       continue;
-    }
-    uint64_t expected = 0;
-    if (oldest->taken.compare_exchange_strong(expected, 1,
-          std::memory_order_acq_rel, std::memory_order_relaxed)) {
-
-//      oldest->taken.store(1, std::memory_order_relaxed);
-      *element = oldest->data;
+    } else {
+//    uint64_t expected = 0;
+////    if (oldest->taken.compare_exchange_strong(expected, 1,
+////          std::memory_order_acq_rel, std::memory_order_relaxed)) {
+//    if (remove_[check_index]->compare_exchange_weak(
+//            check_remove, check_remove + 1, 
+//            std::memory_order_acq_rel, std::memory_order_relaxed)) {
+      *element = check->data.load(std::memory_order_acquire);
       return true;
     }
     
-    oldest = find_oldest_item();
+    index = find_oldest_item(&oldest, &remove_index, start, 0);
   }
-}
-
-// Returns the oldest not-taken item from the thread-local queue indicated by
-// thread_id.
-template<typename T>
-ah_details::Item<T>* AHQueue<T>::get_oldest_item(uint64_t thread_id) {
-
-  uint64_t insert = insert_[thread_id].load(std::memory_order_relaxed);
-  uint64_t remove = remove_[thread_id].load(std::memory_order_relaxed);
-
-  // If the thread-local queue is empty, no element is returned.
-  if (insert == remove) {
-    return NULL;
-  }
-
-  ah_details::Item<T>* result = NULL;
-
-  uint64_t i;
-  for (i = remove; i < insert; i++) {
-
-    ah_details::Item<T>* item = queues_[thread_id][i].load(std::memory_order_relaxed);
-    // Check if the item has already been taken. Taken items are ignored.
-    if (item->taken.load(std::memory_order_acquire) == 0) {
-      result = item;
-      break;
-    }
-  }
-
-  // Adjust the remove pointer of the thread-local queue. This is only an optimization.
-  if (i != remove) {
-    remove_[thread_id].compare_exchange_weak(remove, i, 
-        std::memory_order_relaxed, std::memory_order_relaxed);
-  }
-
-  return result;
 }
 
 // Returns the oldest not-taken item from all thread-local queues. The 
 // thread-local queues are accessed exactly once, it an older element is 
 // enqueued in the meantime, then it is ignored.
 template<typename T>
-ah_details::Item<T>* AHQueue<T>::find_oldest_item() {
+uint64_t AHQueue<T>::find_oldest_item(Item* *result, uint64_t *remove_index, uint64_t start, uint64_t t) {
 
-  ah_details::Item<T>* result = NULL;
+  *result = NULL;
+  uint64_t index = -1;
+  uint64_t timestamp = UINT64_MAX;
 
   for (uint64_t i = 0; i < num_threads_; i++) {
 
-    ah_details::Item<T>* item = get_oldest_item(i);
-    if (result == NULL) {
-      result = item;
-    } else if (item != NULL) {
-      if (result->timestamp > item->timestamp) {
-        result = item;
+    Item* item;
+    uint64_t remove;
+    remove = get_oldest_item((start + i) % num_threads_, &item);
+    if (item != NULL) {
+      uint64_t item_timestamp = item->timestamp.load(std::memory_order_acquire);
+      if (timestamp > item_timestamp) {
+        *result = item;
+        *remove_index = remove;
+        index = (start + i) % num_threads_;
+        timestamp = item_timestamp;
+      } 
+      if (t >= timestamp) {
+        if (remove_[index]->compare_exchange_weak(
+                *remove_index, *remove_index + 1, 
+                std::memory_order_acq_rel, std::memory_order_relaxed)) {
+          return index;
+        }
       }
     }
   }
 
-  return result;
+  return index;
+}
+
+// Returns the oldest not-taken item from the thread-local queue indicated by
+// thread_id.
+template<typename T>
+inline uint64_t AHQueue<T>::get_oldest_item(uint64_t thread_id, Item* *result) {
+
+  uint64_t insert = insert_[thread_id]->load(std::memory_order_relaxed);
+  uint64_t remove = remove_[thread_id]->load(std::memory_order_relaxed);
+
+  // If the thread-local queue is empty, no element is returned.
+  if (insert == remove) {
+    *result = NULL;
+    return -1;
+  } else {
+    *result = queues_[thread_id][remove].load(std::memory_order_acquire);
+    return remove;
+  }
+//
+//  Item* result = NULL;
+//
+//  uint64_t i;
+//  for (i = remove; i < insert; i++) {
+//
+//    Item* item = queues_[thread_id][i].load(std::memory_order_relaxed);
+//    // Check if the item has already been taken. Taken items are ignored.
+//    if (item->taken.load(std::memory_order_acquire) == 0) {
+//      result = item;
+//      break;
+//    }
+//  }
+//
+//  return result;
 }
 
 #endif  // SCAL_DATASTRUCTURES_AH_QUEUE_H_

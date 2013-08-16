@@ -28,6 +28,7 @@ class Benchmark {
   virtual ~Benchmark() {}
 
   void *data_;
+  uint64_t global_start_time_;
 
   virtual void bench_func(void) = 0;
   uint64_t thread_id(void);
@@ -49,7 +50,6 @@ class Benchmark {
   pthread_barrier_t start_barrier_;
   pthread_t *threads_;
   uint64_t num_threads_;
-  uint64_t global_start_time_;
   uint64_t global_end_time_;
   uint64_t thread_prealloc_size_;
 
