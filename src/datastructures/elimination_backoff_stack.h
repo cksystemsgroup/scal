@@ -87,7 +87,8 @@ class EliminationBackoffStack : public Stack<T>, public PartialPoolInterface {
     uint32_t n = snprintf(buffer,
                           sizeof(buffer),
                           "%ld %ld %ld",
-                          sum1, sum2, sum2 / sum1
+                          sum1, sum2, 
+                          sum1 ? (sum2 / sum1) : 0
                           );
     if (n != strlen(buffer)) {
       fprintf(stderr, "%s: error creating stats string\n", __func__);
