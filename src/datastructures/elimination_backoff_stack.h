@@ -50,7 +50,8 @@ struct Node {
 template<typename T>
 class EliminationBackoffStack : public Stack<T>, public PartialPoolInterface {
  public:
-  EliminationBackoffStack(uint64_t num_threads, uint64_t size_collision);
+  EliminationBackoffStack(uint64_t num_threads, uint64_t size_collision,
+      uint64_t delay);
   bool push(T item);
   bool pop(T *item);
 
@@ -110,6 +111,7 @@ class EliminationBackoffStack : public Stack<T>, public PartialPoolInterface {
   std::atomic<uint64_t>* *location_;
   std::atomic<uint64_t>* *collision_;
   const uint64_t size_collision_;
+  const uint64_t delay_;
   const uint64_t num_threads_;
   int64_t* *counter1_;
   int64_t* *counter2_;
@@ -130,8 +132,9 @@ class EliminationBackoffStack : public Stack<T>, public PartialPoolInterface {
 
 template<typename T>
 EliminationBackoffStack<T>::EliminationBackoffStack(
-    uint64_t num_threads, uint64_t size_collision) 
-  : size_collision_(size_collision), num_threads_(num_threads) {
+    uint64_t num_threads, uint64_t size_collision, uint64_t delay) 
+  : size_collision_(size_collision), num_threads_(num_threads),
+    delay_(delay) {
   top_ = scal::get<AtomicPointer<Node*> >(scal::kCachePrefetch);
 
   operations_ = static_cast<Operation**>(
@@ -246,9 +249,8 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
     }
   }
 
-  calculate_pi(1500);
-  // delay
-  //
+  // Wait some time for collisions.
+  calculate_pi(delay_);
   
   uint64_t expected = thread_id;
   if (!location_[thread_id]->compare_exchange_strong(
