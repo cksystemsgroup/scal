@@ -9,8 +9,8 @@
 
 void* ds_new() {
   HardwareTimeStamp *timestamping = new HardwareTimeStamp();
-  TLArrayBuffer<uint64_t> *buffer 
-    = new TLArrayBuffer<uint64_t>(g_num_threads + 1);
+  TSBuffer<uint64_t> *buffer 
+    = new TLLinkedListBuffer<uint64_t>(g_num_threads + 1);
   TSStack<uint64_t> *ts =
       new TSStack<uint64_t>(buffer, timestamping);
   return static_cast<void*>(ts);
