@@ -467,6 +467,7 @@ class TLLinkedListBuffer : public TSBuffer<T> {
     bool try_remove_youngest(T *element, uint64_t *threshold) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
+      printf ("Thread %lu starts try\n", thread_id);
       Item* *emptiness_check_pointers = 
         emptiness_check_pointers_[thread_id];
       bool empty = true;
@@ -511,11 +512,12 @@ class TLLinkedListBuffer : public TSBuffer<T> {
                     std::memory_order_acq_rel, std::memory_order_relaxed)) {
               // Try to adjust the remove pointer. It does not matter if 
               // this CAS fails.
-              buckets_[buffer_index]->compare_exchange_weak(
-                  old_top, (Item*)add_next_aba(result, old_top, 0), 
-                  std::memory_order_acq_rel, std::memory_order_relaxed);
+//              buckets_[buffer_index]->compare_exchange_weak(
+//                  old_top, (Item*)add_next_aba(result, old_top, 0), 
+//                  std::memory_order_acq_rel, std::memory_order_relaxed);
 
               *element = result->data.load(std::memory_order_acquire);
+              printf ("Thread %lu finishes try\n", thread_id);
               return true;
             }
           }
@@ -540,18 +542,20 @@ class TLLinkedListBuffer : public TSBuffer<T> {
                 std::memory_order_acq_rel, std::memory_order_relaxed)) {
           // Try to adjust the remove pointer. It does not matter if this 
           // CAS fails.
-          buckets_[buffer_index]->compare_exchange_weak(
-              old_top, (Item*)add_next_aba(result, old_top, 0), 
-              std::memory_order_acq_rel, std::memory_order_relaxed);
+//          buckets_[buffer_index]->compare_exchange_weak(
+//              old_top, (Item*)add_next_aba(result, old_top, 0), 
+//              std::memory_order_acq_rel, std::memory_order_relaxed);
           *element = result->data.load(std::memory_order_acquire);
+              printf ("Thread %lu finishes try\n", thread_id);
           return true;
         } else {
           *threshold = result->timestamp.load() + 1;
-          *element = 0;
+          *element = (T)NULL;
         }
       }
 
-      *element = 0;
+      *element = (T)NULL;
+      printf ("Thread %lu finishes try unsuccessfully", thread_id);
       return !empty;
     }
 };
@@ -580,7 +584,7 @@ template<typename T>
 bool TSStack<T>::pop(T *element) {
   uint64_t threshold = timestamping_->get_timestamp();
   while (buffer_->try_remove_youngest(element, &threshold)) {
-    if (element != (T)NULL) {
+    if (*element != (T)NULL) {
       return true;
     }
   }
