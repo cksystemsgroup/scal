@@ -17,17 +17,6 @@
 #define BUFFERSIZE 1000000
 #define ABAOFFSET (1ul << 32)
 
-namespace ts_details {
-  // An item contains the element, a time stamp when the element was enqueued,
-  // and a flag which indicates if the element has already been dequeued.
-  template<typename T>
-    struct Item {
-      std::atomic<T> data;
-      std::atomic<uint64_t> timestamp;
-      std::atomic<uint64_t> taken;
-    };
-}
-
 //////////////////////////////////////////////////////////////////////
 // The base TimeStamp class.
 //////////////////////////////////////////////////////////////////////
