@@ -16,9 +16,12 @@ DEFINE_uint64(delay, 1500, "time waiting in the collision array");
 EliminationBackoffStack<uint64_t> *ebs;
 
 void* ds_new() {
-  uint64_t size_collision = (g_num_threads + 1)/2;
+  uint64_t size_collision = (g_num_threads + 1)/10;
   if (FLAGS_collision != 0) {
     size_collision = FLAGS_collision;
+  }
+  if (size_collision == 0) { 
+    size_collision = 1;
   }
 
   ebs = new EliminationBackoffStack<uint64_t>(g_num_threads + 1, 
