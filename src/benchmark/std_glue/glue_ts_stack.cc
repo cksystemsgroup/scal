@@ -12,6 +12,8 @@ DEFINE_bool(list, false, "use the linked-list-based inner buffer");
 DEFINE_bool(stutter_clock, false, "use the stuttering clock");
 DEFINE_bool(atomic_clock, false, "use atomic fetch-and-inc clock");
 DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
+DEFINE_bool(init_threshold, false, "initializes the dequeue threshold "
+    "with the current time");
 
 void* ds_new() {
   TimeStamp *timestamping;
@@ -33,7 +35,7 @@ void* ds_new() {
     buffer = new TLLinkedListBuffer<uint64_t>(g_num_threads + 1);
   }
   TSStack<uint64_t> *ts =
-      new TSStack<uint64_t>(buffer, timestamping);
+      new TSStack<uint64_t>(buffer, timestamping, FLAGS_init_threshold);
   return static_cast<void*>(ts);
 }
 

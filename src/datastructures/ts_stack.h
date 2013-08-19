@@ -563,9 +563,12 @@ class TSStack : public Stack<T> {
  private:
   TSBuffer<T> *buffer_;
   TimeStamp *timestamping_;
+  bool init_threshold_;
  public:
-  explicit TSStack(TSBuffer<T> *buffer, TimeStamp *timestamping) 
-    : buffer_(buffer), timestamping_(timestamping) {
+  explicit TSStack
+    (TSBuffer<T> *buffer, TimeStamp *timestamping, bool init_threshold) 
+    : buffer_(buffer), timestamping_(timestamping),
+      init_threshold_(init_threshold) {
   }
   bool push(T element);
   bool pop(T *element);
@@ -580,13 +583,14 @@ bool TSStack<T>::push(T element) {
 
 template<typename T>
 bool TSStack<T>::pop(T *element) {
-  uint64_t threshold = timestamping_->get_timestamp();
-  uint64_t counter = 0;
+  uint64_t threshold;
+  if (init_threshold_) {
+    threshold = timestamping_->get_timestamp();
+  } else {
+    threshold = UINT64_MAX;
+  }
   while (buffer_->try_remove_youngest(element, &threshold)) {
-    counter++;
-    if (counter > 10) {
-      abort();
-    }
+
     if (*element != (T)NULL) {
       return true;
     }
