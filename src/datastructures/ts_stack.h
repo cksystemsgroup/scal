@@ -94,7 +94,7 @@ class AtomicCounterTimeStamp : public TimeStamp {
   public:
     AtomicCounterTimeStamp() {
       clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
-      clock_->store(UINT64_MAX - 1);
+      clock_->store(1);
     }
   
     uint64_t get_timestamp() {
@@ -355,7 +355,7 @@ template<typename T>
 class TLLinkedListBuffer : public TSBuffer<T> {
   private:
     typedef struct Item {
-      Item* next;
+      std::atomic<Item*> next;
       std::atomic<T> data;
       std::atomic<uint64_t> timestamp;
       std::atomic<uint64_t> taken;
@@ -373,7 +373,7 @@ class TLLinkedListBuffer : public TSBuffer<T> {
 
     void *get_aba_free_pointer(void *pointer) {
       uint64_t result = (uint64_t)pointer;
-      result &= 0xfffffff8;
+      result &= 0xfffffffffffffff8;
       return (void*)result;
     }
 
@@ -382,8 +382,8 @@ class TLLinkedListBuffer : public TSBuffer<T> {
       aba += increment;
       aba &= 0x7;
       uint64_t result = (uint64_t)pointer;
-      result = (result & 0xfffffff8) | aba;
-      return (void*)((result & 0xfffffff8) | aba);
+      result = (result & 0xfffffffffffffff8) | aba;
+      return (void*)((result & 0xffffffffffffff8) | aba);
     }
 
     // Returns the oldest not-taken item from the thread-local queue 
@@ -394,10 +394,10 @@ class TLLinkedListBuffer : public TSBuffer<T> {
         buckets_[thread_id]->load(std::memory_order_acquire));
 
       while (result->taken.load(std::memory_order_acquire) != 0 &&
-          result->next != result) {
-        result = result->next;
+          result->next.load() != result) {
+        result = result->next.load();
       }
-      if (result == result->next) {
+      if (result == result->next.load()) {
         return NULL;
       } else {
         return result;
@@ -427,7 +427,7 @@ class TLLinkedListBuffer : public TSBuffer<T> {
         new_item->timestamp.store(0, std::memory_order_release);
         new_item->data.store(0, std::memory_order_release);
         new_item->taken.store(1, std::memory_order_release);
-        new_item->next = new_item;
+        new_item->next.store(new_item);
         buckets_[i]->store(new_item, std::memory_order_release);
 
         emptiness_check_pointers_[i] = static_cast<Item**> (
@@ -450,12 +450,13 @@ class TLLinkedListBuffer : public TSBuffer<T> {
       Item* old_top = buckets_[thread_id]->load(std::memory_order_acquire);
 
       Item* top = (Item*)get_aba_free_pointer(old_top);
-      while (top->next != top 
+      while (top->next.load() != top 
           && top->taken.load(std::memory_order_acquire)) {
-        top = top->next;
+        top = top->next.load();
       }
 
-      new_item->next = top;
+      new_item->next.store(top);
+      void* tmp = add_next_aba(new_item, old_top, 1);
       buckets_[thread_id]->store(
           (Item*) add_next_aba(new_item, old_top, 1), 
           std::memory_order_release);
@@ -467,7 +468,6 @@ class TLLinkedListBuffer : public TSBuffer<T> {
     bool try_remove_youngest(T *element, uint64_t *threshold) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
-      printf ("Thread %lu starts try\n", thread_id);
       Item* *emptiness_check_pointers = 
         emptiness_check_pointers_[thread_id];
       bool empty = true;
@@ -512,13 +512,13 @@ class TLLinkedListBuffer : public TSBuffer<T> {
                     std::memory_order_acq_rel, std::memory_order_relaxed)) {
               // Try to adjust the remove pointer. It does not matter if 
               // this CAS fails.
-//              buckets_[buffer_index]->compare_exchange_weak(
-//                  old_top, (Item*)add_next_aba(result, old_top, 0), 
-//                  std::memory_order_acq_rel, std::memory_order_relaxed);
+              buckets_[buffer_index]->compare_exchange_weak(
+                  old_top, (Item*)add_next_aba(result, old_top, 0), 
+                  std::memory_order_acq_rel, std::memory_order_relaxed);
 
               *element = result->data.load(std::memory_order_acquire);
-              printf ("Thread %lu finishes try\n", thread_id);
               return true;
+            } else {
             }
           }
         } else {
@@ -542,11 +542,10 @@ class TLLinkedListBuffer : public TSBuffer<T> {
                 std::memory_order_acq_rel, std::memory_order_relaxed)) {
           // Try to adjust the remove pointer. It does not matter if this 
           // CAS fails.
-//          buckets_[buffer_index]->compare_exchange_weak(
-//              old_top, (Item*)add_next_aba(result, old_top, 0), 
-//              std::memory_order_acq_rel, std::memory_order_relaxed);
+          buckets_[buffer_index]->compare_exchange_weak(
+              old_top, (Item*)add_next_aba(result, old_top, 0), 
+              std::memory_order_acq_rel, std::memory_order_relaxed);
           *element = result->data.load(std::memory_order_acquire);
-              printf ("Thread %lu finishes try\n", thread_id);
           return true;
         } else {
           *threshold = result->timestamp.load() + 1;
@@ -555,7 +554,6 @@ class TLLinkedListBuffer : public TSBuffer<T> {
       }
 
       *element = (T)NULL;
-      printf ("Thread %lu finishes try unsuccessfully", thread_id);
       return !empty;
     }
 };
@@ -583,7 +581,12 @@ bool TSStack<T>::push(T element) {
 template<typename T>
 bool TSStack<T>::pop(T *element) {
   uint64_t threshold = timestamping_->get_timestamp();
+  uint64_t counter = 0;
   while (buffer_->try_remove_youngest(element, &threshold)) {
+    counter++;
+    if (counter > 10) {
+      abort();
+    }
     if (*element != (T)NULL) {
       return true;
     }
