@@ -34,12 +34,12 @@ executables = {
              , 'scal2random' : 'dq-2random -nohw_random'
              , 'wf' : 'wf-ppopp11'
              , 'ebstack' : 'ebstack -delay 2000'
-             , 'tsstutterlist'   : 'tsstack -stutter_clock -list'
-             , 'tsstutterarray'  : 'tsstack -stutter_clock -array'
-             , 'tsatomiclist'    : 'tsstack -atomic_clock -list'
-             , 'tsatomicarray'   : 'tsstack -atomic_clock -array'
-             , 'tshwlist'        : 'tsstack -hw_clock -list'
-             , 'tshwarray'       : 'tsstack -hw_clock -array'
+             , 'tsstutterlist'   : 'tsstack -stutter_clock -list -noinit_threshold'
+             , 'tsstutterarray'  : 'tsstack -stutter_clock -array -noinit_threshold'
+             , 'tsatomiclist'    : 'tsstack -atomic_clock -list -init_threshold'
+             , 'tsatomicarray'   : 'tsstack -atomic_clock -array -init_threshold'
+             , 'tshwlist'        : 'tsstack -hw_clock -list -init_threshold'
+             , 'tshwarray'       : 'tsstack -hw_clock -array -init_threshold'
              }
 
 #hasPartials = ['scal2random', 'scalrr', 'uskfifo', 'bskfifo', 'scal1random', 'scaltlrr', 'sq', 'rd']
