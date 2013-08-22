@@ -320,26 +320,26 @@ class TLArrayBuffer : public TSBuffer<T> {
       if (result != NULL) {
         // We found a youngest element which is not younger than the threshold.
         // We try to remove it.
-        uint64_t expected = 0;
-        if (result->taken.compare_exchange_weak(
-                expected, 1, 
-                std::memory_order_acq_rel, std::memory_order_relaxed)) {
-          // Try to adjust the remove pointer. It does not matter if this 
-          // CAS fails.
-          insert_[buffer_index]->compare_exchange_weak(
-              old_remove_index, buffer_array_index,
-              std::memory_order_acq_rel, std::memory_order_relaxed);
-          *element = result->data.load(std::memory_order_acquire);
-          return true;
-        } else {
+//        uint64_t expected = 0;
+//        if (result->taken.compare_exchange_weak(
+//                expected, 1, 
+//                std::memory_order_acq_rel, std::memory_order_relaxed)) {
+//          // Try to adjust the remove pointer. It does not matter if this 
+//          // CAS fails.
+//          insert_[buffer_index]->compare_exchange_weak(
+//              old_remove_index, buffer_array_index,
+//              std::memory_order_acq_rel, std::memory_order_relaxed);
+//          *element = result->data.load(std::memory_order_acquire);
+//          return true;
+//        } else {
           // We were not able to remove the youngest element. However, in
           // later invocations we can remove any element younger than the
           // one we found in this iteration. Therefore the time stamp of
           // the element we found in this round will be the threshold for
           // the next round.
-          *threshold = result->timestamp.load() + 1;
-          *element = 0;
-        }
+          *threshold = result->timestamp.load();
+          *element = (T)NULL;
+//        }
       }
 
       *element = 0;
@@ -356,9 +356,9 @@ class TLLinkedListBuffer : public TSBuffer<T> {
   private:
     typedef struct Item {
       std::atomic<Item*> next;
+      std::atomic<uint64_t> taken;
       std::atomic<T> data;
       std::atomic<uint64_t> timestamp;
-      std::atomic<uint64_t> taken;
     } Item;
 
     // The number of threads.
@@ -536,21 +536,21 @@ class TLLinkedListBuffer : public TSBuffer<T> {
       if (result != NULL) {
         // We found a youngest element which is not younger than the threshold.
         // We try to remove it.
-        uint64_t expected = 0;
-        if (result->taken.compare_exchange_weak(
-                expected, 1, 
-                std::memory_order_acq_rel, std::memory_order_relaxed)) {
-          // Try to adjust the remove pointer. It does not matter if this 
-          // CAS fails.
-          buckets_[buffer_index]->compare_exchange_weak(
-              old_top, (Item*)add_next_aba(result, old_top, 0), 
-              std::memory_order_acq_rel, std::memory_order_relaxed);
-          *element = result->data.load(std::memory_order_acquire);
-          return true;
-        } else {
-          *threshold = result->timestamp.load() + 1;
+//        uint64_t expected = 0;
+//        if (result->taken.compare_exchange_weak(
+//                expected, 1, 
+//                std::memory_order_acq_rel, std::memory_order_relaxed)) {
+//          // Try to adjust the remove pointer. It does not matter if this 
+//          // CAS fails.
+//          buckets_[buffer_index]->compare_exchange_weak(
+//              old_top, (Item*)add_next_aba(result, old_top, 0), 
+//              std::memory_order_acq_rel, std::memory_order_relaxed);
+//          *element = result->data.load(std::memory_order_acquire);
+//          return true;
+//        } else {
+          *threshold = result->timestamp.load();
           *element = (T)NULL;
-        }
+//        }
       }
 
       *element = (T)NULL;
