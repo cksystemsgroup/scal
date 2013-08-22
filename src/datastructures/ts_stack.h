@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "datastructures/stack.h"
+#include "datastructures/ts_timestamp.h"
 #include "util/threadlocals.h"
 #include "util/time.h"
 #include "util/malloc.h"
@@ -18,121 +19,20 @@
 #define ABAOFFSET (1ul << 32)
 
 //////////////////////////////////////////////////////////////////////
-// The base TimeStamp class.
-//////////////////////////////////////////////////////////////////////
-class TimeStamp {
- public:
-  virtual uint64_t get_timestamp() = 0;
-};
-
-//////////////////////////////////////////////////////////////////////
-// A TimeStamp class based a stuttering counter which requires no
-// AWAR or RAW synchronization.
-//////////////////////////////////////////////////////////////////////
-class StutteringTimeStamp : public TimeStamp {
-  private: 
-    // The thread-local clocks.
-    std::atomic<uint64_t>* *clocks_;
-    // The number of threads.
-    uint64_t num_threads_;
-
-    inline uint64_t max(uint64_t x, uint64_t y) {
-      if (x > y) {
-        return x;
-      }
-      return y;
-    }
-
-  public:
-    //////////////////////////////////////////////////////////////////////
-    // Constructor
-    //////////////////////////////////////////////////////////////////////
-    StutteringTimeStamp(uint64_t num_threads) 
-      : num_threads_(num_threads) {
-
-      clocks_ = static_cast<std::atomic<uint64_t>**>(
-          scal::calloc_aligned(num_threads_, 
-            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
-
-      for (int i = 0; i < num_threads_; i++) {
-        clocks_[i] = 
-          scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
-        clocks_[i]->store(1);
-      }
-    }
-  
-    //////////////////////////////////////////////////////////////////////
-    // Returns a new time stamp.
-    //////////////////////////////////////////////////////////////////////
-    uint64_t get_timestamp() {
-
-      uint64_t thread_id = scal::ThreadContext::get().thread_id();
-      uint64_t latest_time = 0;
-
-      // Find the latest of all thread-local times.
-      for (int i = 0; i < num_threads_; i++) {
-        latest_time = 
-          max(latest_time, clocks_[i]->load(std::memory_order_acquire));
-      }
-
-      // 2) Set the thread-local time to the latest found time + 1.
-      clocks_[thread_id]->store(
-          latest_time + 1, std::memory_order_release);
-      // Return the current local time.
-      return latest_time + 1;
-    }
-};
-
-//////////////////////////////////////////////////////////////////////
-// A TimeStamp class based on an atomic counter
-//////////////////////////////////////////////////////////////////////
-class AtomicCounterTimeStamp : public TimeStamp {
-  private:
-    // Memory for the atomic counter.
-    std::atomic<uint64_t> *clock_;
-
-  public:
-    AtomicCounterTimeStamp() {
-      clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
-      clock_->store(1);
-    }
-  
-    uint64_t get_timestamp() {
-      return clock_->fetch_add(1);
-    }
-};
-
-//////////////////////////////////////////////////////////////////////
-// A TimeStamp class based on a hardware counter
-//////////////////////////////////////////////////////////////////////
-class HardwareTimeStamp : public TimeStamp {
-  private:
-
-
-  public:
-    HardwareTimeStamp() {
-    }
-  
-    uint64_t get_timestamp() {
-      return get_hwtime();
-    }
-};
-
-//////////////////////////////////////////////////////////////////////
-// The base TSBuffer class.
+// The base TSStackBuffer class.
 //////////////////////////////////////////////////////////////////////
 template<typename T>
-class TSBuffer {
+class TSStackBuffer {
   public:
     virtual void insert_element(T element, uint64_t timestamp) = 0;
     virtual bool try_remove_youngest(T *element, uint64_t *threshold) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
-// A TSBuffer based on thread-local arrays.
+// A TSStackBuffer based on thread-local arrays.
 //////////////////////////////////////////////////////////////////////
 template<typename T>
-class TLArrayBuffer : public TSBuffer<T> {
+class TLArrayStackBuffer : public TSStackBuffer<T> {
   private:
     typedef struct Item {
       std::atomic<T> data;
@@ -179,7 +79,7 @@ class TLArrayBuffer : public TSBuffer<T> {
     }
 
   public:
-    TLArrayBuffer(uint64_t num_threads) : num_threads_(num_threads) {
+    TLArrayStackBuffer(uint64_t num_threads) : num_threads_(num_threads) {
       buckets_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 2));
@@ -349,10 +249,10 @@ class TLArrayBuffer : public TSBuffer<T> {
 };
 
 //////////////////////////////////////////////////////////////////////
-// A TSBuffer based on thread-local linked lists.
+// A TSStackBuffer based on thread-local linked lists.
 //////////////////////////////////////////////////////////////////////
 template<typename T>
-class TLLinkedListBuffer : public TSBuffer<T> {
+class TLLinkedListStackBuffer : public TSStackBuffer<T> {
   private:
     typedef struct Item {
       std::atomic<Item*> next;
@@ -408,7 +308,7 @@ class TLLinkedListBuffer : public TSBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // Constructor
     /////////////////////////////////////////////////////////////////
-    TLLinkedListBuffer(uint64_t num_threads) : num_threads_(num_threads) {
+    TLLinkedListStackBuffer(uint64_t num_threads) : num_threads_(num_threads) {
       buckets_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 2));
@@ -561,12 +461,12 @@ class TLLinkedListBuffer : public TSBuffer<T> {
 template<typename T>
 class TSStack : public Stack<T> {
  private:
-  TSBuffer<T> *buffer_;
+  TSStackBuffer<T> *buffer_;
   TimeStamp *timestamping_;
   bool init_threshold_;
  public:
   explicit TSStack
-    (TSBuffer<T> *buffer, TimeStamp *timestamping, bool init_threshold) 
+    (TSStackBuffer<T> *buffer, TimeStamp *timestamping, bool init_threshold) 
     : buffer_(buffer), timestamping_(timestamping),
       init_threshold_(init_threshold) {
   }

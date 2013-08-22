@@ -5,6 +5,7 @@
 #include <gflags/gflags.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
+#include "datastructures/ts_timestamp.h"
 #include "datastructures/ts_stack.h"
 
 DEFINE_bool(array, false, "use the array-based inner buffer");
@@ -26,13 +27,13 @@ void* ds_new() {
   } else {
     timestamping = new HardwareTimeStamp();
   }
-  TSBuffer<uint64_t> *buffer;
+  TSStackBuffer<uint64_t> *buffer;
   if (FLAGS_array) {
-    buffer = new TLArrayBuffer<uint64_t>(g_num_threads + 1);
+    buffer = new TLArrayStackBuffer<uint64_t>(g_num_threads + 1);
   } else if (FLAGS_list) {
-    buffer = new TLLinkedListBuffer<uint64_t>(g_num_threads + 1);
+    buffer = new TLLinkedListStackBuffer<uint64_t>(g_num_threads + 1);
   } else {
-    buffer = new TLLinkedListBuffer<uint64_t>(g_num_threads + 1);
+    buffer = new TLLinkedListStackBuffer<uint64_t>(g_num_threads + 1);
   }
   TSStack<uint64_t> *ts =
       new TSStack<uint64_t>(buffer, timestamping, FLAGS_init_threshold);
