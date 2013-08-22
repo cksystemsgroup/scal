@@ -36,6 +36,7 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/ah_queue.h \
 	src/datastructures/ah_stack.h \
 	src/datastructures/ts_stack.h \
+	src/datastructures/ts_deque.h \
 	src/datastructures/enq_pool.h \
 	src/datastructures/spmc_queue.h \
 	src/datastructures/segment_queue.h \
@@ -160,6 +161,11 @@ shortest_path_tsstack_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
         src/benchmark/std_glue/glue_ts_stack.cc
 
+bin_PROGRAMS += shortest-path-tsdeque
+shortest_path_tsdeque_SOURCES = \
+        $(SHORTESTPATH_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_deque.cc
+
 bin_PROGRAMS += shortest-path-enq
 shortest_path_enq_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
@@ -263,6 +269,11 @@ bin_PROGRAMS += seqalt-tsstack
 seqalt_tsstack_SOURCES = \
         $(SEQALT_BASE_OBJS) \
         src/benchmark/std_glue/glue_ts_stack.cc
+
+bin_PROGRAMS += seqalt-tsdeque
+seqalt_tsdeque_SOURCES = \
+        $(SEQALT_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_deque.cc
 
 bin_PROGRAMS += seqalt-enq
 seqalt_enq_SOURCES = \
@@ -387,6 +398,11 @@ bin_PROGRAMS += prodcon-tsstack
 prodcon_tsstack_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_ts_stack.cc
+
+bin_PROGRAMS += prodcon-tsdeque
+prodcon_tsdeque_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_deque.cc
 
 bin_PROGRAMS += prodcon-enq
 prodcon_enq_SOURCES = \
