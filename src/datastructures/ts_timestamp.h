@@ -113,4 +113,19 @@ class HardwareTimeStamp : public TimeStamp {
     }
 };
 
+//////////////////////////////////////////////////////////////////////
+// A TimeStamp class based on a hardware counter
+//////////////////////////////////////////////////////////////////////
+class ShiftedHardwareTimeStamp : public TimeStamp {
+  private:
+
+
+  public:
+    ShiftedHardwareTimeStamp() {
+    }
+  
+    uint64_t get_timestamp() {
+      return get_hwtime() >> 1;
+    }
+};
 #endif // SCAL_DATASTRUCTURES_TS_TIMESTAMP_H_
