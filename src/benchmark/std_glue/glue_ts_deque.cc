@@ -23,9 +23,9 @@ void* ds_new() {
   } else if (FLAGS_atomic_clock) {
     timestamping = new AtomicCounterTimeStamp();
   } else if (FLAGS_hw_clock) {
-    timestamping = new HardwareTimeStamp();
+    timestamping = new ShiftedHardwareTimeStamp();
   } else {
-    timestamping = new HardwareTimeStamp();
+    timestamping = new ShiftedHardwareTimeStamp();
   }
   TSDequeBuffer<uint64_t> *buffer;
   if (FLAGS_array) {
