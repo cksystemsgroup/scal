@@ -266,8 +266,6 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
     // The thread-local queues, implemented as arrays of size BUFFERSIZE. 
     // At the moment buffer overflows are not considered.
     std::atomic<Item*> **buckets_;
-    // The insert pointers of the thread-local queues.
-    std::atomic<uint64_t>* *insert_;
     // The pointers for the emptiness check.
     Item** *emptiness_check_pointers_;
 
@@ -356,7 +354,6 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
       }
 
       new_item->next.store(top);
-      void* tmp = add_next_aba(new_item, old_top, 1);
       buckets_[thread_id]->store(
           (Item*) add_next_aba(new_item, old_top, 1), 
           std::memory_order_release);
@@ -380,7 +377,7 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
       uint64_t timestamp = 0;
       // Stores the value of the remove pointer of a thead-local buffer 
       // before the buffer is actually accessed.
-      Item* old_top = 0;
+      Item* old_top = NULL;
 
       uint64_t start = hwrand();
       // We iterate over all thead-local buffers
@@ -423,13 +420,11 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
           }
         } else {
           // No element was found, work on the emptiness check.
-          if (empty) {
-            if (emptiness_check_pointers[tmp_buffer_index] 
-                != tmp_top) {
-              empty = false;
-              emptiness_check_pointers[tmp_buffer_index] = 
-                tmp_top;
-            }
+          if (emptiness_check_pointers[tmp_buffer_index] 
+              != tmp_top) {
+            empty = false;
+            emptiness_check_pointers[tmp_buffer_index] = 
+              tmp_top;
           }
         }
       }
@@ -447,10 +442,9 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
 //              std::memory_order_acq_rel, std::memory_order_relaxed);
 //          *element = result->data.load(std::memory_order_acquire);
 //          return true;
-//        } else {
+//        }
           *threshold = result->timestamp.load();
           *element = (T)NULL;
-//        }
       }
 
       *element = (T)NULL;
