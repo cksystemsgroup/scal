@@ -507,8 +507,9 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // we have found until now.
         if (item != NULL) {
           empty = false;
-          uint64_t item_timestamp = 
+          int64_t item_timestamp = 
             item->timestamp.load(std::memory_order_seq_cst);
+
           if (timestamp > item_timestamp) {
             // We found a new youngest element, so we remember it.
             result = item;
@@ -609,7 +610,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // we have found until now.
         if (item != NULL) {
           empty = false;
-          uint64_t item_timestamp = 
+          int64_t item_timestamp = 
             item->timestamp.load(std::memory_order_seq_cst);
           if (timestamp < item_timestamp) {
             // We found a new youngest element, so we remember it.
