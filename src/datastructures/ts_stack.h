@@ -415,7 +415,6 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
 
               *element = result->data.load(std::memory_order_acquire);
               return true;
-            } else {
             }
           }
         } else {
