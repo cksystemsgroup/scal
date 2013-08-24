@@ -100,7 +100,7 @@ templates = {
   + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
 
   , 'deq': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
-  + '-operations 10000 -c {work} {partials_param} {partials} '
+  + '-operations 10000 -c {work} {partials_param} {partials} -barrier '
   + '{perfParam} -noset_rt_priority -prealloc_size 500m > {filename}'
 
   , 'seqalt' : '@../seqalt-{exe} -allow_empty_returns -threads {thread} '
