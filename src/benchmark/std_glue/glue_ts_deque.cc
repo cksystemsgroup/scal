@@ -8,8 +8,6 @@
 #include "datastructures/ts_timestamp.h"
 #include "datastructures/ts_deque.h"
 
-DEFINE_bool(array, false, "use the array-based inner buffer");
-DEFINE_bool(list, false, "use the linked-list-based inner buffer");
 DEFINE_bool(stutter_clock, false, "use the stuttering clock");
 DEFINE_bool(atomic_clock, false, "use atomic fetch-and-inc clock");
 DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
@@ -28,13 +26,7 @@ void* ds_new() {
     timestamping = new ShiftedHardwareTimeStamp();
   }
   TSDequeBuffer<uint64_t> *buffer;
-  if (FLAGS_array) {
-    buffer = new TLArrayDequeBuffer<uint64_t>(g_num_threads + 1);
-  } else if (FLAGS_list) {
-    buffer = new TLLinkedListDequeBuffer<uint64_t>(g_num_threads + 1);
-  } else {
-    buffer = new TLLinkedListDequeBuffer<uint64_t>(g_num_threads + 1);
-  }
+  buffer = new TLLinkedListDequeBuffer<uint64_t>(g_num_threads + 1);
   TSDeque<uint64_t> *ts =
       new TSDeque<uint64_t>(buffer, timestamping, FLAGS_init_threshold);
   return static_cast<void*>(ts);
