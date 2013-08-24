@@ -620,11 +620,12 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             old_right = tmp_right;
           }
           // Check if we can remove the element immediately.
-          if (*threshold > timestamp) {
+          if (*threshold < timestamp) {
             uint64_t expected = 0;
             if (result->taken.compare_exchange_weak(
-                    expected, 1, 
-                    std::memory_order_seq_cst, std::memory_order_relaxed)) {
+                  expected, 1, 
+                  std::memory_order_seq_cst, std::memory_order_relaxed)) {
+
               // Try to adjust the remove pointer. It does not matter if 
               // this CAS fails.
               right_[buffer_index]->compare_exchange_weak(
