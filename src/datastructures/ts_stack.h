@@ -207,13 +207,11 @@ class TLArrayStackBuffer : public TSStackBuffer<T> {
           }
         } else {
           // No element was found, work on the emptiness check.
-          if (empty) {
-            if (emptiness_check_pointers[tmp_buffer_index] 
-                != tmp_buffer_array_index) {
-              empty = false;
-              emptiness_check_pointers[tmp_buffer_index] = 
-                tmp_buffer_array_index;
-            }
+          if (emptiness_check_pointers[tmp_buffer_index] 
+              != tmp_buffer_array_index) {
+            empty = false;
+            emptiness_check_pointers[tmp_buffer_index] = 
+              tmp_buffer_array_index;
           }
         }
       }
