@@ -71,16 +71,16 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
     // indicated by thread_id.
     Item* get_left_item(uint64_t thread_id) {
 
-      Item* old_right = right_[thread_id]->load(std::memory_order_seq_cst);
-      Item* right = (Item*)get_aba_free_pointer(
-          old_right);
+      Item* old_right = right_[thread_id]->load();
+      Item* right = (Item*)get_aba_free_pointer(old_right);
 
       int64_t threshold = right->timestamp.load();
 
-      Item* result = (Item*)get_aba_free_pointer(
-        left_[thread_id]->load(std::memory_order_seq_cst));
+      Item* result = (Item*)get_aba_free_pointer(left_[thread_id]->load());
 
-      while (result->taken.load(std::memory_order_seq_cst) != 0 &&
+      // We start at the left pointer and iterate to the right until we find
+      // the first item which has not been taken yet.
+      while (result->taken.load() != 0 &&
           result->right.load() != result) {
         result = result->right.load();
       }
@@ -100,14 +100,16 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
     Item* get_right_item(uint64_t thread_id) {
 
       Item* left = (Item*)get_aba_free_pointer(
-          left_[thread_id]->load(std::memory_order_seq_cst));
+          left_[thread_id]->load());
 
       int64_t threshold = left->timestamp.load();
 
       Item* result = (Item*)get_aba_free_pointer(
-        right_[thread_id]->load(std::memory_order_seq_cst));
+        right_[thread_id]->load());
 
-      while (result->taken.load(std::memory_order_seq_cst) != 0 &&
+      // We start at the right pointer and iterate to the left until we find
+      // the first item which has not been taken yet.
+      while (result->taken.load() != 0 &&
           result->left.load() != result) {
         result = result->left.load();
       }
@@ -154,13 +156,13 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
 
         // Add a sentinal node.
         Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
-        new_item->timestamp.store(0, std::memory_order_seq_cst);
-        new_item->data.store(0, std::memory_order_seq_cst);
-        new_item->taken.store(1, std::memory_order_seq_cst);
+        new_item->timestamp.store(0);
+        new_item->data.store(0);
+        new_item->taken.store(1);
         new_item->left.store(new_item);
         new_item->right.store(new_item);
-        left_[i]->store(new_item, std::memory_order_seq_cst);
-        right_[i]->store(new_item, std::memory_order_seq_cst);
+        left_[i]->store(new_item);
+        right_[i]->store(new_item);
 
         emptiness_check_left_[i] = static_cast<Item**> (
             scal::calloc_aligned(num_threads_, sizeof(Item*), 
@@ -180,17 +182,16 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
       // Switch the sign of the time stamp of elements inserted at the left side.
-      new_item->timestamp.store(((int64_t)timestamp) * (-1),
-          std::memory_order_seq_cst);
-      new_item->data.store(element, std::memory_order_seq_cst);
-      new_item->taken.store(0, std::memory_order_seq_cst);
-      new_item->left.store(new_item, std::memory_order_seq_cst);
+      new_item->timestamp.store(((int64_t)timestamp) * (-1));
+      new_item->data.store(element);
+      new_item->taken.store(0);
+      new_item->left.store(new_item);
 
-      Item* old_left = left_[thread_id]->load(std::memory_order_seq_cst);
+      Item* old_left = left_[thread_id]->load();
 
       Item* left = (Item*)get_aba_free_pointer(old_left);
       while (left->right.load() != left 
-          && left->taken.load(std::memory_order_seq_cst)) {
+          && left->taken.load()) {
         left = left->right.load();
       }
 
@@ -199,15 +200,14 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // pointer too to guarantee that a pending right-pointer update of a
         // remove operation does not make the left and the right pointer point
         // to different lists.
-        Item* old_right = right_[thread_id]->load(std::memory_order_seq_cst);
-        right_[thread_id]->store( (Item*) add_next_aba(left, old_right, 1),
-            std::memory_order_seq_cst); }
+        Item* old_right = right_[thread_id]->load();
+        right_[thread_id]->store( (Item*) add_next_aba(left, old_right, 1));
+      }
 
       new_item->right.store(left);
       left->left.store(new_item);
       left_[thread_id]->store(
-        (Item*) add_next_aba(new_item, old_left, 1),
-        std::memory_order_seq_cst);
+        (Item*) add_next_aba(new_item, old_left, 1));
     }
 
     /////////////////////////////////////////////////////////////////
@@ -217,16 +217,16 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
-      new_item->timestamp.store(timestamp, std::memory_order_seq_cst);
-      new_item->data.store(element, std::memory_order_seq_cst);
-      new_item->taken.store(0, std::memory_order_seq_cst);
-      new_item->right.store(new_item, std::memory_order_seq_cst);
+      new_item->timestamp.store(timestamp);
+      new_item->data.store(element);
+      new_item->taken.store(0);
+      new_item->right.store(new_item);
 
-      Item* old_right = right_[thread_id]->load(std::memory_order_seq_cst);
+      Item* old_right = right_[thread_id]->load();
 
       Item* right = (Item*)get_aba_free_pointer(old_right);
       while (right->left.load() != right 
-          && right->taken.load(std::memory_order_seq_cst)) {
+          && right->taken.load()) {
         right = right->left.load();
       }
 
@@ -235,15 +235,13 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // pointer too to guarantee that a pending left-pointer update of a
         // remove operation does not make the left and the right pointer point
         // to different lists.
-        Item* old_left = left_[thread_id]->load(std::memory_order_seq_cst);
-        left_[thread_id]->store( (Item*) add_next_aba(right, old_left, 1),
-            std::memory_order_seq_cst); }
+        Item* old_left = left_[thread_id]->load();
+        left_[thread_id]->store( (Item*) add_next_aba(right, old_left, 1)); }
 
       new_item->left.store(right);
       right->right.store(new_item);
       right_[thread_id]->store(
-        (Item*) add_next_aba(new_item, old_right, 1),
-        std::memory_order_seq_cst);
+        (Item*) add_next_aba(new_item, old_right, 1));
     }
 
     /////////////////////////////////////////////////////////////////
@@ -282,7 +280,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         if (item != NULL) {
           empty = false;
           int64_t item_timestamp = 
-            item->timestamp.load(std::memory_order_seq_cst);
+            item->timestamp.load();
 
           if (timestamp > item_timestamp) {
             // We found a new youngest element, so we remember it.
@@ -296,15 +294,13 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             uint64_t expected = 0;
             if (result->taken.load() == 0) {
               if (result->taken.compare_exchange_weak(
-                  expected, 1, 
-                  std::memory_order_seq_cst, std::memory_order_relaxed)) {
+                  expected, 1)) {
                 // Try to adjust the remove pointer. It does not matter if 
                 // this CAS fails.
                 left_[buffer_index]->compare_exchange_weak(
-                    old_left, (Item*)add_next_aba(result, old_left, 0), 
-                    std::memory_order_seq_cst, std::memory_order_relaxed);
+                    old_left, (Item*)add_next_aba(result, old_left, 0));
 
-                *element = result->data.load(std::memory_order_seq_cst);
+                *element = result->data.load();
                 return true;
               }
             }
@@ -333,14 +329,12 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
           uint64_t expected = 0;
             if (result->taken.load() == 0) {
           if (result->taken.compare_exchange_weak(
-                  expected, 1, 
-                  std::memory_order_seq_cst, std::memory_order_relaxed)) {
+                  expected, 1)) {
             // Try to adjust the remove pointer. It does not matter if this 
             // CAS fails.
             left_[buffer_index]->compare_exchange_weak(
-                old_left, (Item*)add_next_aba(result, old_left, 0), 
-                std::memory_order_seq_cst, std::memory_order_relaxed);
-            *element = result->data.load(std::memory_order_seq_cst);
+                old_left, (Item*)add_next_aba(result, old_left, 0));
+            *element = result->data.load();
             return true;
           }
             }
@@ -388,7 +382,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         if (item != NULL) {
           empty = false;
           int64_t item_timestamp = 
-            item->timestamp.load(std::memory_order_seq_cst);
+            item->timestamp.load();
           if (timestamp < item_timestamp) {
             // We found a new youngest element, so we remember it.
             result = item;
@@ -401,16 +395,14 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             uint64_t expected = 0;
             if (result->taken.load() == 0) {
               if (result->taken.compare_exchange_weak(
-                    expected, 1, 
-                    std::memory_order_seq_cst, std::memory_order_relaxed)) {
+                    expected, 1)) {
 
                 // Try to adjust the remove pointer. It does not matter if 
                 // this CAS fails.
                 right_[buffer_index]->compare_exchange_weak(
-                    old_right, (Item*)add_next_aba(result, old_right, 0), 
-                    std::memory_order_seq_cst, std::memory_order_relaxed);
+                    old_right, (Item*)add_next_aba(result, old_right, 0));
 
-                *element = result->data.load(std::memory_order_seq_cst);
+                *element = result->data.load();
                 return true;
               }
             }
@@ -439,14 +431,12 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
           uint64_t expected = 0;
           if (result->taken.load() == 0) {
             if (result->taken.compare_exchange_weak(
-                    expected, 1, 
-                    std::memory_order_seq_cst, std::memory_order_relaxed)) {
+                    expected, 1)) {
               // Try to adjust the remove pointer. It does not matter if
               // this CAS fails.
               right_[buffer_index]->compare_exchange_weak(
-                  old_right, (Item*)add_next_aba(result, old_right, 0), 
-                  std::memory_order_seq_cst, std::memory_order_relaxed);
-              *element = result->data.load(std::memory_order_seq_cst);
+                  old_right, (Item*)add_next_aba(result, old_right, 0));
+              *element = result->data.load();
               return true;
             }
           }

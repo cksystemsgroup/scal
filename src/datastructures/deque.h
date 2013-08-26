@@ -22,7 +22,7 @@ class Deque : public Queue<T> {
   }
 
   virtual inline bool dequeue(T *item) {
-    return remove_left(item);
+    return remove_right(item);
   }
 };
 
