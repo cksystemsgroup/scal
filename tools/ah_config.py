@@ -1,5 +1,4 @@
-allQueues = [
-             , 'bskfifo'
+allQueues = [ 'bskfifo'
              , 'ebstack'
              , 'fc'
              , 'kstack'
