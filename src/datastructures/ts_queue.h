@@ -62,7 +62,7 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
       if (insert == remove) {
         *result = NULL;
       } else {
-        *result = buckets_[thread_id][remove].load();
+        *result = buckets_[thread_id][remove*64].load();
       }
       return remove;
     }
@@ -71,37 +71,38 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
     TLArrayQueueBuffer(uint64_t num_threads) : num_threads_(num_threads) {
       buckets_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       insert_ = static_cast<std::atomic<uint64_t>**>(
           scal::calloc_aligned(num_threads_, 
-            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
+            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 4));
 
       remove_ = static_cast<std::atomic<uint64_t>**>(
           scal::calloc_aligned(num_threads_, 
-            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
+            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 4));
 
 
       emptiness_check_pointers_ = static_cast<uint64_t**>(
           scal::calloc_aligned(num_threads_, sizeof(uint64_t*), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       for (int i = 0; i < num_threads_; i++) {
         buckets_[i] = static_cast<std::atomic<Item*>*>(
-            calloc(BUFFERSIZE, sizeof(std::atomic<Item*>)));
+            scal::calloc_aligned(BUFFERSIZE, sizeof(std::atomic<Item*>),
+              scal::kCachePrefetch * 4));
 
         insert_[i] = scal::get<std::atomic<uint64_t>>(
-            scal::kCachePrefetch);
+            scal::kCachePrefetch * 4);
         insert_[i]->store(0);
 
         emptiness_check_pointers_[i] = static_cast<uint64_t*> (
             scal::calloc_aligned(num_threads_, sizeof(uint64_t), 
-              scal::kCachePrefetch *2));
+              scal::kCachePrefetch * 4));
       }
 
       for (int i = 0; i < num_threads_; i++) {
         remove_[i] = scal::get<std::atomic<uint64_t>>(
-            scal::kCachePrefetch * 2);
+            scal::kCachePrefetch * 4);
         remove_[i]->store(0);
       }
     }
@@ -109,13 +110,13 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
     void insert_element(T element, uint64_t timestamp) {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
-      Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
+      Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch * 4);
       new_item->timestamp.store(timestamp, std::memory_order_release);
       new_item->data.store(element, std::memory_order_release);
 
       // 4) Insert the new item into the thread-local queue.
       uint64_t insert = insert_[thread_id]->load();
-      buckets_[thread_id][insert].store(new_item);
+      buckets_[thread_id][insert*64].store(new_item);
       insert_[thread_id]->store(insert + 1);
     };
 
@@ -231,13 +232,13 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
     // The pointers for the emptiness check.
     Item** *emptiness_check_pointers_;
 
-    void *get_aba_free_pointer(void *pointer) {
+    inline void *get_aba_free_pointer(void *pointer) {
       uint64_t result = (uint64_t)pointer;
       result &= 0xfffffffffffffff8;
       return (void*)result;
     }
 
-    void *add_next_aba(void *pointer, void *old, uint64_t increment) {
+    inline void *add_next_aba(void *pointer, void *old, uint64_t increment) {
       uint64_t aba = (uint64_t)old;
       aba += increment;
       aba &= 0x7;
@@ -253,26 +254,26 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
     TLLinkedListQueueBuffer(uint64_t num_threads) : num_threads_(num_threads) {
       insert_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       remove_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       emptiness_check_pointers_ = static_cast<Item***>(
           scal::calloc_aligned(num_threads_, sizeof(Item**), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       for (int i = 0; i < num_threads_; i++) {
 
         insert_[i] = static_cast<std::atomic<Item*>*>(
-            scal::get<std::atomic<Item*>>(scal::kCachePrefetch));
+            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
 
         remove_[i] = static_cast<std::atomic<Item*>*>(
-            scal::get<std::atomic<Item*>>(scal::kCachePrefetch));
+            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
 
         // Add a sentinal node.
-        Item *new_item = scal::get<Item>(scal::kCachePrefetch);
+        Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
         new_item->timestamp.store(0);
         new_item->data.store(0);
         new_item->next.store(NULL);
@@ -281,7 +282,7 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
 
         emptiness_check_pointers_[i] = static_cast<Item**> (
             scal::calloc_aligned(num_threads_, sizeof(Item*), 
-              scal::kCachePrefetch * 2));
+              scal::kCachePrefetch * 4));
       }
     }
 

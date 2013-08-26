@@ -130,30 +130,30 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
     TLLinkedListDequeBuffer(uint64_t num_threads) : num_threads_(num_threads) {
       left_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       right_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       emptiness_check_left_ = static_cast<Item***>(
           scal::calloc_aligned(num_threads_, sizeof(Item**), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       emptiness_check_right_ = static_cast<Item***>(
           scal::calloc_aligned(num_threads_, sizeof(Item**), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       for (int i = 0; i < num_threads_; i++) {
 
         left_[i] = static_cast<std::atomic<Item*>*>(
-            scal::get<std::atomic<Item*>>(scal::kCachePrefetch));
+            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
 
         right_[i] = static_cast<std::atomic<Item*>*>(
-            scal::get<std::atomic<Item*>>(scal::kCachePrefetch));
+            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
 
         // Add a sentinal node.
-        Item *new_item = scal::get<Item>(scal::kCachePrefetch);
+        Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
         new_item->timestamp.store(0, std::memory_order_seq_cst);
         new_item->data.store(0, std::memory_order_seq_cst);
         new_item->taken.store(1, std::memory_order_seq_cst);
@@ -164,11 +164,11 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
 
         emptiness_check_left_[i] = static_cast<Item**> (
             scal::calloc_aligned(num_threads_, sizeof(Item*), 
-              scal::kCachePrefetch * 2));
+              scal::kCachePrefetch * 4));
 
         emptiness_check_right_[i] = static_cast<Item**> (
             scal::calloc_aligned(num_threads_, sizeof(Item*), 
-              scal::kCachePrefetch * 2));
+              scal::kCachePrefetch * 4));
       }
     }
 
