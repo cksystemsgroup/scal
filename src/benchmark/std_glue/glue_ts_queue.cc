@@ -14,6 +14,7 @@ DEFINE_bool(stutter_clock, false, "use the stuttering clock");
 DEFINE_bool(atomic_clock, false, "use atomic fetch-and-inc clock");
 DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
 
+TSQueue<uint64_t> *ts;
 void* ds_new() {
   TimeStamp *timestamping;
   if (FLAGS_stutter_clock) {
@@ -33,11 +34,11 @@ void* ds_new() {
   } else {
     buffer = new TLLinkedListQueueBuffer<uint64_t>(g_num_threads + 1);
   }
-  TSQueue<uint64_t> *ts =
-      new TSQueue<uint64_t>(buffer, timestamping);
+  ts =
+      new TSQueue<uint64_t>(buffer, timestamping, g_num_threads + 1);
   return static_cast<void*>(ts);
 }
 
 char* ds_get_stats(void) {
-  return NULL;
+  return ts->ds_get_stats();
 }

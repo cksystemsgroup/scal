@@ -129,6 +129,10 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
       uint64_t *emptiness_check_pointers = 
         emptiness_check_pointers_[thread_id];
       bool empty = true;
+      // This flag indicates if all thread-local buckets are not empty. 
+      // If all thread-local buckets contain at least one element, we do
+      // not have to do the second iteration.
+      bool all_full = true;
       // The remove_index stores the index where the element is stored in
       // a thread-local buffer.
       uint64_t buffer_array_index = -1;
@@ -142,7 +146,6 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
       // Stores the value of the remove pointer of a thead-local buffer 
       // before the buffer is actually accessed.
       uint64_t old_remove_index = 0;
-      bool all_full = true;
 
       uint64_t start = hwrand();
       // We iterate over all thead-local buffers
@@ -311,6 +314,10 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
       Item* *emptiness_check_pointers = 
         emptiness_check_pointers_[thread_id];
       bool empty = true;
+      // This flag indicates if all thread-local buckets are not empty. 
+      // If all thread-local buckets contain at least one element, we do
+      // not have to do the second iteration.
+      bool all_full = true;
       // Initialize the result pointer to NULL, which means that no 
       // element has been removed.
       Item *result = NULL;
@@ -327,6 +334,9 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
       for (uint64_t i = 0; i < num_threads_; i++) {
 
         uint64_t tmp_buffer_index = (start + i) % num_threads_;
+        if (tmp_buffer_index == 0) {
+          continue;
+        }
         // We get the remove/insert pointer of the current thread-local 
         // buffer.
         Item* tmp_remove = remove_[tmp_buffer_index]->load();
@@ -349,6 +359,7 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
             old_remove = tmp_remove;
           } 
         } else {
+          all_full = false;
           // No element was found, work on the emptiness check.
           if (emptiness_check_pointers[tmp_buffer_index] 
               != tmp_remove) {
@@ -359,7 +370,7 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
         }
       }
       if (result != NULL) {
-        if (timestamp <= *threshold) {
+        if (timestamp <= *threshold || all_full) {
           if (remove_[buffer_index]->load() == old_remove) {
           if (remove_[buffer_index]->compare_exchange_weak(
                 old_remove, (Item*)add_next_aba(result, old_remove, 1))) {
@@ -380,13 +391,65 @@ class TSQueue : public Queue<T> {
  private:
   TSQueueBuffer<T> *buffer_;
   TimeStamp *timestamping_;
+  int64_t* *counter1_;
+  int64_t* *counter2_;
+  uint64_t num_threads_;
+  inline void inc_counter1() {
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
+    (*counter1_[thread_id])++;
+  }
+  inline void inc_counter2() {
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
+    (*counter2_[thread_id])++;
+  }
  public:
   explicit TSQueue
-    (TSQueueBuffer<T> *buffer, TimeStamp *timestamping) 
-    : buffer_(buffer), timestamping_(timestamping) {
+    (TSQueueBuffer<T> *buffer, TimeStamp *timestamping, 
+     uint64_t num_threads) 
+    : buffer_(buffer), timestamping_(timestamping), num_threads_(num_threads) {
+    counter1_ = static_cast<int64_t**>(
+        scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
+          scal::kCachePrefetch * 4));
+
+    counter2_ = static_cast<int64_t**>(
+        scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
+          scal::kCachePrefetch * 4));
+
+    for (uint64_t i = 0; i < num_threads; i++) {
+      counter1_[i] = scal::get<int64_t>(scal::kCachePrefetch * 4);
+      *(counter1_[i]) = 0;
+      counter2_[i] = scal::get<int64_t>(scal::kCachePrefetch * 4);
+      *(counter2_[i]) = 0;
+    }
   }
   bool enqueue(T element);
   bool dequeue(T *element);
+
+  char* ds_get_stats(void) {
+
+    int64_t sum1 = 0;
+    int64_t sum2 = 0;
+
+    for (int i = 0; i < num_threads_; i++) {
+      sum1 += *counter1_[i];
+      sum2 += *counter2_[i];
+    }
+
+    char buffer[255] = { 0 };
+    uint32_t n = snprintf(buffer,
+                          sizeof(buffer),
+                          "%ld %ld %ld",
+                          sum1, sum2, 
+                          sum1 ? (sum2 / sum1) : 0
+                          );
+    if (n != strlen(buffer)) {
+      fprintf(stderr, "%s: error creating stats string\n", __func__);
+      abort();
+    }
+    char *newbuf = static_cast<char*>(calloc(
+        strlen(buffer) + 1, sizeof(*newbuf)));
+    return strncpy(newbuf, buffer, strlen(buffer));
+  }
 };
 
 template<typename T>
@@ -398,9 +461,11 @@ bool TSQueue<T>::enqueue(T element) {
 
 template<typename T>
 bool TSQueue<T>::dequeue(T *element) {
+  inc_counter1();
   uint64_t threshold;
   threshold = 0;
   while (buffer_->try_remove_oldest(element, &threshold)) {
+    inc_counter2();
     if (*element != (T)NULL) {
       return true;
     }
