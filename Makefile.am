@@ -489,6 +489,132 @@ prodcon_wf_ppopp12_SOURCES = \
 	$(PRODCON_BASE_OBJS) \
 	src/benchmark/std_glue/glue_wf_ppopp12.cc
 
+MANDEL_BASE_OBJS = \
+	      $(UTIL_OBJS) \
+        src/benchmark/common.cc \
+        src/benchmark/mandelbrot/mandel.cc \
+        src/benchmark/mandelbrot/bitmap.cc 
+
+bin_PROGRAMS += mandel-bskfifo
+mandel_bskfifo_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_bskfifo.cc
+
+bin_PROGRAMS += mandel-fc
+mandel_fc_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_fc_queue.cc
+
+bin_PROGRAMS += mandel-fcd
+mandel_fcd_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_fc_deque.cc
+
+bin_PROGRAMS += mandel-ah
+mandel_ah_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ah_queue.cc
+
+bin_PROGRAMS += mandel-ahstack
+mandel_ahstack_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ah_stack.cc
+
+bin_PROGRAMS += mandel-tsstack
+mandel_tsstack_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_stack.cc
+
+bin_PROGRAMS += mandel-tsdeque
+mandel_tsdeque_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_deque.cc
+
+bin_PROGRAMS += mandel-enq
+mandel_enq_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_enq_pool.cc
+
+bin_PROGRAMS += mandel-spmc
+mandel_spmc_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_spmc_queue.cc
+
+bin_PROGRAMS += mandel-lb
+mandel_lb_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_lb_queue.cc
+
+bin_PROGRAMS += mandel-kstack
+mandel_kstack_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_kstack.cc
+
+bin_PROGRAMS += mandel-ms
+mandel_ms_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ms_queue.cc
+
+bin_PROGRAMS += mandel-sq
+mandel_sq_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_s_queue.cc
+
+bin_PROGRAMS += mandel-dq-1random
+mandel_dq_1random_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_1random.cc
+
+bin_PROGRAMS += mandel-dq-2random
+mandel_dq_2random_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_2random.cc
+
+bin_PROGRAMS += mandel-dq-1random-tstack
+mandel_dq_1random_tstack_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_1random_tstack.cc
+
+bin_PROGRAMS += mandel-dq-partrr
+mandel_dq_partrr_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_partrr.cc
+
+bin_PROGRAMS += mandel-dq-rid
+mandel_dq_rid_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dq_rid.cc
+
+bin_PROGRAMS += mandel-rd
+mandel_rd_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_rd_queue.cc
+
+bin_PROGRAMS += mandel-tstack
+mandel_tstack_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_treiber_stack.cc
+
+bin_PROGRAMS += mandel-ebstack
+mandel_ebstack_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_eb_stack.cc
+
+bin_PROGRAMS += mandel-uskfifo
+mandel_uskfifo_SOURCES = \
+        $(MANDEL_BASE_OBJS) \
+        src/benchmark/std_glue/glue_uskfifo.cc
+
+bin_PROGRAMS += mandel-wf-ppopp11
+mandel_wf_ppopp11_SOURCES = \
+	$(MANDEL_BASE_OBJS) \
+	src/benchmark/std_glue/glue_wf_ppopp11.cc
+
+bin_PROGRAMS += mandel-wf-ppopp12
+mandel_wf_ppopp12_SOURCES = \
+	$(MANDEL_BASE_OBJS) \
+	src/benchmark/std_glue/glue_wf_ppopp12.cc
+
 #
 # SPF benchmark
 #
