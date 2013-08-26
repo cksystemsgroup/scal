@@ -294,17 +294,19 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
           // Check if we can remove the element immediately.
           if (*threshold > timestamp) {
             uint64_t expected = 0;
-            if (result->taken.compare_exchange_weak(
-                    expected, 1, 
-                    std::memory_order_seq_cst, std::memory_order_relaxed)) {
-              // Try to adjust the remove pointer. It does not matter if 
-              // this CAS fails.
-              left_[buffer_index]->compare_exchange_weak(
-                  old_left, (Item*)add_next_aba(result, old_left, 0), 
-                  std::memory_order_seq_cst, std::memory_order_relaxed);
+            if (result->taken.load() == 0) {
+              if (result->taken.compare_exchange_weak(
+                  expected, 1, 
+                  std::memory_order_seq_cst, std::memory_order_relaxed)) {
+                // Try to adjust the remove pointer. It does not matter if 
+                // this CAS fails.
+                left_[buffer_index]->compare_exchange_weak(
+                    old_left, (Item*)add_next_aba(result, old_left, 0), 
+                    std::memory_order_seq_cst, std::memory_order_relaxed);
 
-              *element = result->data.load(std::memory_order_seq_cst);
-              return true;
+                *element = result->data.load(std::memory_order_seq_cst);
+                return true;
+              }
             }
           }
         } else {
@@ -329,6 +331,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
+            if (result->taken.load() == 0) {
           if (result->taken.compare_exchange_weak(
                   expected, 1, 
                   std::memory_order_seq_cst, std::memory_order_relaxed)) {
@@ -340,6 +343,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             *element = result->data.load(std::memory_order_seq_cst);
             return true;
           }
+            }
         }
         *threshold = result->timestamp.load();
       }
@@ -395,19 +399,20 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
           // Check if we can remove the element immediately.
           if (*threshold < timestamp) {
             uint64_t expected = 0;
-            if (result->taken.compare_exchange_weak(
-                  expected, 1, 
-                  std::memory_order_seq_cst, std::memory_order_relaxed)) {
+            if (result->taken.load() == 0) {
+              if (result->taken.compare_exchange_weak(
+                    expected, 1, 
+                    std::memory_order_seq_cst, std::memory_order_relaxed)) {
 
-              // Try to adjust the remove pointer. It does not matter if 
-              // this CAS fails.
-              right_[buffer_index]->compare_exchange_weak(
-                  old_right, (Item*)add_next_aba(result, old_right, 0), 
-                  std::memory_order_seq_cst, std::memory_order_relaxed);
+                // Try to adjust the remove pointer. It does not matter if 
+                // this CAS fails.
+                right_[buffer_index]->compare_exchange_weak(
+                    old_right, (Item*)add_next_aba(result, old_right, 0), 
+                    std::memory_order_seq_cst, std::memory_order_relaxed);
 
-              *element = result->data.load(std::memory_order_seq_cst);
-              return true;
-            } else {
+                *element = result->data.load(std::memory_order_seq_cst);
+                return true;
+              }
             }
           }
         } else {
@@ -432,16 +437,18 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
-          if (result->taken.compare_exchange_weak(
-                  expected, 1, 
-                  std::memory_order_seq_cst, std::memory_order_relaxed)) {
-            // Try to adjust the remove pointer. It does not matter if this 
-            // CAS fails.
-            right_[buffer_index]->compare_exchange_weak(
-                old_right, (Item*)add_next_aba(result, old_right, 0), 
-                std::memory_order_seq_cst, std::memory_order_relaxed);
-            *element = result->data.load(std::memory_order_seq_cst);
-            return true;
+          if (result->taken.load() == 0) {
+            if (result->taken.compare_exchange_weak(
+                    expected, 1, 
+                    std::memory_order_seq_cst, std::memory_order_relaxed)) {
+              // Try to adjust the remove pointer. It does not matter if
+              // this CAS fails.
+              right_[buffer_index]->compare_exchange_weak(
+                  old_right, (Item*)add_next_aba(result, old_right, 0), 
+                  std::memory_order_seq_cst, std::memory_order_relaxed);
+              *element = result->data.load(std::memory_order_seq_cst);
+              return true;
+            }
           }
         }
         *threshold = result->timestamp.load();
