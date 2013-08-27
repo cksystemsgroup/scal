@@ -157,7 +157,7 @@ int main(int argc, const char **argv) {
     }
 
     uint32_t n = snprintf(buffer, sizeof(buffer), 
-        "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ; enough_inserting: %" PRIu64 " ;producer_aggr: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
+        "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ; enough_inserting: %" PRIu64 " ;consumer_aggr: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
         g_num_threads,
         FLAGS_producers,
         FLAGS_consumers,
