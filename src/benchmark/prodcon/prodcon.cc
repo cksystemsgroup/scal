@@ -2,6 +2,7 @@
 // by a BSD license that can be found in the LICENSE file.
 
 #define __STDC_FORMAT_MACROS 1  // we want PRIu64 and friends
+#define __STDC_LIMIT_MACROS
 
 #include <gflags/gflags.h>
 #include <pthread.h>
@@ -32,6 +33,8 @@ DEFINE_bool(log_operations, false, "log invocation/response/linearization "
 DEFINE_bool(barrier, false, "uses a barrier between the enqueues and "
     "dequeues such that first all elements are enqueued, then all elements"
     "are dequeued");
+DEFINE_uint64(measure_at, 0, "make a time measurement after the given number of "
+    "elements was removed from the data structure");
 
 using scal::Benchmark;
 
@@ -47,6 +50,42 @@ class ProdConBench : public Benchmark {
       fprintf(stderr, "%s: error: Unable to init start barrier.\n", __func__);
       abort();
     }
+
+    if (FLAGS_measure_at != 0) {
+      producer_time_ = static_cast<uint64_t**>(
+          scal::calloc_aligned(num_threads + 1, sizeof(uint64_t*), 
+            scal::kCachePrefetch * 4));
+
+      consumer_time_ = static_cast<uint64_t**>(
+          scal::calloc_aligned(num_threads + 1, sizeof(uint64_t*), 
+            scal::kCachePrefetch * 4));
+
+      for (uint64_t i = 0; i < num_threads + 1; i++) {
+        producer_time_[i] = scal::get<uint64_t>(scal::kCachePrefetch * 4);
+        *(producer_time_[i]) = UINT64_MAX;
+        consumer_time_[i] = scal::get<uint64_t>(scal::kCachePrefetch * 4);
+        *(consumer_time_[i]) = 0;
+      }
+    }
+  }
+  uint64_t get_min_producer_time() {
+    uint64_t min_producer_time = UINT64_MAX;
+    for (int i = 0; i < g_num_threads + 1; i++) {
+      if (min_producer_time > *producer_time_[i]) {
+        min_producer_time = *producer_time_[i];
+      }
+    }
+    return min_producer_time - global_start_time_;
+  }
+
+  uint64_t get_max_consumer_time() {
+    uint64_t max_consumer_time = 0;
+    for (int i = 0; i < g_num_threads + 1; i++) {
+      if (max_consumer_time < *consumer_time_[i]) {
+        max_consumer_time = *consumer_time_[i];
+      }
+    }
+    return max_consumer_time - global_start_time_;
   }
  protected:
   void bench_func(void);
@@ -56,6 +95,8 @@ class ProdConBench : public Benchmark {
   void consumer(void);
 
   pthread_barrier_t prod_con_barrier_;
+  uint64_t* *producer_time_;
+  uint64_t* *consumer_time_;
 };
 
 uint64_t g_num_threads;
@@ -104,13 +145,26 @@ int main(int argc, const char **argv) {
   if (FLAGS_print_summary) {
     uint64_t exec_time = benchmark->execution_time();
     char buffer[1024] = {0};
+
+    uint64_t enough_inserting = 0;
+    uint64_t measure_at_aggr = 0;
+    if (FLAGS_measure_at != 0) {
+      uint64_t min_producer_time = benchmark->get_min_producer_time();
+      uint64_t max_consumer_time = benchmark->get_max_consumer_time();
+      enough_inserting = (min_producer_time > max_consumer_time);
+      measure_at_aggr = (uint64_t)((FLAGS_measure_at * FLAGS_producers) / 
+          (static_cast<double>(max_consumer_time) / 1000));
+    }
+
     uint32_t n = snprintf(buffer, sizeof(buffer), 
-        "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
-        g_num_threads - 1,
+        "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ; enough_inserting: %" PRIu64 " ;consumer_aggr: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
+        g_num_threads,
         FLAGS_producers,
         FLAGS_consumers,
         exec_time,
         FLAGS_operations,
+        enough_inserting,
+        measure_at_aggr,
         FLAGS_c,
         // TODO Change the calculation.
         (uint64_t)((FLAGS_operations * FLAGS_producers * 2) / (static_cast<double>(exec_time) / 1000)));
@@ -148,6 +202,10 @@ void ProdConBench::producer(void) {
     }
     scal::StdOperationLogger::get().response(true, item);
     calculate_pi(FLAGS_c);
+
+  }
+  if (0 != FLAGS_measure_at) {
+    *producer_time_[thread_id] = get_utime();
   }
 }
 
@@ -172,10 +230,14 @@ void ProdConBench::consumer(void) {
     scal::StdOperationLogger::get().response(ok, ret);
     calculate_pi(FLAGS_c);
     if (!ok) {
-      break;
       continue;
     }
     j++;
+
+    if (j == FLAGS_measure_at) {
+      *consumer_time_[thread_id] = get_utime();
+      break;
+    }
   }
 }
 

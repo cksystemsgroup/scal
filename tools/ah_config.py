@@ -108,6 +108,11 @@ templates = {
   + '-operations 10000 -c {work} {partials_param} {partials} '
   + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
 
+  , 'infprod': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
+  + '-operations 150000 -measure_at 10000 -c {work} '
+  + '{partials_param} {partials} '
+  + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
+
   , 'deq': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
   + '-operations 10000 -c {work} {partials_param} {partials} -barrier '
   + '{perfParam} -noset_rt_priority -prealloc_size 500m > {filename}'
@@ -126,6 +131,9 @@ filenameTemplates = {
     + '-c{work}.txt'
 
     , 'enq': '@{directory}{queue}-t{thread}{partials_param}{partials}'
+    + '-c{work}.txt'
+
+    , 'infprod': '@{directory}{queue}-t{thread}{partials_param}{partials}'
     + '-c{work}.txt'
 
     , 'deq': '@{directory}{queue}-t{thread}{partials_param}{partials}'
