@@ -139,41 +139,41 @@ EliminationBackoffStack<T>::EliminationBackoffStack(
 
   operations_ = static_cast<Operation**>(
       scal::calloc_aligned(num_threads, 
-          sizeof(Operation*), scal::kCachePrefetch * 2));
+          sizeof(Operation*), scal::kCachePrefetch * 4));
 
   location_ = static_cast<std::atomic<uint64_t>**>(
       scal::calloc_aligned(num_threads, 
-          sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
+          sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 4));
 
   collision_ = static_cast<std::atomic<uint64_t>**>(
       scal::calloc_aligned(size_collision_,
-          sizeof(AtomicValue<uint64_t>*), scal::kCachePrefetch * 2));
+          sizeof(AtomicValue<uint64_t>*), scal::kCachePrefetch * 4));
   
   counter1_ = static_cast<int64_t**>(
       scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
-        scal::kCachePrefetch * 2));
+        scal::kCachePrefetch * 4));
 
   counter2_ = static_cast<int64_t**>(
       scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
-        scal::kCachePrefetch * 2));
+        scal::kCachePrefetch * 4));
 
   for (uint64_t i = 0; i < num_threads; i++) {
-    operations_[i] = scal::get<Operation>(scal::kCachePrefetch * 2);
+    operations_[i] = scal::get<Operation>(scal::kCachePrefetch * 4);
   }
   for (uint64_t i = 0; i < num_threads; i++) {
     location_[i] = 
-      scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 2);
+      scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 4);
   }
 
   for (uint64_t i = 0; i < size_collision_; i++) {
     collision_[i] = 
-      scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 2);
+      scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 4);
   }
 
   for (uint64_t i = 0; i < num_threads; i++) {
-    counter1_[i] = scal::get<int64_t>(scal::kCachePrefetch * 2);
+    counter1_[i] = scal::get<int64_t>(scal::kCachePrefetch * 4);
     *(counter1_[i]) = 0;
-    counter2_[i] = scal::get<int64_t>(scal::kCachePrefetch * 2);
+    counter2_[i] = scal::get<int64_t>(scal::kCachePrefetch * 4);
     *(counter2_[i]) = 0;
   }
 }
@@ -225,7 +225,7 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
         him, thread_id)) { 
   }
   if (him != EMPTY) {
-    inc_counter1();
+//    inc_counter1();
     uint64_t other = location_[him]->load();
     if (other == him && 
         operations_[other]->opcode != opcode) {
@@ -233,7 +233,7 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
       if (location_[thread_id]->compare_exchange_weak(
             expected, EMPTY)) {
         if (try_collision(thread_id, other, item)) {
-      inc_counter2();
+//      inc_counter2();
          return true;
         } else {
           return false;
@@ -243,7 +243,7 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
           *item = operations_[location_[thread_id]->load()]->data;
           location_[thread_id]->store(0);
         }
-      inc_counter2();
+//      inc_counter2();
         return true;
       }
     }
@@ -259,7 +259,7 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
       *item = operations_[location_[thread_id]->load()]->data;
       location_[thread_id]->store(EMPTY);
     }
-      inc_counter2();
+//      inc_counter2();
     return true;
   }
 
