@@ -35,180 +35,174 @@ template<typename T>
 class TLArrayQueueBuffer : public TSQueueBuffer<T> {
   private:
     typedef struct Item {
+      std::atomic<Item*> next;
       std::atomic<T> data;
-      std::atomic<uint64_t> timestamp;
+      std::atomic<uint64_t> t1;
+      std::atomic<uint64_t> t2;
     } Item;
 
     // The number of threads.
     uint64_t num_threads_;
     // The thread-local queues, implemented as arrays of size BUFFERSIZE. 
     // At the moment buffer overflows are not considered.
-    std::atomic<Item*> **buckets_;
-    // The insert pointers of the thread-local queues.
-    std::atomic<uint64_t>* *insert_;
-    // The remove pointers of the thread-local queues.
-    std::atomic<uint64_t>* *remove_;
+    std::atomic<Item*> **insert_;
+    std::atomic<Item*> **remove_;
     // The pointers for the emptiness check.
-    uint64_t* *emptiness_check_pointers_;
+    Item** *emptiness_check_pointers_;
 
-    // Returns the oldest not-taken item from the thread-local queue 
-    // indicated by thread_id.
-    uint64_t get_oldest_item(uint64_t thread_id, Item* *result) {
+    inline void *get_aba_free_pointer(void *pointer) {
+      uint64_t result = (uint64_t)pointer;
+      result &= 0xfffffffffffffff8;
+      return (void*)result;
+    }
 
-      uint64_t insert = insert_[thread_id]->load();
-      uint64_t remove = remove_[thread_id]->load();
-
-      // If the thread-local queue is empty, no element is returned.
-      if (insert == remove) {
-        *result = NULL;
-      } else {
-        *result = buckets_[thread_id][remove*64].load();
-      }
-      return remove;
+    inline void *add_next_aba(void *pointer, void *old, uint64_t increment) {
+      uint64_t aba = (uint64_t)old;
+      aba += increment;
+      aba &= 0x7;
+      uint64_t result = (uint64_t)pointer;
+      result = (result & 0xfffffffffffffff8) | aba;
+      return (void*)((result & 0xffffffffffffff8) | aba);
     }
 
   public:
+    /////////////////////////////////////////////////////////////////
+    // Constructor
+    /////////////////////////////////////////////////////////////////
     TLArrayQueueBuffer(uint64_t num_threads) : num_threads_(num_threads) {
-      buckets_ = static_cast<std::atomic<Item*>**>(
+      insert_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 4));
 
-      insert_ = static_cast<std::atomic<uint64_t>**>(
-          scal::calloc_aligned(num_threads_, 
-            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 4));
+      remove_ = static_cast<std::atomic<Item*>**>(
+          scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
+            scal::kCachePrefetch * 4));
 
-      remove_ = static_cast<std::atomic<uint64_t>**>(
-          scal::calloc_aligned(num_threads_, 
-            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 4));
-
-
-      emptiness_check_pointers_ = static_cast<uint64_t**>(
-          scal::calloc_aligned(num_threads_, sizeof(uint64_t*), 
+      emptiness_check_pointers_ = static_cast<Item***>(
+          scal::calloc_aligned(num_threads_, sizeof(Item**), 
             scal::kCachePrefetch * 4));
 
       for (int i = 0; i < num_threads_; i++) {
-        buckets_[i] = static_cast<std::atomic<Item*>*>(
-            scal::calloc_aligned(BUFFERSIZE, sizeof(std::atomic<Item*>),
+
+        insert_[i] = static_cast<std::atomic<Item*>*>(
+            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
+
+        remove_[i] = static_cast<std::atomic<Item*>*>(
+            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
+
+        // Add a sentinal node.
+        Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
+        new_item->t1.store(0);
+        new_item->t2.store(0);
+        new_item->data.store(0);
+        new_item->next.store(NULL);
+        insert_[i]->store(new_item);
+        remove_[i]->store(new_item);
+
+        emptiness_check_pointers_[i] = static_cast<Item**> (
+            scal::calloc_aligned(num_threads_, sizeof(Item*), 
               scal::kCachePrefetch * 4));
-
-        insert_[i] = scal::get<std::atomic<uint64_t>>(
-            scal::kCachePrefetch * 4);
-        insert_[i]->store(0);
-
-        emptiness_check_pointers_[i] = static_cast<uint64_t*> (
-            scal::calloc_aligned(num_threads_, sizeof(uint64_t), 
-              scal::kCachePrefetch * 4));
-      }
-
-      for (int i = 0; i < num_threads_; i++) {
-        remove_[i] = scal::get<std::atomic<uint64_t>>(
-            scal::kCachePrefetch * 4);
-        remove_[i]->store(0);
       }
     }
 
+    /////////////////////////////////////////////////////////////////
+    // insert_element
+    /////////////////////////////////////////////////////////////////
     void insert_element(T element, uint64_t timestamp) {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
-      Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch * 4);
-      new_item->timestamp.store(timestamp, std::memory_order_release);
-      new_item->data.store(element, std::memory_order_release);
+      Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
+      new_item->t1.store(timestamp);
+      new_item->t2.store(UINT64_MAX);
+      new_item->data.store(element);
+      new_item->next.store(NULL);
 
-      // 4) Insert the new item into the thread-local queue.
-      uint64_t insert = insert_[thread_id]->load();
-      buckets_[thread_id][insert*64].store(new_item);
-      insert_[thread_id]->store(insert + 1);
+      Item* old_insert = insert_[thread_id]->load();
+      old_insert->next.store(new_item);
+      insert_[thread_id]->store(new_item);
+      new_item->t2.store(get_hwtime());
     };
 
     /////////////////////////////////////////////////////////////////
-    //
+    // try_remove_oldest
     /////////////////////////////////////////////////////////////////
     bool try_remove_oldest(T *element, uint64_t *threshold) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
-      uint64_t *emptiness_check_pointers = 
+      Item* *emptiness_check_pointers = 
         emptiness_check_pointers_[thread_id];
       bool empty = true;
       // This flag indicates if all thread-local buckets are not empty. 
       // If all thread-local buckets contain at least one element, we do
       // not have to do the second iteration.
       bool all_full = true;
-      // The remove_index stores the index where the element is stored in
-      // a thread-local buffer.
-      uint64_t buffer_array_index = -1;
       // Initialize the result pointer to NULL, which means that no 
       // element has been removed.
       Item *result = NULL;
       // Indicates the index which contains the oldest item.
       uint64_t buffer_index = -1;
       // Stores the time stamp of the oldest item found until now.
-      uint64_t timestamp = UINT64_MAX;
+      uint64_t t1 = 0;
+      uint64_t t2 = 0;
       // Stores the value of the remove pointer of a thead-local buffer 
       // before the buffer is actually accessed.
-      uint64_t old_remove_index = 0;
+      Item* old_remove = NULL;
 
       uint64_t start = hwrand();
       // We iterate over all thead-local buffers
       for (uint64_t i = 0; i < num_threads_; i++) {
 
-        Item* item;
         uint64_t tmp_buffer_index = (start + i) % num_threads_;
-        // We get the remove/insert pointer of the current thread-local 
-        // buffer.
         if (tmp_buffer_index == 0) {
           continue;
         }
+        // We get the remove/insert pointer of the current thread-local 
+        // buffer.
+        Item* tmp_remove = remove_[tmp_buffer_index]->load();
+        Item* tmp_insert = insert_[tmp_buffer_index]->load();
+        Item* item = 
+          ((Item*)get_aba_free_pointer(tmp_remove))->next.load();
         // We get the oldest element from that thread-local buffer.
-        uint64_t tmp_buffer_array_index = 
-          get_oldest_item(tmp_buffer_index, &item);
         // If we found an element, we compare it to the oldest element 
         // we have found until now.
-        if (item != NULL) {
+        if (get_aba_free_pointer(tmp_remove) != tmp_insert) {
+          assert(item != NULL);
           empty = false;
-          uint64_t item_timestamp = 
-            item->timestamp.load(std::memory_order_acquire);
-          if (timestamp > item_timestamp) {
+          uint64_t item_t1 = 
+            item->t1.load(std::memory_order_acquire);
+          uint64_t item_t2 = 
+            item->t2.load(std::memory_order_acquire);
+          if (t1 < item_t1 && t2 < item_t2) {
             // We found a new oldest element, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
-            timestamp = item_timestamp;
-            buffer_array_index = tmp_buffer_array_index;
+            t1 = item_t1;
+            t2 = item_t2;
+            old_remove = tmp_remove;
           } 
-          // Check if we can remove the element immediately.
-//          if (*threshold > timestamp) {
-//            if (remove_[buffer_index]->compare_exchange_weak(
-//                buffer_array_index, buffer_array_index + 1)) {
-//              *element = result->data.load();
-//              return true;
-//            }
-//          }
         } else {
-          // No element was found, work on the emptiness check.
           all_full = false;
+          // No element was found, work on the emptiness check.
           if (emptiness_check_pointers[tmp_buffer_index] 
-              != tmp_buffer_array_index) {
+              != tmp_remove) {
             empty = false;
             emptiness_check_pointers[tmp_buffer_index] = 
-              tmp_buffer_array_index;
+              tmp_remove;
           }
         }
       }
       if (result != NULL) {
-        if (timestamp <= *threshold || all_full) {
+//        if (timestamp <= *threshold || all_full) {
+          if (remove_[buffer_index]->load() == old_remove) {
           if (remove_[buffer_index]->compare_exchange_weak(
-              buffer_array_index, buffer_array_index + 1)) {
-            *element = result->data.load();
+                old_remove, (Item*)add_next_aba(result, old_remove, 1))) {
+            *element = result->data.load(std::memory_order_acquire);
             return true;
           }
-        }
-        // We were not able to remove the oldest element. However, in
-        // later invocations we can remove any element younger than the
-        // one we found in this iteration. Therefore the time stamp of
-        // the element we found in this round will be the threshold for
-        // the next round.
-        *threshold = result->timestamp.load();
+          }
+  //      }
+        *threshold = result->t1.load();
       }
-
       *element = (T)NULL;
       return !empty;
     }

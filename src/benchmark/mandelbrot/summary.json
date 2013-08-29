@@ -1,0 +1,25 @@
+{
+  "threads": {
+    "col": 0,
+    "gp_col": "$1",
+    "avg": false
+  },
+  "producers": {
+    "col": 1,
+    "gp_col": "$2",
+    "avg": false
+  },
+  "consumers": {
+    "col": 2,
+    "gp_col": "$3",
+    "avg": false
+  },
+  "execution_time": {
+    "col": 3,
+    "gp_col": "$4",
+    "avg": true
+  },
+  "execution_time_ms": {
+    "gp_col": "$4/1000"
+  }
+}
