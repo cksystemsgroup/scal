@@ -207,13 +207,11 @@ class TLArrayStackBuffer : public TSStackBuffer<T> {
           }
         } else {
           // No element was found, work on the emptiness check.
-          if (empty) {
-            if (emptiness_check_pointers[tmp_buffer_index] 
-                != tmp_buffer_array_index) {
-              empty = false;
-              emptiness_check_pointers[tmp_buffer_index] = 
-                tmp_buffer_array_index;
-            }
+          if (emptiness_check_pointers[tmp_buffer_index] 
+              != tmp_buffer_array_index) {
+            empty = false;
+            emptiness_check_pointers[tmp_buffer_index] = 
+              tmp_buffer_array_index;
           }
         }
       }
@@ -309,19 +307,19 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
     TLLinkedListStackBuffer(uint64_t num_threads) : num_threads_(num_threads) {
       buckets_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       emptiness_check_pointers_ = static_cast<Item***>(
           scal::calloc_aligned(num_threads_, sizeof(Item**), 
-            scal::kCachePrefetch * 2));
+            scal::kCachePrefetch * 4));
 
       for (int i = 0; i < num_threads_; i++) {
 
         buckets_[i] = static_cast<std::atomic<Item*>*>(
-            scal::get<std::atomic<Item*>>(scal::kCachePrefetch));
+            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
 
         // Add a sentinal node.
-        Item *new_item = scal::get<Item>(scal::kCachePrefetch);
+        Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
         new_item->timestamp.store(0, std::memory_order_release);
         new_item->data.store(0, std::memory_order_release);
         new_item->taken.store(1, std::memory_order_release);
@@ -330,7 +328,7 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
 
         emptiness_check_pointers_[i] = static_cast<Item**> (
             scal::calloc_aligned(num_threads_, sizeof(Item*), 
-              scal::kCachePrefetch * 2));
+              scal::kCachePrefetch * 4));
       }
     }
 
@@ -415,7 +413,6 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
 
               *element = result->data.load(std::memory_order_acquire);
               return true;
-            } else {
             }
           }
         } else {

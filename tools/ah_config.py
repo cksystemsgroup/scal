@@ -1,6 +1,4 @@
 allQueues = [
-               'ah'
-             , 'ahstack'
              , 'bskfifo'
              , 'ebstack'
              , 'fc'
@@ -24,6 +22,12 @@ allQueues = [
              , 'tsatomicarray' 
              , 'tshwlist'      
              , 'tshwarray'     
+             , 'tsqueuestutter' 
+             , 'tsqueueatomic' 
+             , 'tsqueuehw' 
+             , 'tsdequestutter' 
+             , 'tsdequeatomic' 
+             , 'tsdequehw' 
              ]
 
 executables = { 
@@ -40,6 +44,12 @@ executables = {
              , 'tsatomicarray'   : 'tsstack -atomic_clock -array -init_threshold'
              , 'tshwlist'        : 'tsstack -hw_clock -list -init_threshold'
              , 'tshwarray'       : 'tsstack -hw_clock -array -init_threshold'
+             , 'tsqueuestutter'  : 'tsqueue -stutter_clock -list'
+             , 'tsqueueatomic'   : 'tsqueue -atomic_clock -list'
+             , 'tsqueuehw'       : 'tsqueue -hw_clock -list'
+             , 'tsdequestutter'  : 'tsdeque -stutter_clock'
+             , 'tsdequeatomic'   : 'tsdeque -atomic_clock'
+             , 'tsdequehw'       : 'tsdeque -hw_clock'
              }
 
 #hasPartials = ['scal2random', 'scalrr', 'uskfifo', 'bskfifo', 'scal1random', 'scaltlrr', 'sq', 'rd']
@@ -100,7 +110,7 @@ templates = {
   + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
 
   , 'deq': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
-  + '-operations 10000 -c {work} {partials_param} {partials} '
+  + '-operations 10000 -c {work} {partials_param} {partials} -barrier '
   + '{perfParam} -noset_rt_priority -prealloc_size 500m > {filename}'
 
   , 'seqalt' : '@../seqalt-{exe} -allow_empty_returns -threads {thread} '

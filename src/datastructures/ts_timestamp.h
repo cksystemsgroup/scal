@@ -47,7 +47,7 @@ class StutteringTimeStamp : public TimeStamp {
 
       clocks_ = static_cast<std::atomic<uint64_t>**>(
           scal::calloc_aligned(num_threads_, 
-            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch * 2));
+            sizeof(std::atomic<uint64_t>*), scal::kCachePrefetch));
 
       for (int i = 0; i < num_threads_; i++) {
         clocks_[i] = 
@@ -88,7 +88,7 @@ class AtomicCounterTimeStamp : public TimeStamp {
 
   public:
     AtomicCounterTimeStamp() {
-      clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch);
+      clock_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 4);
       clock_->store(1);
     }
   

@@ -6,14 +6,15 @@
 
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "datastructures/ts_timestamp.h"
-#include "datastructures/ts_deque.h"
+#include "datastructures/ts_queue.h"
 
+DEFINE_bool(array, false, "use the array-based inner buffer");
+DEFINE_bool(list, false, "use the linked-list-based inner buffer");
 DEFINE_bool(stutter_clock, false, "use the stuttering clock");
 DEFINE_bool(atomic_clock, false, "use atomic fetch-and-inc clock");
 DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
-DEFINE_bool(init_threshold, false, "initializes the dequeue threshold "
-    "with the current time");
 
+TSQueue<uint64_t> *ts;
 void* ds_new() {
   TimeStamp *timestamping;
   if (FLAGS_stutter_clock) {
@@ -21,17 +22,23 @@ void* ds_new() {
   } else if (FLAGS_atomic_clock) {
     timestamping = new AtomicCounterTimeStamp();
   } else if (FLAGS_hw_clock) {
-    timestamping = new ShiftedHardwareTimeStamp();
+    timestamping = new HardwareTimeStamp();
   } else {
-    timestamping = new ShiftedHardwareTimeStamp();
+    timestamping = new HardwareTimeStamp();
   }
-  TSDequeBuffer<uint64_t> *buffer;
-  buffer = new TLLinkedListDequeBuffer<uint64_t>(g_num_threads + 1);
-  TSDeque<uint64_t> *ts =
-      new TSDeque<uint64_t>(buffer, timestamping, FLAGS_init_threshold);
+  TSQueueBuffer<uint64_t> *buffer;
+  if (FLAGS_array) {
+    buffer = new TLArrayQueueBuffer<uint64_t>(g_num_threads + 1);
+  } else if (FLAGS_list) {
+    buffer = new TLLinkedListQueueBuffer<uint64_t>(g_num_threads + 1);
+  } else {
+    buffer = new TLLinkedListQueueBuffer<uint64_t>(g_num_threads + 1);
+  }
+  ts =
+      new TSQueue<uint64_t>(buffer, timestamping, g_num_threads + 1);
   return static_cast<void*>(ts);
 }
 
 char* ds_get_stats(void) {
-  return NULL;
+  return ts->ds_get_stats();
 }
