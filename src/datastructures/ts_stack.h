@@ -14,6 +14,7 @@
 #include "util/malloc.h"
 #include "util/platform.h"
 #include "util/random.h"
+#include "util/workloads.h"
 
 #define BUFFERSIZE 1000000
 #define ABAOFFSET (1ul << 32)
@@ -24,7 +25,7 @@
 template<typename T>
 class TSStackBuffer {
   public:
-    virtual void insert_element(T element, uint64_t timestamp) = 0;
+    virtual void insert_element(T element, TimeStamp *timestamp) = 0;
     virtual bool try_remove_youngest(T *element, uint64_t *threshold) = 0;
 };
 
@@ -114,11 +115,12 @@ class TLArrayStackBuffer : public TSStackBuffer<T> {
       }
     }
 
-    void insert_element(T element, uint64_t timestamp) {
+    void insert_element(T element, TimeStamp *timestamp) {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
-      new_item->timestamp.store(timestamp, std::memory_order_release);
+      new_item->timestamp.store(timestamp->get_timestamp(), 
+          std::memory_order_release);
       new_item->data.store(element, std::memory_order_release);
       new_item->taken.store(0, std::memory_order_release);
 
@@ -335,11 +337,12 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // insert_element
     /////////////////////////////////////////////////////////////////
-    void insert_element(T element, uint64_t timestamp) {
+    void insert_element(T element, TimeStamp *timestamp) {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
-      new_item->timestamp.store(timestamp, std::memory_order_release);
+      new_item->timestamp.store(timestamp->get_timestamp(), 
+          std::memory_order_release);
       new_item->data.store(element, std::memory_order_release);
       new_item->taken.store(0, std::memory_order_release);
 
@@ -449,6 +452,228 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
     }
 };
 
+//////////////////////////////////////////////////////////////////////
+// A TSStackBuffer based on thread-local linked lists.
+//////////////////////////////////////////////////////////////////////
+template<typename T>
+class TL2TSStackBuffer : public TSStackBuffer<T> {
+  private:
+    typedef struct Item {
+      std::atomic<Item*> next;
+      std::atomic<uint64_t> taken;
+      std::atomic<T> data;
+      std::atomic<uint64_t> t1;
+      std::atomic<uint64_t> t2;
+    } Item;
+
+    // The number of threads.
+    uint64_t num_threads_;
+    // The thread-local queues, implemented as arrays of size BUFFERSIZE. 
+    // At the moment buffer overflows are not considered.
+    std::atomic<Item*> **buckets_;
+    // The pointers for the emptiness check.
+    Item** *emptiness_check_pointers_;
+    uint64_t delay_;
+
+    void *get_aba_free_pointer(void *pointer) {
+      uint64_t result = (uint64_t)pointer;
+      result &= 0xfffffffffffffff8;
+      return (void*)result;
+    }
+
+    void *add_next_aba(void *pointer, void *old, uint64_t increment) {
+      uint64_t aba = (uint64_t)old;
+      aba += increment;
+      aba &= 0x7;
+      uint64_t result = (uint64_t)pointer;
+      result = (result & 0xfffffffffffffff8) | aba;
+      return (void*)((result & 0xffffffffffffff8) | aba);
+    }
+
+    // Returns the oldest not-taken item from the thread-local queue 
+    // indicated by thread_id.
+    Item* get_youngest_item(uint64_t thread_id) {
+
+      Item* result = (Item*)get_aba_free_pointer(
+        buckets_[thread_id]->load(std::memory_order_acquire));
+
+      while (result->taken.load(std::memory_order_acquire) != 0 &&
+          result->next.load() != result) {
+        result = result->next.load();
+      }
+      if (result == result->next.load()) {
+        return NULL;
+      } else {
+        return result;
+      }
+    }
+
+  public:
+    /////////////////////////////////////////////////////////////////
+    // Constructor
+    /////////////////////////////////////////////////////////////////
+    TL2TSStackBuffer(uint64_t num_threads, uint64_t delay) : 
+      num_threads_(num_threads), delay_(delay) {
+      buckets_ = static_cast<std::atomic<Item*>**>(
+          scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
+            scal::kCachePrefetch * 4));
+
+      emptiness_check_pointers_ = static_cast<Item***>(
+          scal::calloc_aligned(num_threads_, sizeof(Item**), 
+            scal::kCachePrefetch * 4));
+
+      for (int i = 0; i < num_threads_; i++) {
+
+        buckets_[i] = static_cast<std::atomic<Item*>*>(
+            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
+
+        // Add a sentinal node.
+        Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
+        new_item->t1.store(0, std::memory_order_release);
+        new_item->t2.store(0, std::memory_order_release);
+        new_item->data.store(0, std::memory_order_release);
+        new_item->taken.store(1, std::memory_order_release);
+        new_item->next.store(new_item);
+        buckets_[i]->store(new_item, std::memory_order_release);
+
+        emptiness_check_pointers_[i] = static_cast<Item**> (
+            scal::calloc_aligned(num_threads_, sizeof(Item*), 
+              scal::kCachePrefetch * 4));
+      }
+    }
+
+    /////////////////////////////////////////////////////////////////
+    // insert_element
+    /////////////////////////////////////////////////////////////////
+    void insert_element(T element, TimeStamp *timestamp) {
+      uint64_t thread_id = scal::ThreadContext::get().thread_id();
+
+      Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
+//      new_item->timestamp.store(timestamp, std::memory_order_release);
+      new_item->t1.store(UINT64_MAX, std::memory_order_release);
+      new_item->t2.store(UINT64_MAX, std::memory_order_release);
+      new_item->data.store(element, std::memory_order_release);
+      new_item->taken.store(0, std::memory_order_release);
+
+      Item* old_top = buckets_[thread_id]->load(std::memory_order_acquire);
+
+      Item* top = (Item*)get_aba_free_pointer(old_top);
+      while (top->next.load() != top 
+          && top->taken.load(std::memory_order_acquire)) {
+        top = top->next.load();
+      }
+
+      new_item->next.store(top);
+      buckets_[thread_id]->store(
+          (Item*) add_next_aba(new_item, old_top, 1), 
+          std::memory_order_release);
+
+      new_item->t1.store(timestamp->get_timestamp());
+      calculate_pi(delay_);
+      new_item->t2.store(timestamp->get_timestamp());
+    };
+
+    /////////////////////////////////////////////////////////////////
+    // try_remove_youngest
+    /////////////////////////////////////////////////////////////////
+    bool try_remove_youngest(T *element, uint64_t *threshold) {
+      // Initialize the data needed for the emptiness check.
+      uint64_t thread_id = scal::ThreadContext::get().thread_id();
+      Item* *emptiness_check_pointers = 
+        emptiness_check_pointers_[thread_id];
+      bool empty = true;
+      // Initialize the result pointer to NULL, which means that no 
+      // element has been removed.
+      Item *result = NULL;
+      // Indicates the index which contains the youngest item.
+      uint64_t buffer_index = -1;
+      // Stores the time stamp of the youngest item found until now.
+      uint64_t t1 = 0;
+      uint64_t t2 = 0;
+      // Stores the value of the remove pointer of a thead-local buffer 
+      // before the buffer is actually accessed.
+      Item* old_top = NULL;
+
+      uint64_t start = hwrand();
+      // We iterate over all thead-local buffers
+      for (uint64_t i = 0; i < num_threads_; i++) {
+
+        uint64_t tmp_buffer_index = (start + i) % num_threads_;
+        // We get the remove/insert pointer of the current thread-local buffer.
+        Item* tmp_top = buckets_[tmp_buffer_index]->load();
+        // We get the youngest element from that thread-local buffer.
+        Item* item = get_youngest_item(tmp_buffer_index);
+        // If we found an element, we compare it to the youngest element 
+        // we have found until now.
+        if (item != NULL) {
+          empty = false;
+          uint64_t item_t1 = 
+            item->t1.load();
+          uint64_t item_t2 = 
+            item->t2.load();
+          if (t2 < item_t1) {
+            // We found a new youngest element, so we remember it.
+            result = item;
+            buffer_index = tmp_buffer_index;
+            t1 = item_t1;
+            t2 = item_t2;
+            old_top = tmp_top;
+           
+            // Check if we can remove the element immediately.
+            if (*threshold <= t2) {
+              uint64_t expected = 0;
+              if (result->taken.compare_exchange_weak(
+                      expected, 1, 
+                      std::memory_order_acq_rel, std::memory_order_relaxed)) {
+                // Try to adjust the remove pointer. It does not matter if 
+                // this CAS fails.
+                buckets_[buffer_index]->compare_exchange_weak(
+                    old_top, (Item*)add_next_aba(result, old_top, 0), 
+                    std::memory_order_acq_rel, std::memory_order_relaxed);
+
+                *element = result->data.load(std::memory_order_acquire);
+                return true;
+              }
+            }
+          }
+        } else {
+          // No element was found, work on the emptiness check.
+          if (emptiness_check_pointers[tmp_buffer_index] 
+              != tmp_top) {
+            empty = false;
+            emptiness_check_pointers[tmp_buffer_index] = 
+              tmp_top;
+          }
+        }
+      }
+      if (result != NULL) {
+        // We found a youngest element which is not younger than the threshold.
+        // We try to remove it.
+//        uint64_t expected = 0;
+//        if (result->taken.compare_exchange_weak(
+//                expected, 1, 
+//                std::memory_order_acq_rel, std::memory_order_relaxed)) {
+//          // Try to adjust the remove pointer. It does not matter if this 
+//          // CAS fails.
+//          buckets_[buffer_index]->compare_exchange_weak(
+//              old_top, (Item*)add_next_aba(result, old_top, 0), 
+//              std::memory_order_acq_rel, std::memory_order_relaxed);
+//          *element = result->data.load(std::memory_order_acquire);
+//          return true;
+//        }
+
+        uint64_t timestamp = result->t1.load();
+        if (timestamp < UINT64_MAX) {
+          *threshold = timestamp;
+        }
+        *element = (T)NULL;
+      }
+
+      *element = (T)NULL;
+      return !empty;
+    }
+};
+
 template<typename T>
 class TSStack : public Stack<T> {
  private:
@@ -467,8 +692,7 @@ class TSStack : public Stack<T> {
 
 template<typename T>
 bool TSStack<T>::push(T element) {
-  uint64_t timestamp = timestamping_->get_timestamp();
-  buffer_->insert_element(element, timestamp);
+  buffer_->insert_element(element, timestamping_);
   return true;
 }
 
