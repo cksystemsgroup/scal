@@ -44,6 +44,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       std::atomic<T> data;
       std::atomic<int64_t> t1;
       std::atomic<int64_t> t2;
+      std::atomic<int64_t> t3;
     } Item;
 
     // The number of threads.
@@ -191,8 +192,8 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
       // Switch the sign of the time stamp of elements inserted at the left side.
       new_item->t1.store(INT64_MIN);
-///          ((int64_t)timestamp->get_timestamp()) * (-1));
       new_item->t2.store(INT64_MIN);
+      new_item->t3.store(((int64_t)timestamp->get_timestamp()) * (-1));
       new_item->data.store(element);
       new_item->taken.store(0);
       new_item->left.store(new_item);
@@ -233,6 +234,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
       new_item->t1.store(INT64_MAX);
       new_item->t2.store(INT64_MAX);
+      new_item->t3.store((int64_t)timestamp->get_timestamp());
       new_item->data.store(element);
       new_item->taken.store(0);
       new_item->right.store(new_item);
@@ -347,23 +349,28 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       if (result != NULL) {
         // TODO: Fix the following condition. What happens if 
         // threshold = INT64_MIN and t1 = INT_MIN?
-        if (t1 <= *threshold) {
+        int64_t t3 = result->t3.load();
+        if ((t1 != INT64_MIN &&t2 <= *threshold) || t3 >= *threshold) {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
-            if (result->taken.load() == 0) {
-          if (result->taken.compare_exchange_weak(
-                  expected, 1)) {
-            // Try to adjust the remove pointer. It does not matter if this 
-            // CAS fails.
-            left_[buffer_index]->compare_exchange_weak(
-                old_left, (Item*)add_next_aba(result, old_left, 0));
-            *element = result->data.load();
-            return true;
-          }
+          if (result->taken.load() == 0) {
+            if (result->taken.compare_exchange_weak(
+                    expected, 1)) {
+              // Try to adjust the remove pointer. It does not matter if this 
+              // CAS fails.
+              left_[buffer_index]->compare_exchange_weak(
+                  old_left, (Item*)add_next_aba(result, old_left, 0));
+              *element = result->data.load();
+              return true;
             }
+          }
         }
-        *threshold = result->t1.load();
+        if (t1 != INT64_MIN) {
+          *threshold =  t1;
+        } else {
+          *threshold = t3;
+        }
       }
 
       *element = (T)NULL;
@@ -454,7 +461,8 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       if (result != NULL) {
         // TODO: Fix the following condition. What happens if 
         // threshold = INT64_MAX and t2 = INT_MAX?
-        if (t2 >= *threshold) {
+        int64_t t3 = result->t3.load();
+        if ((t2 != INT64_MAX &&t2 >= *threshold) || t3 <= *threshold) {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -470,7 +478,11 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             }
           }
         }
-        *threshold = result->t2.load();
+        if (t2 != INT64_MAX) {
+          *threshold =  t2;
+        } else {
+          *threshold = t3;
+        }
       }
 
       *element = (T)NULL;
