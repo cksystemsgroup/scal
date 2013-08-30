@@ -8,11 +8,14 @@
 #include "datastructures/ts_timestamp.h"
 #include "datastructures/ts_deque.h"
 
+DEFINE_bool(list, false, "use the linked-list-based inner buffer");
+DEFINE_bool(2ts, false, "use the 2-time-stamp inner buffer");
 DEFINE_bool(stutter_clock, false, "use the stuttering clock");
 DEFINE_bool(atomic_clock, false, "use atomic fetch-and-inc clock");
 DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
 DEFINE_bool(init_threshold, false, "initializes the dequeue threshold "
     "with the current time");
+DEFINE_uint64(delay, 0, "delay in the insert operation");
 
 void* ds_new() {
   TimeStamp *timestamping;
@@ -26,7 +29,12 @@ void* ds_new() {
     timestamping = new ShiftedHardwareTimeStamp();
   }
   TSDequeBuffer<uint64_t> *buffer;
-  buffer = new TLLinkedListDequeBuffer<uint64_t>(g_num_threads + 1);
+  if (FLAGS_list) {
+    buffer = new TLLinkedListDequeBuffer<uint64_t>(g_num_threads + 1);
+  } else if (FLAGS_2ts) {
+    buffer 
+      = new TL2TSDequeBuffer<uint64_t>(g_num_threads + 1, FLAGS_delay);
+  }
   TSDeque<uint64_t> *ts =
       new TSDeque<uint64_t>(buffer, timestamping, FLAGS_init_threshold);
   return static_cast<void*>(ts);
