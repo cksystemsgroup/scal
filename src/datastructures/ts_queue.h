@@ -13,6 +13,7 @@
 #include "util/time.h"
 #include "util/malloc.h"
 #include "util/platform.h"
+#include "util/workloads.h"
 #include "util/random.h"
 
 #define BUFFERSIZE 1000000
@@ -24,7 +25,7 @@
 template<typename T>
 class TSQueueBuffer {
   public:
-    virtual void insert_element(T element, uint64_t timestamp) = 0;
+    virtual std::atomic<uint64_t> *insert_element(T element, uint64_t timestamp) = 0;
     virtual bool try_remove_oldest(T *element, uint64_t *threshold) = 0;
 };
 
@@ -32,7 +33,7 @@ class TSQueueBuffer {
 // A TSQueueBuffer based on thread-local arrays.
 //////////////////////////////////////////////////////////////////////
 template<typename T>
-class TLArrayQueueBuffer : public TSQueueBuffer<T> {
+class TL2TSQueueBuffer : public TSQueueBuffer<T> {
   private:
     typedef struct Item {
       std::atomic<Item*> next;
@@ -69,7 +70,7 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // Constructor
     /////////////////////////////////////////////////////////////////
-    TLArrayQueueBuffer(uint64_t num_threads) : num_threads_(num_threads) {
+    TL2TSQueueBuffer(uint64_t num_threads) : num_threads_(num_threads) {
       insert_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 4));
@@ -108,7 +109,7 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // insert_element
     /////////////////////////////////////////////////////////////////
-    void insert_element(T element, uint64_t timestamp) {
+    std::atomic<uint64_t> *insert_element(T element, uint64_t timestamp) {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
@@ -120,13 +121,14 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
       Item* old_insert = insert_[thread_id]->load();
       old_insert->next.store(new_item);
       insert_[thread_id]->store(new_item);
-      new_item->t2.store(get_hwtime());
+      return &new_item->t2;
     };
 
     /////////////////////////////////////////////////////////////////
     // try_remove_oldest
     /////////////////////////////////////////////////////////////////
     bool try_remove_oldest(T *element, uint64_t *threshold) {
+      uint64_t start_time = get_hwtime();
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_pointers = 
@@ -142,8 +144,8 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
       // Indicates the index which contains the oldest item.
       uint64_t buffer_index = -1;
       // Stores the time stamp of the oldest item found until now.
-      uint64_t t1 = 0;
-      uint64_t t2 = 0;
+      uint64_t t1 = UINT64_MAX;
+      uint64_t t2 = UINT64_MAX;
       // Stores the value of the remove pointer of a thead-local buffer 
       // before the buffer is actually accessed.
       Item* old_remove = NULL;
@@ -172,7 +174,8 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
             item->t1.load(std::memory_order_acquire);
           uint64_t item_t2 = 
             item->t2.load(std::memory_order_acquire);
-          if (t1 < item_t1 && t2 < item_t2) {
+          if (item_t2 < t1) {
+//          if (t1 < item_t1) {
             // We found a new oldest element, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
@@ -192,7 +195,7 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
         }
       }
       if (result != NULL) {
-//        if (timestamp <= *threshold || all_full) {
+        if (t1 <= threshold[1] || t2 <= start_time) {
           if (remove_[buffer_index]->load() == old_remove) {
           if (remove_[buffer_index]->compare_exchange_weak(
                 old_remove, (Item*)add_next_aba(result, old_remove, 1))) {
@@ -200,8 +203,9 @@ class TLArrayQueueBuffer : public TSQueueBuffer<T> {
             return true;
           }
           }
-  //      }
-        *threshold = result->t1.load();
+        }
+        threshold[0] = result->t1.load();
+        threshold[1] = result->t2.load();
       }
       *element = (T)NULL;
       return !empty;
@@ -286,7 +290,7 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // insert_element
     /////////////////////////////////////////////////////////////////
-    void insert_element(T element, uint64_t timestamp) {
+    std::atomic<uint64_t> *insert_element(T element, uint64_t timestamp) {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
@@ -297,6 +301,7 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
       Item* old_insert = insert_[thread_id]->load();
       old_insert->next.store(new_item);
       insert_[thread_id]->store(new_item);
+      return NULL;
     };
 
     /////////////////////////////////////////////////////////////////
@@ -318,7 +323,7 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
       // Indicates the index which contains the oldest item.
       uint64_t buffer_index = -1;
       // Stores the time stamp of the oldest item found until now.
-      uint64_t timestamp = 0;
+      uint64_t timestamp = UINT64_MAX;
       // Stores the value of the remove pointer of a thead-local buffer 
       // before the buffer is actually accessed.
       Item* old_remove = NULL;
@@ -345,7 +350,7 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
           empty = false;
           uint64_t item_timestamp = 
             item->timestamp.load(std::memory_order_acquire);
-          if (timestamp < item_timestamp) {
+          if (timestamp > item_timestamp) {
             // We found a new oldest element, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
@@ -388,6 +393,8 @@ class TSQueue : public Queue<T> {
   int64_t* *counter1_;
   int64_t* *counter2_;
   uint64_t num_threads_;
+  uint64_t delay_;
+
   inline void inc_counter1() {
     uint64_t thread_id = scal::ThreadContext::get().thread_id();
     (*counter1_[thread_id])++;
@@ -399,8 +406,9 @@ class TSQueue : public Queue<T> {
  public:
   explicit TSQueue
     (TSQueueBuffer<T> *buffer, TimeStamp *timestamping, 
-     uint64_t num_threads) 
-    : buffer_(buffer), timestamping_(timestamping), num_threads_(num_threads) {
+     uint64_t num_threads, uint64_t delay) 
+    : buffer_(buffer), timestamping_(timestamping), num_threads_(num_threads),
+    delay_(delay) {
     counter1_ = static_cast<int64_t**>(
         scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
           scal::kCachePrefetch * 4));
@@ -432,8 +440,8 @@ class TSQueue : public Queue<T> {
     char buffer[255] = { 0 };
     uint32_t n = snprintf(buffer,
                           sizeof(buffer),
-                          "%ld %ld %ld",
-                          sum1, sum2, 
+                          "%lu %ld",
+                          delay_,  
                           sum1 ? (sum2 / sum1) : 0
                           );
     if (n != strlen(buffer)) {
@@ -449,16 +457,22 @@ class TSQueue : public Queue<T> {
 template<typename T>
 bool TSQueue<T>::enqueue(T element) {
   uint64_t timestamp = timestamping_->get_timestamp();
-  buffer_->insert_element(element, timestamp);
+  std::atomic<uint64_t> *timestamp_slot =
+    buffer_->insert_element(element, timestamp);
+  if (timestamp_slot != NULL) {
+    calculate_pi(delay_);
+    timestamp_slot->store(timestamping_->get_timestamp());
+  }
   return true;
 }
 
 template<typename T>
 bool TSQueue<T>::dequeue(T *element) {
   inc_counter1();
-  uint64_t threshold;
-  threshold = 0;
-  while (buffer_->try_remove_oldest(element, &threshold)) {
+  uint64_t threshold[2];
+  threshold[0] = 0;
+  threshold[1] = 0;
+  while (buffer_->try_remove_oldest(element, threshold)) {
     inc_counter2();
     if (*element != (T)NULL) {
       return true;

@@ -8,11 +8,12 @@
 #include "datastructures/ts_timestamp.h"
 #include "datastructures/ts_queue.h"
 
-DEFINE_bool(array, false, "use the array-based inner buffer");
+DEFINE_bool(2ts, false, "use the array-based inner buffer");
 DEFINE_bool(list, false, "use the linked-list-based inner buffer");
 DEFINE_bool(stutter_clock, false, "use the stuttering clock");
 DEFINE_bool(atomic_clock, false, "use atomic fetch-and-inc clock");
 DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
+DEFINE_uint64(delay, 0, "delay in the insert operation");
 
 TSQueue<uint64_t> *ts;
 void* ds_new() {
@@ -27,15 +28,15 @@ void* ds_new() {
     timestamping = new HardwareTimeStamp();
   }
   TSQueueBuffer<uint64_t> *buffer;
-  if (FLAGS_array) {
-    buffer = new TLArrayQueueBuffer<uint64_t>(g_num_threads + 1);
+  if (FLAGS_2ts) {
+    buffer = new TL2TSQueueBuffer<uint64_t>(g_num_threads + 1);
   } else if (FLAGS_list) {
     buffer = new TLLinkedListQueueBuffer<uint64_t>(g_num_threads + 1);
   } else {
     buffer = new TLLinkedListQueueBuffer<uint64_t>(g_num_threads + 1);
   }
   ts =
-      new TSQueue<uint64_t>(buffer, timestamping, g_num_threads + 1);
+      new TSQueue<uint64_t>(buffer, timestamping, g_num_threads + 1, FLAGS_delay);
   return static_cast<void*>(ts);
 }
 
