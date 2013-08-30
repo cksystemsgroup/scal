@@ -21,6 +21,7 @@ allQueues = [ 'bskfifo'
              , 'tsatomicarray' 
              , 'tshwlist'      
              , 'tshwarray'     
+             , 'tshw2ts'     
              , 'tsqueuestutter' 
              , 'tsqueueatomic' 
              , 'tsqueuehw' 
@@ -28,6 +29,7 @@ allQueues = [ 'bskfifo'
              , 'tsdequestutter' 
              , 'tsdequeatomic' 
              , 'tsdequehw' 
+             , 'tsdequehw2ts' 
              ]
 
 executables = { 
@@ -44,13 +46,15 @@ executables = {
              , 'tsatomicarray'   : 'tsstack -atomic_clock -array -init_threshold'
              , 'tshwlist'        : 'tsstack -hw_clock -list -init_threshold'
              , 'tshwarray'       : 'tsstack -hw_clock -array -init_threshold'
+             , 'tshw2ts'       : 'tsstack -hw_clock -2ts -init_threshold -delay 3000'
              , 'tsqueuestutter'  : 'tsqueue -stutter_clock -list'
              , 'tsqueueatomic'   : 'tsqueue -atomic_clock -list'
              , 'tsqueuehw'       : 'tsqueue -hw_clock -list'
-             , 'tsqueue2ts'       : 'tsqueue -hw_clock -array'
-             , 'tsdequestutter'  : 'tsdeque -stutter_clock'
-             , 'tsdequeatomic'   : 'tsdeque -atomic_clock'
-             , 'tsdequehw'       : 'tsdeque -hw_clock'
+             , 'tsqueue2ts'       : 'tsqueue -hw_clock -2ts -delay 3000'
+             , 'tsdequestutter'  : 'tsdeque -list -stutter_clock'
+             , 'tsdequeatomic'   : 'tsdeque -list -atomic_clock -init_threshold'
+             , 'tsdequehw'       : 'tsdeque -list -hw_clock -init_threshold'
+             , 'tsdequehw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold -delay 3000'
              }
 
 #hasPartials = ['scal2random', 'scalrr', 'uskfifo', 'bskfifo', 'scal1random', 'scaltlrr', 'sq', 'rd']
@@ -102,7 +106,7 @@ maxThreadsB7=24
 # have the same placeholders.
 templates = {
   'prodcon': '@../prodcon-{exe} -producers {thread} ' 
-  + '-consumers {thread} -operations 10000 -c {work} -prealloc_size 1g '
+  + '-consumers {thread} -operations 10000 -c {work} -prealloc_size 500m '
   + '{partials_param} {partials} {perfParam} -noset_rt_priority '
   + '> {filename}'
 
@@ -121,7 +125,7 @@ templates = {
 
   , 'seqalt' : '@../seqalt-{exe} -allow_empty_returns -threads {thread} '
   + '-elements 10000 -c {work} {partials_param} {partials} {perfParam} '
-  + '-noset_rt_priority -prealloc_size 1g > {filename}'
+  + '-noset_rt_priority -prealloc_size 500m > {filename}'
 
   , 'shortest-path' : '{work}@../shortest-path-{exe} -threads {thread} '
   + '-height 100 -width 10000 {partials_param} {partials} '
