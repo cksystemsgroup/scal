@@ -128,7 +128,6 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
     // try_remove_oldest
     /////////////////////////////////////////////////////////////////
     bool try_remove_oldest(T *element, uint64_t *threshold) {
-      uint64_t start_time = get_hwtime();
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_pointers = 
@@ -170,11 +169,11 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
         if (get_aba_free_pointer(tmp_remove) != tmp_insert) {
           assert(item != NULL);
           empty = false;
-          uint64_t item_t1 = 
-            item->t1.load(std::memory_order_acquire);
           uint64_t item_t2 = 
             item->t2.load(std::memory_order_acquire);
           if (item_t2 < t1) {
+            uint64_t item_t1 = 
+              item->t1.load(std::memory_order_acquire);
 //          if (t1 < item_t1) {
             // We found a new oldest element, so we remember it.
             result = item;
@@ -195,7 +194,7 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
         }
       }
       if (result != NULL) {
-        if (t1 <= threshold[1] || t2 <= start_time) {
+        if (t1 <= threshold[1] || t2 <= threshold[0]) {
           if (remove_[buffer_index]->load() == old_remove) {
           if (remove_[buffer_index]->compare_exchange_weak(
                 old_remove, (Item*)add_next_aba(result, old_remove, 1))) {
@@ -204,7 +203,6 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
           }
           }
         }
-        threshold[0] = result->t1.load();
         threshold[1] = result->t2.load();
       }
       *element = (T)NULL;
@@ -407,8 +405,9 @@ class TSQueue : public Queue<T> {
   explicit TSQueue
     (TSQueueBuffer<T> *buffer, TimeStamp *timestamping, 
      uint64_t num_threads, uint64_t delay) 
-    : buffer_(buffer), timestamping_(timestamping), num_threads_(num_threads),
-    delay_(delay) {
+    : buffer_(buffer), timestamping_(timestamping)
+      , num_threads_(num_threads), delay_(delay) {
+
     counter1_ = static_cast<int64_t**>(
         scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
           scal::kCachePrefetch * 4));
@@ -470,6 +469,7 @@ template<typename T>
 bool TSQueue<T>::dequeue(T *element) {
   inc_counter1();
   uint64_t threshold[2];
+//  threshold[0] = timestamping_->get_timestamp();
   threshold[0] = 0;
   threshold[1] = 0;
   while (buffer_->try_remove_oldest(element, threshold)) {
