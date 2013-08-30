@@ -163,11 +163,11 @@ int main(int argc, const char **argv) {
         FLAGS_consumers,
         exec_time,
         FLAGS_operations,
-        enough_inserting,
-        measure_at_aggr,
         FLAGS_c,
         // TODO Change the calculation.
-        (uint64_t)((FLAGS_operations * FLAGS_producers * 2) / (static_cast<double>(exec_time) / 1000)));
+        (uint64_t)((FLAGS_operations * FLAGS_producers * 2) / (static_cast<double>(exec_time) / 1000)),
+        enough_inserting,
+        measure_at_aggr);
     if (n != strlen(buffer)) {
       fprintf(stderr, "%s: error: failed to create summary string\n", __func__);
       abort();
