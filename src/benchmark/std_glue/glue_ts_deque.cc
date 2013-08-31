@@ -15,7 +15,7 @@ DEFINE_bool(atomic_clock, false, "use atomic fetch-and-inc clock");
 DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
 DEFINE_bool(init_threshold, false, "initializes the dequeue threshold "
     "with the current time");
-DEFINE_uint64(delay, 0, "delay in the insert operation");
+DEFINE_int64(delay, -1, "delay in the insert operation");
 
 void* ds_new() {
   TimeStamp *timestamping;
@@ -28,6 +28,18 @@ void* ds_new() {
   } else {
     timestamping = new ShiftedHardwareTimeStamp();
   }
+
+  uint64_t delay;
+  if (FLAGS_delay >= 0) {
+    delay = FLAGS_delay;
+  } else {
+    if (g_num_threads <= 2) {
+      delay = 0;
+    } else {
+      delay = g_num_threads * 60;
+    }
+  }
+
   TSDequeBuffer<uint64_t> *buffer;
   if (FLAGS_list) {
     buffer = new TLLinkedListDequeBuffer<uint64_t>(g_num_threads + 1);
