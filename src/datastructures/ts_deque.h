@@ -341,7 +341,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             old_left = tmp_left;
            
             // Check if we can remove the element immediately.
-            if (*threshold > t1) {
+            if (threshold[0] > t1) {
               uint64_t expected = 0;
               if (result->taken.load() == 0) {
                 if (result->taken.compare_exchange_weak(
@@ -379,8 +379,11 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         // right side and did not get a time stamp yet. We should not take
         // it then, except if we found the same element already in the
         // previous iteration (and stored it as potential_element).
-        if ((t1 != INT64_MAX &&t1 <= *threshold) 
-            || result == *potential_element) {
+        if ((t1 != INT64_MAX &&t1 <= threshold[0]) 
+            || result == *potential_element
+            || (t1 > 0 && t1 < threshold[1])
+            || (t2 < 0 && t2 > -threshold[1])
+            ){
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -400,7 +403,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         // already had a time stamp. Otherwise we continue to use the old
         // time stamp. 
         if (t1 != INT64_MAX) {
-          *threshold =  t1;
+          threshold[0] =  t1;
           *potential_element = NULL;
         } else {
           *potential_element = result;
@@ -460,7 +463,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             old_right = tmp_right;
 
             // Check if we can remove the element immediately.
-            if (*threshold < t2) {
+            if (threshold[0] < t2) {
               uint64_t expected = 0;
               if (result->taken.load() == 0) {
                 if (result->taken.compare_exchange_weak(
@@ -499,8 +502,11 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         // left side and did not get a time stamp yet. We should not take
         // it then, except if we found the same element already in the
         // previous iteration (and stored it as potential_element).
-        if ((t2 != INT64_MIN && t2 >= *threshold) 
-            || result == *potential_element) {
+        if ((t2 != INT64_MIN && t2 >= threshold[0]) 
+            || (result == *potential_element)
+            || (t1 > 0 && t1 < threshold[1])
+            || (t2 < 0 && t2 > -threshold[1])
+            ) {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -520,7 +526,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         // already had a time stamp. Otherwise we continue to use the old
         // time stamp. 
         if (t2 != INT64_MIN) {
-          *threshold =  t2;
+          threshold[0] =  t2;
           *potential_element = NULL;
         } else {
           *potential_element = result;
@@ -823,7 +829,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             old_left = tmp_left;
           } 
           // Check if we can remove the element immediately.
-          if (*threshold > timestamp) {
+          if (threshold[0] > timestamp) {
             uint64_t expected = 0;
             if (result->taken.load() == 0) {
               if (result->taken.compare_exchange_weak(
@@ -860,8 +866,11 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // the right side and did not get a time stamp yet. We should not
         // take it then, except if we found the same element already in the
         // previous iteration (and stored it as potential_element).
-        if ((timestamp != INT64_MAX && timestamp <= *threshold)
-            || result == *potential_element) {
+        if ((timestamp != INT64_MAX && timestamp <= threshold[0])
+            || result == *potential_element
+            || (timestamp > 0 && timestamp < threshold[1])
+            || (timestamp < 0 && timestamp > -threshold[1])
+            ){
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -881,7 +890,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // already had a time stamp. Otherwise we continue to use the old
         // time stamp. 
         if (timestamp != INT64_MAX) {
-          *threshold =  timestamp;
+          threshold[0] =  timestamp;
           *potential_element = NULL;
         } else {
           *potential_element = result;
@@ -938,7 +947,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             old_right = tmp_right;
           }
           // Check if we can remove the element immediately.
-          if (*threshold < timestamp) {
+          if (threshold[0] < timestamp) {
             uint64_t expected = 0;
             if (result->taken.load() == 0) {
               if (result->taken.compare_exchange_weak(
@@ -976,8 +985,11 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // the left side and did not get a time stamp yet. We should not
         // take it then, except if we found the same element already in the
         // previous iteration (and stored it as potential_element).
-        if ((timestamp != INT64_MIN && timestamp >= *threshold)
-            || result == *potential_element) {
+        if ((timestamp != INT64_MIN && timestamp >= threshold[0])
+            || result == *potential_element
+            || (timestamp > 0 && timestamp < threshold[1])
+            || (timestamp < 0 && timestamp > -threshold[1])
+            ){
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -997,7 +1009,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // already had a time stamp. Otherwise we continue to use the old
         // time stamp. 
         if (timestamp != INT64_MIN) {
-          *threshold = timestamp;
+          threshold[0] = timestamp;
           *potential_element = NULL;
         } else {
           *potential_element = result;
@@ -1042,17 +1054,18 @@ bool TSDeque<T>::insert_right(T element) {
 
 template<typename T>
 bool TSDeque<T>::remove_left(T *element) {
-  int64_t threshold;
+  int64_t threshold[2];
+  threshold[1] = timestamping_->get_timestamp();
   if (init_threshold_) {
-    threshold = ((int64_t)timestamping_->get_timestamp()) * -1;
+    threshold[0] = -threshold[1];
   } else {
-    threshold = INT64_MIN;
+    threshold[0] = INT64_MIN;
   }
 
   void *potential_element = NULL;
 
   while (
-    buffer_->try_remove_left(element, &threshold, &potential_element)) {
+    buffer_->try_remove_left(element, threshold, &potential_element)) {
     if (*element != (T)NULL) {
       return true;
     }
@@ -1062,17 +1075,18 @@ bool TSDeque<T>::remove_left(T *element) {
 
 template<typename T>
 bool TSDeque<T>::remove_right(T *element) {
-  int64_t threshold;
+  int64_t threshold[2];
+  threshold[1] = timestamping_->get_timestamp();
   if (init_threshold_) {
-    threshold = timestamping_->get_timestamp();
+    threshold[0] = threshold[1];
   } else {
-    threshold = INT64_MAX;
+    threshold[0] = INT64_MAX;
   }
 
   void *potential_element = NULL;
 
   while (
-    buffer_->try_remove_right(element, &threshold, &potential_element)) {
+    buffer_->try_remove_right(element, threshold, &potential_element)) {
     if (*element != (T)NULL) {
       return true;
     }
