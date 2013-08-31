@@ -375,7 +375,11 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         }
       }
       if (result != NULL) {
-        if ((t1 != INT64_MIN &&t1 <= *threshold) 
+        // (t1 == INT64_MAX) means that the element was inserted at the
+        // right side and did not get a time stamp yet. We should not take
+        // it then, except if we found the same element already in the
+        // previous iteration (and stored it as potential_element).
+        if ((t1 != INT64_MAX &&t1 <= *threshold) 
             || result == *potential_element) {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
@@ -392,7 +396,10 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             }
           }
         }
-        if (t1 != INT64_MIN) {
+        // We only set an new threshold if the element we tried to remove
+        // already had a time stamp. Otherwise we continue to use the old
+        // time stamp. 
+        if (t1 != INT64_MAX) {
           *threshold =  t1;
           *potential_element = NULL;
         } else {
@@ -488,7 +495,11 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         }
       }
       if (result != NULL) {
-        if ((t2 != INT64_MAX &&t2 >= *threshold) 
+        // (t2 == INT64_MIN) means that the element was inserted at the
+        // left side and did not get a time stamp yet. We should not take
+        // it then, except if we found the same element already in the
+        // previous iteration (and stored it as potential_element).
+        if ((t2 != INT64_MIN && t2 >= *threshold) 
             || result == *potential_element) {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
@@ -505,7 +516,10 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             }
           }
         }
-        if (t2 != INT64_MAX) {
+        // We only set an new threshold if the element we tried to remove
+        // already had a time stamp. Otherwise we continue to use the old
+        // time stamp. 
+        if (t2 != INT64_MIN) {
           *threshold =  t2;
           *potential_element = NULL;
         } else {
@@ -842,7 +856,12 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         }
       }
       if (result != NULL) {
-        if (timestamp == *threshold) {
+        // (timestamp == INT64_MAX) means that the element was inserted at
+        // the right side and did not get a time stamp yet. We should not
+        // take it then, except if we found the same element already in the
+        // previous iteration (and stored it as potential_element).
+        if ((timestamp != INT64_MAX && timestamp <= *threshold)
+            || result == *potential_element) {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -858,7 +877,15 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
           }
             }
         }
-        *threshold = result->timestamp.load();
+        // We only set an new threshold if the element we tried to remove
+        // already had a time stamp. Otherwise we continue to use the old
+        // time stamp. 
+        if (timestamp != INT64_MAX) {
+          *threshold =  timestamp;
+          *potential_element = NULL;
+        } else {
+          *potential_element = result;
+        }
       }
 
       *element = (T)NULL;
@@ -945,7 +972,12 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         }
       }
       if (result != NULL) {
-        if (timestamp == *threshold) {
+        // (timestamp == INT64_MIN) means that the element was inserted at
+        // the left side and did not get a time stamp yet. We should not
+        // take it then, except if we found the same element already in the
+        // previous iteration (and stored it as potential_element).
+        if ((timestamp != INT64_MIN && timestamp >= *threshold)
+            || result == *potential_element) {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -961,7 +993,15 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             }
           }
         }
-        *threshold = result->timestamp.load();
+        // We only set an new threshold if the element we tried to remove
+        // already had a time stamp. Otherwise we continue to use the old
+        // time stamp. 
+        if (timestamp != INT64_MIN) {
+          *threshold = timestamp;
+          *potential_element = NULL;
+        } else {
+          *potential_element = result;
+        }
       }
 
       *element = (T)NULL;
