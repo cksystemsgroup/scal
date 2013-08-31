@@ -54,7 +54,7 @@ executables = {
              , 'tsdequestutter'  : 'tsdeque -list -stutter_clock'
              , 'tsdequeatomic'   : 'tsdeque -list -atomic_clock -init_threshold'
              , 'tsdequehw'       : 'tsdeque -list -hw_clock -init_threshold'
-             , 'tsdequehw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold -delay 3000'
+             , 'tsdequehw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
              }
 
 #hasPartials = ['scal2random', 'scalrr', 'uskfifo', 'bskfifo', 'scal1random', 'scaltlrr', 'sq', 'rd']
@@ -112,7 +112,7 @@ templates = {
 
   , 'enq': '@../prodcon-{exe} -producers {thread} -consumers 0 '
   + '-operations 10000 -c {work} {partials_param} {partials} '
-  + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
+  + '{perfParam} -noset_rt_priority -prealloc_size 250m > {filename}'
 
   , 'infprod': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
   + '-operations 150000 -measure_at 10000 -c {work} '
