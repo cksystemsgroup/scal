@@ -30,6 +30,10 @@ allQueues = [ 'bskfifo'
              , 'tsdequeatomic' 
              , 'tsdequehw' 
              , 'tsdequehw2ts' 
+             , 'tsdequeshw' 
+             , 'tsdequeshw2ts' 
+             , 'tsdequeqhw' 
+             , 'tsdequeqhw2ts' 
              ]
 
 executables = { 
@@ -51,10 +55,14 @@ executables = {
              , 'tsqueueatomic'   : 'tsqueue -atomic_clock -list'
              , 'tsqueuehw'       : 'tsqueue -hw_clock -list'
              , 'tsqueue2ts'       : 'tsqueue -hw_clock -2ts -delay 3000'
-             , 'tsdequestutter'  : 'tsdeque -list -stutter_clock'
+             , 'tsdequestutter'  : 'tsdeque -list -stutter_clock -init_threshold'
              , 'tsdequeatomic'   : 'tsdeque -list -atomic_clock -init_threshold'
              , 'tsdequehw'       : 'tsdeque -list -hw_clock -init_threshold'
              , 'tsdequehw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
+             , 'tsdequeshw'       : 'tsdeque -list -hw_clock -init_threshold'
+             , 'tsdequeshw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
+             , 'tsdequeqhw'       : 'tsdeque -list -hw_clock -init_threshold'
+             , 'tsdequeqhw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
              }
 
 #hasPartials = ['scal2random', 'scalrr', 'uskfifo', 'bskfifo', 'scal1random', 'scaltlrr', 'sq', 'rd']
