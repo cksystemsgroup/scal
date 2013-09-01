@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <atomic>
 #include <stdio.h>
+#include <time.h>
 
 #include "datastructures/deque.h"
 #include "datastructures/ts_timestamp.h"
@@ -254,7 +255,17 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         (Item*) add_next_aba(new_item, old_left, 1));
  
       new_item->t2.store(((int64_t)timestamp->get_timestamp()) * (-1));
-      calculate_pi(delay_);
+        
+      uint64_t wait = get_hwtime() + delay_;
+      while (get_hwtime() < wait) {}
+//      struct timespec tim, tim2;
+//      tim.tv_sec = 0;
+//      tim.tv_nsec = delay_;
+//      if(nanosleep(&tim , &tim2) < 0 ) {
+//        printf("Nano sleep system call failed \n");
+//        abort();
+//      }
+//      calculate_pi(delay_);
       new_item->t1.store(((int64_t)timestamp->get_timestamp()) * (-1));
     }
 
@@ -293,7 +304,17 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         (Item*) add_next_aba(new_item, old_right, 1));
 
       new_item->t1.store((int64_t)timestamp->get_timestamp());
-      calculate_pi(delay_);
+
+      uint64_t wait = get_hwtime() + delay_;
+      while (get_hwtime() < wait) {}
+//      struct timespec tim, tim2;
+//      tim.tv_sec = 0;
+//      tim.tv_nsec = delay_;
+//      if(nanosleep(&tim , &tim2) < 0 ) {
+//        printf("Nano sleep system call failed \n");
+//        abort();
+//      }
+//      calculate_pi(delay_);
       new_item->t2.store((int64_t)timestamp->get_timestamp());
     }
 
