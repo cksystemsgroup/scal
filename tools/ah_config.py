@@ -30,6 +30,10 @@ allQueues = [ 'bskfifo'
              , 'tsdequeatomic' 
              , 'tsdequehw' 
              , 'tsdequehw2ts' 
+             , 'tsdequeshw' 
+             , 'tsdequeshw2ts' 
+             , 'tsdequeqhw' 
+             , 'tsdequeqhw2ts' 
              ]
 
 executables = { 
@@ -51,10 +55,18 @@ executables = {
              , 'tsqueueatomic'   : 'tsqueue -atomic_clock -list'
              , 'tsqueuehw'       : 'tsqueue -hw_clock -list'
              , 'tsqueue2ts'       : 'tsqueue -hw_clock -2ts -delay 3000'
-             , 'tsdequestutter'  : 'tsdeque -list -stutter_clock'
+             , 'tsdequestutter'  : 'tsdeque -list -stutter_clock -init_threshold'
              , 'tsdequeatomic'   : 'tsdeque -list -atomic_clock -init_threshold'
              , 'tsdequehw'       : 'tsdeque -list -hw_clock -init_threshold'
-             , 'tsdequehw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold -delay 3000'
+             , 'tsdequehw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
+             , 'tsdequestutternt'  : 'tsdeque -list -stutter_clock -noinit_threshold'
+             , 'tsdequeatomicnt'   : 'tsdeque -list -atomic_clock -noinit_threshold'
+             , 'tsdequehwnt'       : 'tsdeque -list -hw_clock -noinit_threshold'
+             , 'tsdequehw2tsnt'       : 'tsdeque -2ts -hw_clock -noinit_threshold'
+             , 'tsdequeshw'       : 'tsdeque -list -hw_clock -init_threshold'
+             , 'tsdequeshw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
+             , 'tsdequeqhw'       : 'tsdeque -list -hw_clock -init_threshold'
+             , 'tsdequeqhw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
              }
 
 #hasPartials = ['scal2random', 'scalrr', 'uskfifo', 'bskfifo', 'scal1random', 'scaltlrr', 'sq', 'rd']
@@ -112,7 +124,7 @@ templates = {
 
   , 'enq': '@../prodcon-{exe} -producers {thread} -consumers 0 '
   + '-operations 10000 -c {work} {partials_param} {partials} '
-  + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
+  + '{perfParam} -noset_rt_priority -prealloc_size 250m > {filename}'
 
   , 'infprod': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
   + '-operations 150000 -measure_at 10000 -c {work} '

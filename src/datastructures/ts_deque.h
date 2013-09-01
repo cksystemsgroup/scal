@@ -27,8 +27,10 @@ class TSDequeBuffer {
   public:
     virtual void insert_left(T element, TimeStamp *timestamp) = 0;
     virtual void insert_right(T element, TimeStamp *timestamp) = 0;
-    virtual bool try_remove_left(T *element, int64_t *threshold) = 0;
-    virtual bool try_remove_right(T *element, int64_t *threshold) = 0;
+    virtual bool try_remove_left
+      (T *element, int64_t *threshold, void **potential_element) = 0;
+    virtual bool try_remove_right
+      (T *element, int64_t *threshold, void ** potential_element) = 0;
 };
 
 enum DequeSide {
@@ -50,7 +52,6 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       std::atomic<T> data;
       std::atomic<int64_t> t1;
       std::atomic<int64_t> t2;
-      std::atomic<int64_t> t3;
     } Item;
 
     // The number of threads.
@@ -88,8 +89,8 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
 
       Item* result = (Item*)get_aba_free_pointer(left_[thread_id]->load());
 
-      // We start at the left pointer and iterate to the right until we find
-      // the first item which has not been taken yet.
+      // We start at the left pointer and iterate to the right until we
+      // find the first item which has not been taken yet.
       while (result->taken.load() != 0 &&
           result->right.load() != result) {
         result = result->right.load();
@@ -100,9 +101,22 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       // problem that we may find an element inserted at the right side 
       // which is older than an element which was inserted on the left 
       // side in the meantime.
+      // 
+      // The interpretation of the second clause in the condition is the
+      // following: if the t1-time stamp of the result is greater than
+      // the threshold, then the element was inserted during the
+      // execution of this method. We cannot take the element because
+      // there may also exist a new element inserted at the left side
+      // in the meantime and we would have to prefer than one.
+      // Additionally we check if the result is different to the right
+      // pointer we read at the beginning of the method because if
+      // both right and result do not have a t1 time stamp at the time
+      // we read the t1 time stamp, then they both have the same time
+      // stamp but we are not allowed to take result except if it is
+      // the same as the one we read in the beginning of the method. 
       if (result->taken.load() != 0 ||
          (result->t1.load() >= threshold &&
-          right_[thread_id]->load() != old_right)) {
+          result != right)) {
         return NULL;
       }
       return result;
@@ -118,20 +132,33 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       Item* result = (Item*)get_aba_free_pointer(
         right_[thread_id]->load());
 
-      // We start at the right pointer and iterate to the left until we find
-      // the first item which has not been taken yet.
+      // We start at the right pointer and iterate to the left until we
+      // find the first item which has not been taken yet.
       while (result->taken.load() != 0 &&
           result->left.load() != result) {
         result = result->left.load();
       }
 
       // We don't return the element if it was taken already or if it
-      // was inserted after we started the search. Otherwise we have the problem
-      // that we may find an element inserted at the left side which is older
-      // than an element which was inserted on the right side in the meantime.
+      // was inserted after we started the search. Otherwise we have the
+      // problem that we may find an element inserted at the left side
+      // which is older than an element which was inserted on the right
+      // side in the meantime.
+      // 
+      // The interpretation of the second clause in the condition is the
+      // following: if the t2-time stamp of the result is less than
+      // the threshold, then the element was inserted during the
+      // execution of this method. We cannot take the element because
+      // there may also exist a new element inserted at the right side
+      // in the meantime and we would have to prefer than one.
+      // Additionally we check if the result is different to the left
+      // pointer we read at the beginning of the method because if
+      // both left and result do not have a t1 time stamp at the time
+      // we read the t1 time stamp, then they both have the same time
+      // stamp but we are not allowed to take result except if it is
+      // the same as the one we read in the beginning of the method. 
       if (result->taken.load() != 0 || 
-          (result->t2.load() <= threshold &&
-          left_[thread_id]->load() != old_left)) {
+          (result->t2.load() <= threshold && result != left)) {
         return NULL;
       } else {
         return result;
@@ -196,10 +223,10 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
-      // Switch the sign of the time stamp of elements inserted at the left side.
+      // Switch the sign of the time stamp of elements inserted at the
+      // left side.
       new_item->t1.store(INT64_MIN);
       new_item->t2.store(INT64_MIN);
-      new_item->t3.store(((int64_t)timestamp->get_timestamp()) * (-1));
       new_item->data.store(element);
       new_item->taken.store(0);
       new_item->left.store(new_item);
@@ -213,12 +240,12 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       }
 
       if (left->right.load() == left) {
-        // The buffer is empty. We have to increase the aba counter of the right
-        // pointer too to guarantee that a pending right-pointer update of a
-        // remove operation does not make the left and the right pointer point
-        // to different lists.
+        // The buffer is empty. We have to increase the aba counter of the
+        // right pointer too to guarantee that a pending right-pointer
+        // update of a remove operation does not make the left and the
+        // right pointer point to different lists.
         Item* old_right = right_[thread_id]->load();
-        right_[thread_id]->store( (Item*) add_next_aba(left, old_right, 1));
+        right_[thread_id]->store((Item*) add_next_aba(left, old_right, 1));
       }
 
       new_item->right.store(left);
@@ -240,7 +267,6 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
       new_item->t1.store(INT64_MAX);
       new_item->t2.store(INT64_MAX);
-      new_item->t3.store((int64_t)timestamp->get_timestamp());
       new_item->data.store(element);
       new_item->taken.store(0);
       new_item->right.store(new_item);
@@ -254,10 +280,10 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       }
 
       if (right->left.load() == right) {
-        // The buffer is empty. We have to increase the aba counter of the left
-        // pointer too to guarantee that a pending left-pointer update of a
-        // remove operation does not make the left and the right pointer point
-        // to different lists.
+        // The buffer is empty. We have to increase the aba counter of the
+        // left pointer too to guarantee that a pending left-pointer
+        // update of a remove operation does not make the left and the
+        // right pointer point to different lists.
         Item* old_left = left_[thread_id]->load();
         left_[thread_id]->store( (Item*) add_next_aba(right, old_left, 1)); }
 
@@ -274,7 +300,8 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // try_remove_left
     /////////////////////////////////////////////////////////////////
-    bool try_remove_left(T *element, int64_t *threshold) {
+    bool try_remove_left
+      (T *element, int64_t *threshold, void ** potential_element) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -310,7 +337,8 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
           int64_t item_t1 = item->t1.load();
           int64_t item_t2 = item->t2.load();
 
-          if (t1 > item_t2) {
+          if (t1 > item_t2 || 
+              (t1 == INT64_MAX && item == *potential_element)) {
             // We found a new youngest element, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
@@ -319,7 +347,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             old_left = tmp_left;
            
             // Check if we can remove the element immediately.
-            if (*threshold > t1) {
+            if (threshold[0] > t1) {
               uint64_t expected = 0;
               if (result->taken.load() == 0) {
                 if (result->taken.compare_exchange_weak(
@@ -353,10 +381,15 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         }
       }
       if (result != NULL) {
-        // TODO: Fix the following condition. What happens if 
-        // threshold = INT64_MIN and t1 = INT_MIN?
-        int64_t t3 = result->t3.load();
-        if ((t1 != INT64_MIN &&t2 <= *threshold) || t3 >= *threshold) {
+        // (t1 == INT64_MAX) means that the element was inserted at the
+        // right side and did not get a time stamp yet. We should not take
+        // it then, except if we found the same element already in the
+        // previous iteration (and stored it as potential_element).
+        if ((t1 != INT64_MAX &&t1 <= threshold[0]) 
+            || result == *potential_element
+            || (t1 > 0 && t1 < threshold[1])
+            || (t2 < 0 && t2 > -threshold[1])
+            ){
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -372,10 +405,14 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             }
           }
         }
-        if (t1 != INT64_MIN) {
-          *threshold =  t1;
+        // We only set an new threshold if the element we tried to remove
+        // already had a time stamp. Otherwise we continue to use the old
+        // time stamp. 
+        if (t1 != INT64_MAX) {
+          threshold[0] =  t1;
+          *potential_element = NULL;
         } else {
-          *threshold = t3;
+          *potential_element = result;
         }
       }
 
@@ -386,7 +423,8 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // try_remove_right
     ////////////////////////////////////////////////////////////////
-    bool try_remove_right(T *element, int64_t *threshold) {
+    bool try_remove_right
+      (T *element, int64_t *threshold, void ** potential_element) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -421,7 +459,8 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
           empty = false;
           int64_t item_t1 = item->t1.load();
           int64_t item_t2 = item->t2.load();
-          if (t2 < item_t1) {
+          if (t2 < item_t1 || 
+             (t2 == INT64_MIN && item == *potential_element)) {
             // We found a new youngest element, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
@@ -430,7 +469,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             old_right = tmp_right;
 
             // Check if we can remove the element immediately.
-            if (*threshold < t2) {
+            if (threshold[0] < t2) {
               uint64_t expected = 0;
               if (result->taken.load() == 0) {
                 if (result->taken.compare_exchange_weak(
@@ -465,10 +504,15 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         }
       }
       if (result != NULL) {
-        // TODO: Fix the following condition. What happens if 
-        // threshold = INT64_MAX and t2 = INT_MAX?
-        int64_t t3 = result->t3.load();
-        if ((t2 != INT64_MAX &&t2 >= *threshold) || t3 <= *threshold) {
+        // (t2 == INT64_MIN) means that the element was inserted at the
+        // left side and did not get a time stamp yet. We should not take
+        // it then, except if we found the same element already in the
+        // previous iteration (and stored it as potential_element).
+        if ((t2 != INT64_MIN && t2 >= threshold[0]) 
+            || (result == *potential_element)
+            || (t1 > 0 && t1 < threshold[1])
+            || (t2 < 0 && t2 > -threshold[1])
+            ) {
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -484,10 +528,14 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
             }
           }
         }
-        if (t2 != INT64_MAX) {
-          *threshold =  t2;
+        // We only set an new threshold if the element we tried to remove
+        // already had a time stamp. Otherwise we continue to use the old
+        // time stamp. 
+        if (t2 != INT64_MIN) {
+          threshold[0] =  t2;
+          *potential_element = NULL;
         } else {
-          *threshold = t3;
+          *potential_element = result;
         }
       }
 
@@ -544,20 +592,34 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
 
       Item* result = (Item*)get_aba_free_pointer(left_[thread_id]->load());
 
-      // We start at the left pointer and iterate to the right until we find
-      // the first item which has not been taken yet.
+      // We start at the left pointer and iterate to the right until we
+      // find the first item which has not been taken yet.
       while (result->taken.load() != 0 &&
           result->right.load() != result) {
         result = result->right.load();
       }
 
       // We don't return the element if it was taken already or if it
-      // was inserted after we started the search. Otherwise we have the problem
-      // that we may find an element inserted at the right side which is older
-      // than an element which was inserted on the left side in the meantime.
+      // was inserted after we started the search. Otherwise we have the
+      // problem that we may find an element inserted at the right side
+      // which is older than an element which was inserted on the left
+      // side in the meantime.
+      // 
+      // The interpretation of the second clause in the condition is the
+      // following: if the t1-time stamp of the result is greater than
+      // the threshold, then the element was inserted during the
+      // execution of this method. We cannot take the element because
+      // there may also exist a new element inserted at the left side
+      // in the meantime and we would have to prefer than one.
+      // Additionally we check if the result is different to the right
+      // pointer we read at the beginning of the method because if
+      // both right and result do not have a t1 time stamp at the time
+      // we read the t1 time stamp, then they both have the same time
+      // stamp but we are not allowed to take result except if it is
+      // the same as the one we read in the beginning of the method. 
       if (result->taken.load() != 0 ||
-         (result->timestamp.load() > threshold &&
-          right_[thread_id]->load() != old_right)) {
+         (result->timestamp.load() >= threshold &&
+          result != right)) {
         return NULL;
       }
       return result;
@@ -581,10 +643,25 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
       }
 
       // We don't return the element if it was taken already or if it
-      // was inserted after we started the search. Otherwise we have the problem
-      // that we may find an element inserted at the left side which is older
-      // than an element which was inserted on the right side in the meantime.
-      if (result->taken.load() != 0 || result->timestamp.load() < threshold) {
+      // was inserted after we started the search. Otherwise we have the
+      // problem that we may find an element inserted at the left side
+      // which is older than an element which was inserted on the right
+      // side in the meantime.
+      // 
+      // The interpretation of the second clause in the condition is the
+      // following: if the t2-time stamp of the result is less than
+      // the threshold, then the element was inserted during the
+      // execution of this method. We cannot take the element because
+      // there may also exist a new element inserted at the right side
+      // in the meantime and we would have to prefer than one.
+      // Additionally we check if the result is different to the left
+      // pointer we read at the beginning of the method because if
+      // both left and result do not have a t1 time stamp at the time
+      // we read the t1 time stamp, then they both have the same time
+      // stamp but we are not allowed to take result except if it is
+      // the same as the one we read in the beginning of the method. 
+      if (result->taken.load() != 0 || 
+          result->timestamp.load() <= threshold && result != left) {
         return NULL;
       } else {
         return result;
@@ -714,7 +791,8 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // try_remove_left
     /////////////////////////////////////////////////////////////////
-    bool try_remove_left(T *element, int64_t *threshold) {
+    bool try_remove_left
+      (T *element, int64_t *threshold, void ** potential_element) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -757,7 +835,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             old_left = tmp_left;
           } 
           // Check if we can remove the element immediately.
-          if (*threshold > timestamp) {
+          if (threshold[0] > timestamp) {
             uint64_t expected = 0;
             if (result->taken.load() == 0) {
               if (result->taken.compare_exchange_weak(
@@ -790,7 +868,15 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         }
       }
       if (result != NULL) {
-        if (timestamp == *threshold) {
+        // (timestamp == INT64_MAX) means that the element was inserted at
+        // the right side and did not get a time stamp yet. We should not
+        // take it then, except if we found the same element already in the
+        // previous iteration (and stored it as potential_element).
+        if ((timestamp != INT64_MAX && timestamp <= threshold[0])
+            || result == *potential_element
+            || (timestamp > 0 && timestamp < threshold[1])
+            || (timestamp < 0 && timestamp > -threshold[1])
+            ){
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -806,7 +892,15 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
           }
             }
         }
-        *threshold = result->timestamp.load();
+        // We only set an new threshold if the element we tried to remove
+        // already had a time stamp. Otherwise we continue to use the old
+        // time stamp. 
+        if (timestamp != INT64_MAX) {
+          threshold[0] =  timestamp;
+          *potential_element = NULL;
+        } else {
+          *potential_element = result;
+        }
       }
 
       *element = (T)NULL;
@@ -816,7 +910,8 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // try_remove_right
     ////////////////////////////////////////////////////////////////
-    bool try_remove_right(T *element, int64_t *threshold) {
+    bool try_remove_right
+      (T *element, int64_t *threshold, void ** potential_element) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -858,7 +953,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             old_right = tmp_right;
           }
           // Check if we can remove the element immediately.
-          if (*threshold < timestamp) {
+          if (threshold[0] < timestamp) {
             uint64_t expected = 0;
             if (result->taken.load() == 0) {
               if (result->taken.compare_exchange_weak(
@@ -892,7 +987,15 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         }
       }
       if (result != NULL) {
-        if (timestamp == *threshold) {
+        // (timestamp == INT64_MIN) means that the element was inserted at
+        // the left side and did not get a time stamp yet. We should not
+        // take it then, except if we found the same element already in the
+        // previous iteration (and stored it as potential_element).
+        if ((timestamp != INT64_MIN && timestamp >= threshold[0])
+            || result == *potential_element
+            || (timestamp > 0 && timestamp < threshold[1])
+            || (timestamp < 0 && timestamp > -threshold[1])
+            ){
           // We found a similar element to the one in the last iteration. Let's
           // try to remove it
           uint64_t expected = 0;
@@ -908,7 +1011,15 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
             }
           }
         }
-        *threshold = result->timestamp.load();
+        // We only set an new threshold if the element we tried to remove
+        // already had a time stamp. Otherwise we continue to use the old
+        // time stamp. 
+        if (timestamp != INT64_MIN) {
+          threshold[0] = timestamp;
+          *potential_element = NULL;
+        } else {
+          *potential_element = result;
+        }
       }
 
       *element = (T)NULL;
@@ -981,14 +1092,23 @@ bool TSDeque<T>::insert_right(T element) {
 
 template<typename T>
 bool TSDeque<T>::remove_left(T *element) {
-  int64_t threshold;
+  int64_t threshold[2];
   if (init_threshold_) {
-    threshold = ((int64_t)timestamping_->get_timestamp()) * -1;
+    //threshold[1] is positive because defines a point in time independent
+    //of the side of the insert.
+    threshold[1] = timestamping_->get_timestamp();
+    threshold[0] = -threshold[1];
   } else {
-    threshold = INT64_MIN;
+    threshold[0] = INT64_MIN;
+    //threshold[1] is INT64_MIN because we want any insert operation to
+    //start after threshold[1].
+    threshold[1] = INT64_MIN;
   }
 
-  while (buffer_->try_remove_left(element, &threshold)) {
+  void *potential_element = NULL;
+
+  while (
+    buffer_->try_remove_left(element, threshold, &potential_element)) {
     if (*element != (T)NULL) {
       return true;
     }
@@ -998,13 +1118,23 @@ bool TSDeque<T>::remove_left(T *element) {
 
 template<typename T>
 bool TSDeque<T>::remove_right(T *element) {
-  int64_t threshold;
+  int64_t threshold[2];
   if (init_threshold_) {
-    threshold = timestamping_->get_timestamp();
+    //threshold[1] is positive because defines a point in time independent
+    //of the side of the insert.
+    threshold[1] = timestamping_->get_timestamp();
+    threshold[0] = threshold[1];
   } else {
-    threshold = INT64_MAX;
+    threshold[0] = INT64_MAX;
+    //threshold[1] is INT64_MIN because we want any insert operation to
+    //start after threshold[1].
+    threshold[1] = INT64_MIN;
   }
-  while (buffer_->try_remove_right(element, &threshold)) {
+
+  void *potential_element = NULL;
+
+  while (
+    buffer_->try_remove_right(element, threshold, &potential_element)) {
     if (*element != (T)NULL) {
       return true;
     }
