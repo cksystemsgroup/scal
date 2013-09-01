@@ -18,7 +18,7 @@ class Deque : public Queue<T> {
   virtual bool remove_right(T *item) = 0;
 
   virtual inline bool enqueue(T item) {
-    return insert_left(item);
+    return insert_right(item);
   }
 
   virtual inline bool dequeue(T *item) {

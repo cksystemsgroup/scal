@@ -1055,11 +1055,16 @@ bool TSDeque<T>::insert_right(T element) {
 template<typename T>
 bool TSDeque<T>::remove_left(T *element) {
   int64_t threshold[2];
-  threshold[1] = timestamping_->get_timestamp();
   if (init_threshold_) {
+    //threshold[1] is positive because defines a point in time independent
+    //of the side of the insert.
+    threshold[1] = timestamping_->get_timestamp();
     threshold[0] = -threshold[1];
   } else {
     threshold[0] = INT64_MIN;
+    //threshold[1] is INT64_MIN because we want any insert operation to
+    //start after threshold[1].
+    threshold[1] = INT64_MIN;
   }
 
   void *potential_element = NULL;
@@ -1076,11 +1081,16 @@ bool TSDeque<T>::remove_left(T *element) {
 template<typename T>
 bool TSDeque<T>::remove_right(T *element) {
   int64_t threshold[2];
-  threshold[1] = timestamping_->get_timestamp();
   if (init_threshold_) {
+    //threshold[1] is positive because defines a point in time independent
+    //of the side of the insert.
+    threshold[1] = timestamping_->get_timestamp();
     threshold[0] = threshold[1];
   } else {
     threshold[0] = INT64_MAX;
+    //threshold[1] is INT64_MIN because we want any insert operation to
+    //start after threshold[1].
+    threshold[1] = INT64_MIN;
   }
 
   void *potential_element = NULL;
