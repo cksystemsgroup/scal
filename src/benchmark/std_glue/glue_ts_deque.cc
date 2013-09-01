@@ -17,32 +17,10 @@ DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
 DEFINE_bool(init_threshold, false, "initializes the dequeue threshold "
     "with the current time");
 DEFINE_int64(delay, -1, "delay in the insert operation");
-DEFINE_bool(insert_left, false, "put is mapped to insert_left");
-DEFINE_bool(insert_right, false, "put is mapped to insert_right");
-DEFINE_bool(insert_random, false, "put is mapped randomly to insert_left "
-    " and insert_right");
-DEFINE_bool(remove_left, false, "put is mapped to remove_left");
-DEFINE_bool(remove_right, false, "put is mapped to remove_right");
-DEFINE_bool(remove_random, false, "put is mapped randomly to remove_left "
-    " and remove_right");
 
 uint64_t g_delay;
 
 void* ds_new() {
-  uint64_t insert_side = DequeSide::kRight;
-  uint64_t remove_side = DequeSide::kRight;
-
-  if (FLAGS_insert_left) {
-    insert_side = DequeSide::kLeft;
-  } else if (FLAGS_insert_random) {
-    insert_side = DequeSide::kRandom;
-  }
-
-  if (FLAGS_remove_left) {
-    remove_side = DequeSide::kLeft;
-  } else if (FLAGS_remove_random) {
-    remove_side = DequeSide::kRandom;
-  }
 
   TimeStamp *timestamping;
   if (FLAGS_stutter_clock) {
@@ -75,8 +53,7 @@ void* ds_new() {
     buffer = new TLLinkedListDequeBuffer<uint64_t>(g_num_threads + 1);
   }
   TSDeque<uint64_t> *ts =
-      new TSDeque<uint64_t>(buffer, timestamping, FLAGS_init_threshold,
-          insert_side, remove_side);
+      new TSDeque<uint64_t>(buffer, timestamping, FLAGS_init_threshold);
   return static_cast<void*>(ts);
 }
 

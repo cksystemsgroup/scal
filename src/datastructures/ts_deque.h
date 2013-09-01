@@ -1033,48 +1033,17 @@ class TSDeque : public Deque<T> {
   TSDequeBuffer<T> *buffer_;
   TimeStamp *timestamping_;
   bool init_threshold_;
-  uint64_t insert_side_;
-  uint64_t remove_side_;
  public:
   explicit TSDeque
-    (TSDequeBuffer<T> *buffer, TimeStamp *timestamping, bool init_threshold,
-     uint64_t insert_side, uint64_t remove_side) 
+    (TSDequeBuffer<T> *buffer, TimeStamp *timestamping, 
+     bool init_threshold)
     : buffer_(buffer), timestamping_(timestamping),
-      init_threshold_(init_threshold), insert_side_(insert_side),
-      remove_side_(remove_side) {
+      init_threshold_(init_threshold) {
   }
   bool insert_left(T item);
   bool remove_left(T *item);
   bool insert_right(T item);
   bool remove_right(T *item);
-
-  bool enqueue(T item) {
-    if (insert_side_ == DequeSide::kLeft) {
-      return insert_left(item);
-    } else if (insert_side_ == DequeSide::kRight) {
-      return insert_right(item);
-    } else {
-      if (hwrand() % 2 == 0) {
-        return insert_left(item);
-      } else {
-        return insert_right(item);
-      }
-    }
-  }
-
-  bool dequeue(T *item) {
-    if (remove_side_ == DequeSide::kLeft) {
-      return remove_left(item);
-    } else if (remove_side_ == DequeSide::kRight) {
-      return remove_right(item);
-    } else {
-      if (hwrand() % 2 == 0) {
-        return remove_left(item);
-      } else {
-        return remove_right(item);
-      }
-    }
-  }
 };
 
 template<typename T>
@@ -1096,7 +1065,7 @@ bool TSDeque<T>::remove_left(T *element) {
   if (init_threshold_) {
     //threshold[1] is positive because defines a point in time independent
     //of the side of the insert.
-    threshold[1] = timestamping_->get_timestamp();
+    threshold[1] = timestamping_->read_time();
     threshold[0] = -threshold[1];
   } else {
     threshold[0] = INT64_MIN;
@@ -1122,7 +1091,7 @@ bool TSDeque<T>::remove_right(T *element) {
   if (init_threshold_) {
     //threshold[1] is positive because defines a point in time independent
     //of the side of the insert.
-    threshold[1] = timestamping_->get_timestamp();
+    threshold[1] = timestamping_->read_time();
     threshold[0] = threshold[1];
   } else {
     threshold[0] = INT64_MAX;

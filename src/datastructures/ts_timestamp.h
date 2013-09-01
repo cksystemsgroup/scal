@@ -18,6 +18,7 @@
 class TimeStamp {
  public:
   virtual uint64_t get_timestamp() = 0;
+  virtual uint64_t read_time() = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -76,6 +77,24 @@ class StutteringTimeStamp : public TimeStamp {
       // Return the current local time.
       return latest_time + 1;
     }
+
+    //////////////////////////////////////////////////////////////////////
+    // Read the current time.
+    //////////////////////////////////////////////////////////////////////
+    uint64_t read_time() {
+
+      uint64_t thread_id = scal::ThreadContext::get().thread_id();
+      uint64_t latest_time = 0;
+
+      // Find the latest of all thread-local times.
+      for (int i = 0; i < num_threads_; i++) {
+        latest_time = 
+          max(latest_time, clocks_[i]->load(std::memory_order_acquire));
+      }
+
+      // Return the current local time.
+      return latest_time;
+    }
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -95,6 +114,10 @@ class AtomicCounterTimeStamp : public TimeStamp {
     uint64_t get_timestamp() {
       return clock_->fetch_add(1);
     }
+
+    uint64_t read_time() {
+      return clock_->load();
+    }
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -111,6 +134,9 @@ class HardwareTimeStamp : public TimeStamp {
     uint64_t get_timestamp() {
       return get_hwtime();
     }
+    uint64_t read_time() {
+      return get_hwtime();
+    }
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -125,6 +151,9 @@ class ShiftedHardwareTimeStamp : public TimeStamp {
     }
   
     uint64_t get_timestamp() {
+      return get_hwtime() >> 1;
+    }
+    uint64_t read_time() {
       return get_hwtime() >> 1;
     }
 };
