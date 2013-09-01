@@ -31,6 +31,12 @@ class TSDequeBuffer {
     virtual bool try_remove_right(T *element, int64_t *threshold) = 0;
 };
 
+enum DequeSide {
+  kLeft = 0,
+  kRight = 1,
+  kRandom = 2
+};
+
 //////////////////////////////////////////////////////////////////////
 // A TSDequeBuffer based on thread-local linked lists.
 //////////////////////////////////////////////////////////////////////
@@ -916,16 +922,48 @@ class TSDeque : public Deque<T> {
   TSDequeBuffer<T> *buffer_;
   TimeStamp *timestamping_;
   bool init_threshold_;
+  uint64_t insert_side_;
+  uint64_t remove_side_;
  public:
   explicit TSDeque
-    (TSDequeBuffer<T> *buffer, TimeStamp *timestamping, bool init_threshold) 
+    (TSDequeBuffer<T> *buffer, TimeStamp *timestamping, bool init_threshold,
+     uint64_t insert_side, uint64_t remove_side) 
     : buffer_(buffer), timestamping_(timestamping),
-      init_threshold_(init_threshold) {
+      init_threshold_(init_threshold), insert_side_(insert_side),
+      remove_side_(remove_side) {
   }
   bool insert_left(T item);
   bool remove_left(T *item);
   bool insert_right(T item);
-  bool remove_right(T *item); 
+  bool remove_right(T *item);
+
+  bool enqueue(T item) {
+    if (insert_side_ == DequeSide::kLeft) {
+      return insert_left(item);
+    } else if (insert_side_ == DequeSide::kRight) {
+      return insert_right(item);
+    } else {
+      if (hwrand() % 2 == 0) {
+        return insert_left(item);
+      } else {
+        return insert_right(item);
+      }
+    }
+  }
+
+  bool dequeue(T *item) {
+    if (remove_side_ == DequeSide::kLeft) {
+      return remove_left(item);
+    } else if (remove_side_ == DequeSide::kRight) {
+      return remove_right(item);
+    } else {
+      if (hwrand() % 2 == 0) {
+        return remove_left(item);
+      } else {
+        return remove_right(item);
+      }
+    }
+  }
 };
 
 template<typename T>
