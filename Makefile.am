@@ -34,7 +34,7 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/lockbased_queue.h \
 	src/datastructures/ms_queue.h \
 	src/datastructures/ah_queue.h \
-	src/datastructures/ah_stack.h \
+	src/datastructures/lcrq.h \
 	src/datastructures/ts_stack.h \
 	src/datastructures/ts_queue.h \
 	src/datastructures/ts_deque.h \
@@ -152,10 +152,11 @@ shortest_path_ah_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
         src/benchmark/std_glue/glue_ah_queue.cc
 
-bin_PROGRAMS += shortest-path-ahstack
-shortest_path_ahstack_SOURCES = \
+bin_PROGRAMS += shortest-path-lcrq
+shortest_path_lcrq_SOURCES = \
         $(SHORTESTPATH_BASE_OBJS) \
-        src/benchmark/std_glue/glue_ah_stack.cc
+				src/datastructures/lcrq_upstream.cc \
+        src/benchmark/std_glue/glue_lcrq.cc
 
 bin_PROGRAMS += shortest-path-tsstack
 shortest_path_tsstack_SOURCES = \
@@ -266,10 +267,11 @@ seqalt_ah_SOURCES = \
         $(SEQALT_BASE_OBJS) \
         src/benchmark/std_glue/glue_ah_queue.cc
 
-bin_PROGRAMS += seqalt-ahstack
-seqalt_ahstack_SOURCES = \
+bin_PROGRAMS += seqalt-lcrq
+seqalt_lcrq_SOURCES = \
         $(SEQALT_BASE_OBJS) \
-        src/benchmark/std_glue/glue_ah_stack.cc
+				src/datastructures/lcrq_upstream.cc \
+        src/benchmark/std_glue/glue_lcrq.cc
 
 bin_PROGRAMS += seqalt-tsstack
 seqalt_tsstack_SOURCES = \
@@ -400,10 +402,11 @@ prodcon_ah_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_ah_queue.cc
 
-bin_PROGRAMS += prodcon-ahstack
-prodcon_ahstack_SOURCES = \
+bin_PROGRAMS += prodcon-lcrq
+prodcon_lcrq_SOURCES = \
         $(PRODCON_BASE_OBJS) \
-        src/benchmark/std_glue/glue_ah_stack.cc
+				src/datastructures/lcrq_upstream.cc \
+        src/benchmark/std_glue/glue_lcrq.cc
 
 bin_PROGRAMS += prodcon-tsstack
 prodcon_tsstack_SOURCES = \
@@ -531,10 +534,11 @@ mandel_ah_SOURCES = \
         $(MANDEL_BASE_OBJS) \
         src/benchmark/std_glue/glue_ah_queue.cc
 
-bin_PROGRAMS += mandel-ahstack
-mandel_ahstack_SOURCES = \
+bin_PROGRAMS += mandel-lcrq
+mandel_lcrq_SOURCES = \
         $(MANDEL_BASE_OBJS) \
-        src/benchmark/std_glue/glue_ah_stack.cc
+				src/datastructures/lcrq_upstream.cc \
+        src/benchmark/std_glue/glue_lcrq.cc
 
 bin_PROGRAMS += mandel-tsstack
 mandel_tsstack_SOURCES = \
