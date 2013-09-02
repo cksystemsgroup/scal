@@ -16,7 +16,7 @@ DEFINE_bool(atomic_clock, false, "use atomic fetch-and-inc clock");
 DEFINE_bool(hw_clock, false, "use the RDTSC hardware clock");
 DEFINE_bool(init_threshold, false, "initializes the dequeue threshold "
     "with the current time");
-DEFINE_int64(delay, -1, "delay in the insert operation");
+DEFINE_int64(delay, 0, "delay in the insert operation");
 
 uint64_t g_delay;
 
@@ -39,7 +39,7 @@ void* ds_new() {
     if (g_num_threads <= 2) {
       g_delay = 0;
     } else {
-      g_delay = g_num_threads * 60;
+      g_delay = g_num_threads * (-FLAGS_delay);
     }
   }
 
