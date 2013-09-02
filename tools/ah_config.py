@@ -3,6 +3,7 @@ allQueues = [ 'bskfifo'
              , 'fc'
              , 'kstack'
              , 'lb'
+             , 'lcrq'
              , 'ms'
              , 'rd'
              , 'scal1random'
@@ -67,6 +68,8 @@ executables = {
              , 'tsdequeshw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
              , 'tsdequeqhw'       : 'tsdeque -list -hw_clock -init_threshold'
              , 'tsdequeqhw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
+             , 'tsdequedhw'       : 'tsdeque -list -hw_clock -init_threshold'
+             , 'tsdequedhw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
              }
 
 #hasPartials = ['scal2random', 'scalrr', 'uskfifo', 'bskfifo', 'scal1random', 'scaltlrr', 'sq', 'rd']
