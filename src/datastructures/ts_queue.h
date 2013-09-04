@@ -25,7 +25,7 @@
 template<typename T>
 class TSQueueBuffer {
   public:
-    virtual std::atomic<uint64_t> *insert_element(T element, uint64_t timestamp) = 0;
+    virtual void insert_element(T element, TimeStamp *timestamp) = 0;
     virtual bool try_remove_oldest(T *element, uint64_t *threshold) = 0;
 };
 
@@ -44,6 +44,7 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
 
     // The number of threads.
     uint64_t num_threads_;
+    uint64_t delay_;
     // The thread-local queues, implemented as arrays of size BUFFERSIZE. 
     // At the moment buffer overflows are not considered.
     std::atomic<Item*> **insert_;
@@ -70,7 +71,8 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // Constructor
     /////////////////////////////////////////////////////////////////
-    TL2TSQueueBuffer(uint64_t num_threads) : num_threads_(num_threads) {
+    TL2TSQueueBuffer(uint64_t num_threads, uint64_t delay) 
+      : num_threads_(num_threads), delay_(delay) {
       insert_ = static_cast<std::atomic<Item*>**>(
           scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 4));
@@ -109,11 +111,12 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // insert_element
     /////////////////////////////////////////////////////////////////
-    std::atomic<uint64_t> *insert_element(T element, uint64_t timestamp) {
+    void insert_element(T element, TimeStamp *timestamp) {
+      uint64_t t1 = timestamp->get_timestamp();
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
-      new_item->t1.store(timestamp);
+      new_item->t1.store(t1);
       new_item->t2.store(UINT64_MAX);
       new_item->data.store(element);
       new_item->next.store(NULL);
@@ -121,7 +124,9 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
       Item* old_insert = insert_[thread_id]->load();
       old_insert->next.store(new_item);
       insert_[thread_id]->store(new_item);
-      return &new_item->t2;
+      uint64_t wait = get_hwtime() + delay_;
+      while (get_hwtime() < wait) {}
+      new_item->t2.store(timestamp->get_timestamp());
     };
 
     /////////////////////////////////////////////////////////////////
@@ -133,10 +138,6 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
       Item* *emptiness_check_pointers = 
         emptiness_check_pointers_[thread_id];
       bool empty = true;
-      // This flag indicates if all thread-local buckets are not empty. 
-      // If all thread-local buckets contain at least one element, we do
-      // not have to do the second iteration.
-      bool all_full = true;
       // Initialize the result pointer to NULL, which means that no 
       // element has been removed.
       Item *result = NULL;
@@ -170,10 +171,10 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
           assert(item != NULL);
           empty = false;
           uint64_t item_t2 = 
-            item->t2.load(std::memory_order_acquire);
+            item->t2.load();
           if (item_t2 < t1) {
             uint64_t item_t1 = 
-              item->t1.load(std::memory_order_acquire);
+              item->t1.load();
 //          if (t1 < item_t1) {
             // We found a new oldest element, so we remember it.
             result = item;
@@ -183,7 +184,6 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
             old_remove = tmp_remove;
           } 
         } else {
-          all_full = false;
           // No element was found, work on the emptiness check.
           if (emptiness_check_pointers[tmp_buffer_index] 
               != tmp_remove) {
@@ -194,16 +194,15 @@ class TL2TSQueueBuffer : public TSQueueBuffer<T> {
         }
       }
       if (result != NULL) {
-        if (t1 <= threshold[1] || t2 <= threshold[0]) {
+        if (t1 <= *threshold) {
           if (remove_[buffer_index]->load() == old_remove) {
           if (remove_[buffer_index]->compare_exchange_weak(
                 old_remove, (Item*)add_next_aba(result, old_remove, 1))) {
-            *element = result->data.load(std::memory_order_acquire);
+            *element = result->data.load();
             return true;
           }
           }
         }
-        threshold[1] = result->t2.load();
       }
       *element = (T)NULL;
       return !empty;
@@ -288,18 +287,17 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // insert_element
     /////////////////////////////////////////////////////////////////
-    std::atomic<uint64_t> *insert_element(T element, uint64_t timestamp) {
+    void insert_element(T element, TimeStamp *timestamp) {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
-      new_item->timestamp.store(timestamp);
       new_item->data.store(element);
       new_item->next.store(NULL);
 
       Item* old_insert = insert_[thread_id]->load();
       old_insert->next.store(new_item);
       insert_[thread_id]->store(new_item);
-      return NULL;
+      new_item->timestamp.store(timestamp->get_timestamp());
     };
 
     /////////////////////////////////////////////////////////////////
@@ -311,10 +309,6 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
       Item* *emptiness_check_pointers = 
         emptiness_check_pointers_[thread_id];
       bool empty = true;
-      // This flag indicates if all thread-local buckets are not empty. 
-      // If all thread-local buckets contain at least one element, we do
-      // not have to do the second iteration.
-      bool all_full = true;
       // Initialize the result pointer to NULL, which means that no 
       // element has been removed.
       Item *result = NULL;
@@ -347,7 +341,7 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
           assert(item != NULL);
           empty = false;
           uint64_t item_timestamp = 
-            item->timestamp.load(std::memory_order_acquire);
+            item->timestamp.load();
           if (timestamp > item_timestamp) {
             // We found a new oldest element, so we remember it.
             result = item;
@@ -356,7 +350,6 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
             old_remove = tmp_remove;
           } 
         } else {
-          all_full = false;
           // No element was found, work on the emptiness check.
           if (emptiness_check_pointers[tmp_buffer_index] 
               != tmp_remove) {
@@ -367,16 +360,15 @@ class TLLinkedListQueueBuffer : public TSQueueBuffer<T> {
         }
       }
       if (result != NULL) {
-        if (timestamp <= *threshold || all_full) {
+        if (timestamp <= *threshold) {
           if (remove_[buffer_index]->load() == old_remove) {
-          if (remove_[buffer_index]->compare_exchange_weak(
-                old_remove, (Item*)add_next_aba(result, old_remove, 1))) {
-            *element = result->data.load(std::memory_order_acquire);
-            return true;
-          }
+            if (remove_[buffer_index]->compare_exchange_weak(
+                  old_remove, (Item*)add_next_aba(result, old_remove, 1))) {
+              *element = result->data.load();
+              return true;
+            }
           }
         }
-        *threshold = result->timestamp.load();
       }
       *element = (T)NULL;
       return !empty;
@@ -391,7 +383,6 @@ class TSQueue : public Queue<T> {
   int64_t* *counter1_;
   int64_t* *counter2_;
   uint64_t num_threads_;
-  uint64_t delay_;
 
   inline void inc_counter1() {
     uint64_t thread_id = scal::ThreadContext::get().thread_id();
@@ -404,9 +395,9 @@ class TSQueue : public Queue<T> {
  public:
   explicit TSQueue
     (TSQueueBuffer<T> *buffer, TimeStamp *timestamping, 
-     uint64_t num_threads, uint64_t delay) 
+     uint64_t num_threads) 
     : buffer_(buffer), timestamping_(timestamping)
-      , num_threads_(num_threads), delay_(delay) {
+      , num_threads_(num_threads) {
 
     counter1_ = static_cast<int64_t**>(
         scal::calloc_aligned(num_threads, sizeof(uint64_t*), 
@@ -439,8 +430,7 @@ class TSQueue : public Queue<T> {
     char buffer[255] = { 0 };
     uint32_t n = snprintf(buffer,
                           sizeof(buffer),
-                          "%lu %ld",
-                          delay_,  
+                          "%ld",
                           sum1 ? (sum2 / sum1) : 0
                           );
     if (n != strlen(buffer)) {
@@ -455,28 +445,21 @@ class TSQueue : public Queue<T> {
 
 template<typename T>
 bool TSQueue<T>::enqueue(T element) {
-  uint64_t timestamp = timestamping_->get_timestamp();
-  std::atomic<uint64_t> *timestamp_slot =
-    buffer_->insert_element(element, timestamp);
-  if (timestamp_slot != NULL) {
-    calculate_pi(delay_);
-    timestamp_slot->store(timestamping_->get_timestamp());
-  }
+  buffer_->insert_element(element, timestamping_);
   return true;
 }
 
 template<typename T>
 bool TSQueue<T>::dequeue(T *element) {
   inc_counter1();
-  uint64_t threshold[2];
-//  threshold[0] = timestamping_->get_timestamp();
-  threshold[0] = 0;
-  threshold[1] = 0;
-  while (buffer_->try_remove_oldest(element, threshold)) {
+  uint64_t threshold;
+  threshold = timestamping_->read_time();
+  while (buffer_->try_remove_oldest(element, &threshold)) {
     inc_counter2();
     if (*element != (T)NULL) {
       return true;
     }
+    threshold = timestamping_->read_time();
   }
   return false;
 }

@@ -29,14 +29,15 @@ void* ds_new() {
   }
   TSQueueBuffer<uint64_t> *buffer;
   if (FLAGS_2ts) {
-    buffer = new TL2TSQueueBuffer<uint64_t>(g_num_threads + 1);
+    buffer 
+      = new TL2TSQueueBuffer<uint64_t>(g_num_threads + 1, FLAGS_delay);
   } else if (FLAGS_list) {
     buffer = new TLLinkedListQueueBuffer<uint64_t>(g_num_threads + 1);
   } else {
     buffer = new TLLinkedListQueueBuffer<uint64_t>(g_num_threads + 1);
   }
   ts =
-      new TSQueue<uint64_t>(buffer, timestamping, g_num_threads + 1, FLAGS_delay);
+      new TSQueue<uint64_t>(buffer, timestamping, g_num_threads + 1);
   return static_cast<void*>(ts);
 }
 

@@ -569,7 +569,8 @@ class TL2TSStackBuffer : public TSStackBuffer<T> {
           std::memory_order_release);
 
       new_item->t1.store(timestamp->get_timestamp());
-      calculate_pi(delay_);
+      uint64_t wait = get_hwtime() + delay_;
+      while (get_hwtime() < wait) {}
       new_item->t2.store(timestamp->get_timestamp());
     };
 
