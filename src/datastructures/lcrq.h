@@ -37,14 +37,12 @@ LCRQ<T>::LCRQ() {
 
 template<typename T>
 bool LCRQ<T>::enqueue(T item) {
-  lcrq_enqueue((long)item);
-  return true;
+  return lcrq_enqueue(item);
 }
 
 template<typename T>
 bool LCRQ<T>::dequeue(T* item) {
-  *item = lcrq_dequeue();
-  return true;
+  return lcrq_dequeue(item);
 }
 
 #endif  // SCAL_DATASTRUCTURES_LCRQ_H_

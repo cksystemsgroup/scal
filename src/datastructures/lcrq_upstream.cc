@@ -36,6 +36,10 @@
 #include <stdint.h>
 #include <sched.h>
 
+#include "datastructures/lcrq_upstream.h"
+#include "util/malloc.h"
+#include "util/threadlocals.h"
+
 // system.h
 #ifndef CACHE_LINE_SIZE
 #    define CACHE_LINE_SIZE            64
@@ -76,9 +80,9 @@ typedef union int_aligned64_t {
 }  int_aligned64_t;
 
 #define null                           NULL
-#define bool                           int32_t
-#define true                           1
-#define false                          0
+//#define bool                           int32_t
+//#define true                           1
+//#define false                          0
 // end types.h
 
 
@@ -134,7 +138,7 @@ typedef long Object;
 //#define _EMULATE_SWAP_
 
 inline static void *getMemory(size_t size) {
-    void *p = malloc(size);
+    void *p = scal::tlmalloc(size);
 
     if (p == null) {
         perror("malloc failed");
@@ -444,7 +448,7 @@ inline static int64_t _FAA64(volatile int64_t *A, int64_t B) {
 // --------------------
 // The LCRQ's ring size will be 2^{RING_POW}.
 #ifndef RING_POW
-#define RING_POW        (17)
+#define RING_POW        (12)
 #endif
 #define RING_SIZE       (1ull << RING_POW)
 
@@ -567,7 +571,6 @@ inline int crq_is_closed(uint64_t t) {
 
 void lcrq_SHARED_OBJECT_INIT() {
      int i;
-
      RingQueue *rq = reinterpret_cast<RingQueue*>(getMemory(sizeof(RingQueue)));
      init_ring(rq);
      head = tail = rq;
@@ -636,7 +639,7 @@ inline int close_crq(RingQueue *rq, const uint64_t t, const int tries) {
         return BIT_TEST_AND_SET(&rq->tail, 63);
 }
 
-void lcrq_enqueue(Object arg) {
+bool lcrq_enqueue(uint64_t item) {
 
     int try_close = 0;
 
@@ -666,12 +669,12 @@ alloc:
             }
 
             // Solo enqueue
-            nrq->tail = 1, nrq->array[0].val = arg, nrq->array[0].idx = 0;
+            nrq->tail = 1, nrq->array[0].val = item, nrq->array[0].idx = 0;
 
             if (CASPTR(&rq->next, null, nrq)) {
                 CASPTR(&tail, rq, nrq);
                 nrq = null;
-                return;
+                return true;
             }
             continue;
         }
@@ -684,8 +687,8 @@ alloc:
 
         if (likely(is_empty(val))) {
             if (likely(node_index(idx) <= t)) {
-                if ((likely(!node_unsafe(idx)) || rq->head < t) && CAS2((uint64_t*)cell, -1, idx, arg, t)) {
-                    return;
+                if ((likely(!node_unsafe(idx)) || rq->head < t) && CAS2((uint64_t*)cell, -1, idx, item, t)) {
+                    return true;
                 }
             }
         } 
@@ -698,7 +701,7 @@ alloc:
     }
 }
 
-Object lcrq_dequeue() {
+bool lcrq_dequeue(uint64_t *item) {
 
     while (1) {
         RingQueue *rq = head;
@@ -730,8 +733,10 @@ Object lcrq_dequeue() {
 
             if (likely(!is_empty(val))) {
                 if (likely(idx == h)) {
-                    if (CAS2((uint64_t*)cell, val, cell_idx, -1, unsafe | h + RING_SIZE))
-                        return val;
+                    if (CAS2((uint64_t*)cell, val, cell_idx, -1, unsafe | h + RING_SIZE)){
+                      *item = val;
+                      return true;
+                    }
                 } else {
                     if (CAS2((uint64_t*)cell, val, cell_idx, val, set_unsafe(idx))) {
                         break;
@@ -761,8 +766,10 @@ Object lcrq_dequeue() {
             fixState(rq);
             // try to return empty
             next = rq->next;
-            if (next == null)
-                return -1;  // EMPTY
+            if (next == null) {
+              *item = 0;
+                return false;  // EMPTY
+            }
             CASPTR(&head, rq, next);
         }
     }

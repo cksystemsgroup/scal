@@ -5,7 +5,7 @@ typedef long Object;
 struct RingQueue;
 
 void lcrq_SHARED_OBJECT_INIT();
-Object lcrq_dequeue();
-void lcrq_enqueue(Object arg);
+bool lcrq_enqueue(uint64_t item);
+bool lcrq_dequeue(uint64_t *item);
 
 #endif  // SRC_DATASTRUCTURES_LCRQ_ORIGINAL_H
