@@ -95,6 +95,13 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       while (result->taken.load() != 0 &&
           result->right.load() != result) {
         result = result->right.load();
+        int64_t timestamp = result->t1.load();
+        // We reached a node further right than the original right-most 
+        // node. we do not have to search any further to the right, we
+        // will not take the element anyways.
+        if (timestamp != 0 && timestamp > threshold) {
+          return NULL;
+        }
       }
 
       // We don't return the element if it was taken already or if it
@@ -138,6 +145,13 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       while (result->taken.load() != 0 &&
           result->left.load() != result) {
         result = result->left.load();
+        int64_t timestamp = result->t2.load();
+        // We reached a node further left than the original left-most 
+        // node. we do not have to search any further to the left, we
+        // will not take the element anyways.
+        if (timestamp != 0 && timestamp < threshold) {
+          return NULL;
+        }
       }
 
       // We don't return the element if it was taken already or if it
@@ -618,6 +632,13 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
       while (result->taken.load() != 0 &&
           result->right.load() != result) {
         result = result->right.load();
+        int64_t timestamp = result->timestamp.load();
+        // We reached a node further left than the original left-most 
+        // node. we do not have to search any further to the left, we
+        // will not take the element anyways.
+        if (timestamp != 0 && timestamp > threshold) {
+          return NULL;
+        }
       }
 
       // We don't return the element if it was taken already or if it
@@ -661,6 +682,13 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
       while (result->taken.load() != 0 &&
           result->left.load() != result) {
         result = result->left.load();
+        int64_t timestamp = result->timestamp.load();
+        // We reached a node further left than the original left-most 
+        // node. we do not have to search any further to the left, we
+        // will not take the element anyways.
+        if (timestamp != 0 && timestamp < threshold) {
+          return NULL;
+        }
       }
 
       // We don't return the element if it was taken already or if it
