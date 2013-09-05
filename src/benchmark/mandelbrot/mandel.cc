@@ -175,7 +175,7 @@ block_width=%lu block_height=%lu producer=%lu consumer=%lu outfile=%s\n",
   
   // print a summary: see summary.json for description
   uint64_t exec_time = benchmark->execution_time();
-  printf("%lu %lu %lu %lu\n",
+  printf("threads: %lu ;producers: %lu ;consumers: %lu ;runtime: %lu\n",
          FLAGS_producers + FLAGS_consumers,
          FLAGS_producers,
          FLAGS_consumers,
@@ -213,7 +213,8 @@ void MandelbrotBench::bench_func(void) {
 }
 
 void MandelbrotBench::worker_consumer(MandelArg *targ, uint64_t thread_id) {
-  Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
+  MandelArg *data = static_cast<MandelArg*>(data_);
+  Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data->ds);
   Package *tmp;
   bool ret;
   int may_leave = false;
@@ -236,7 +237,8 @@ void MandelbrotBench::worker_consumer(MandelArg *targ, uint64_t thread_id) {
 
 void MandelbrotBench::worker_producer(MandelArg *targ, uint64_t thread_id) {
   using scal::tlcalloc_aligned;
-  Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
+  MandelArg *data = static_cast<MandelArg*>(data_);
+  Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data->ds);
   int width = bitmap_width (targ->bm); 
   int height = bitmap_height (targ->bm);
   int i, j;
