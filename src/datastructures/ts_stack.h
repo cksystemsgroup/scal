@@ -291,14 +291,15 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
       Item* result = (Item*)get_aba_free_pointer(
         buckets_[thread_id]->load(std::memory_order_acquire));
 
-      while (result->taken.load(std::memory_order_acquire) != 0 &&
-          result->next.load() != result) {
-        result = result->next.load();
-      }
-      if (result == result->next.load()) {
-        return NULL;
-      } else {
-        return result;
+      while (true) {
+        if (result->taken.load() == 0) {
+          return result;
+        }
+        Item *next = result->next.load();
+        if (next == result) {
+          return NULL;
+        }
+        result = next;
       }
     }
 
@@ -497,14 +498,15 @@ class TL2TSStackBuffer : public TSStackBuffer<T> {
       Item* result = (Item*)get_aba_free_pointer(
         buckets_[thread_id]->load(std::memory_order_acquire));
 
-      while (result->taken.load(std::memory_order_acquire) != 0 &&
-          result->next.load() != result) {
-        result = result->next.load();
-      }
-      if (result == result->next.load()) {
-        return NULL;
-      } else {
-        return result;
+      while (true) {
+        if (result->taken.load() == 0) {
+          return result;
+        }
+        Item* next = result->next.load();
+        if (next == result) {
+          return NULL;
+        }
+        result = next;
       }
     }
 

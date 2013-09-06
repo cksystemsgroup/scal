@@ -92,42 +92,24 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
 
       // We start at the left pointer and iterate to the right until we
       // find the first item which has not been taken yet.
-      while (result->taken.load() != 0 &&
-          result->right.load() != result) {
-        result = result->right.load();
-        int64_t timestamp = result->t1.load();
+      while (true) {
         // We reached a node further right than the original right-most 
-        // node. we do not have to search any further to the right, we
+        // node. We do not have to search any further to the right, we
         // will not take the element anyways.
-        if (timestamp != 0 && timestamp > threshold) {
+        if (result->t1.load() > threshold) {
           return NULL;
         }
+        // We found a good node, return it.
+        if (result->taken.load() == 0) {
+          return result;
+        }
+        // We have reached the end of the list and found nothing, so we
+        // return NULL.
+        if (result->right.load() == result) {
+          return NULL;
+        }
+        result = result->right.load();
       }
-
-      // We don't return the element if it was taken already or if it
-      // was inserted after we started the search. Otherwise we have the 
-      // problem that we may find an element inserted at the right side 
-      // which is older than an element which was inserted on the left 
-      // side in the meantime.
-      // 
-      // The interpretation of the second clause in the condition is the
-      // following: if the t1-time stamp of the result is greater than
-      // the threshold, then the element was inserted during the
-      // execution of this method. We cannot take the element because
-      // there may also exist a new element inserted at the left side
-      // in the meantime and we would have to prefer than one.
-      // Additionally we check if the result is different to the right
-      // pointer we read at the beginning of the method because if
-      // both right and result do not have a t1 time stamp at the time
-      // we read the t1 time stamp, then they both have the same time
-      // stamp but we are not allowed to take result except if it is
-      // the same as the one we read in the beginning of the method. 
-      if (result->taken.load() != 0 ||
-         (result->t1.load() >= threshold &&
-          result != right)) {
-        return NULL;
-      }
-      return result;
     }
 
     Item* get_right_item(uint64_t thread_id) {
@@ -142,41 +124,23 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
 
       // We start at the right pointer and iterate to the left until we
       // find the first item which has not been taken yet.
-      while (result->taken.load() != 0 &&
-          result->left.load() != result) {
-        result = result->left.load();
-        int64_t timestamp = result->t2.load();
+      while (true) {
         // We reached a node further left than the original left-most 
-        // node. we do not have to search any further to the left, we
+        // node. We do not have to search any further to the left, we
         // will not take the element anyways.
-        if (timestamp != 0 && timestamp < threshold) {
+        if (result->t2.load() < threshold) {
           return NULL;
         }
-      }
-
-      // We don't return the element if it was taken already or if it
-      // was inserted after we started the search. Otherwise we have the
-      // problem that we may find an element inserted at the left side
-      // which is older than an element which was inserted on the right
-      // side in the meantime.
-      // 
-      // The interpretation of the second clause in the condition is the
-      // following: if the t2-time stamp of the result is less than
-      // the threshold, then the element was inserted during the
-      // execution of this method. We cannot take the element because
-      // there may also exist a new element inserted at the right side
-      // in the meantime and we would have to prefer than one.
-      // Additionally we check if the result is different to the left
-      // pointer we read at the beginning of the method because if
-      // both left and result do not have a t1 time stamp at the time
-      // we read the t1 time stamp, then they both have the same time
-      // stamp but we are not allowed to take result except if it is
-      // the same as the one we read in the beginning of the method. 
-      if (result->taken.load() != 0 || 
-          (result->t2.load() <= threshold && result != left)) {
-        return NULL;
-      } else {
-        return result;
+        // We found a good node, return it.
+        if (result->taken.load() == 0) {
+          return result;
+        }
+        // We have reached the end of the list and found nothing, so we
+        // return NULL.
+        if (result->left.load() == result) {
+          return NULL;
+        }
+        result = result->left.load();
       }
     }
 
@@ -629,42 +593,24 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
 
       // We start at the left pointer and iterate to the right until we
       // find the first item which has not been taken yet.
-      while (result->taken.load() != 0 &&
-          result->right.load() != result) {
-        result = result->right.load();
-        int64_t timestamp = result->timestamp.load();
+      while (true) {
         // We reached a node further left than the original left-most 
-        // node. we do not have to search any further to the left, we
+        // node. We do not have to search any further to the left, we
         // will not take the element anyways.
-        if (timestamp != 0 && timestamp > threshold) {
+        if (result->timestamp.load() > threshold) {
           return NULL;
         }
+        // We found a good node, return it.
+        if (result->taken.load() == 0) {
+          return result;
+        }
+        // We have reached the end of the list and found nothing, so we
+        // return NULL.
+        if (result->left.load() == result) {
+          return NULL;
+        }
+        result = result->left.load();
       }
-
-      // We don't return the element if it was taken already or if it
-      // was inserted after we started the search. Otherwise we have the
-      // problem that we may find an element inserted at the right side
-      // which is older than an element which was inserted on the left
-      // side in the meantime.
-      // 
-      // The interpretation of the second clause in the condition is the
-      // following: if the t1-time stamp of the result is greater than
-      // the threshold, then the element was inserted during the
-      // execution of this method. We cannot take the element because
-      // there may also exist a new element inserted at the left side
-      // in the meantime and we would have to prefer than one.
-      // Additionally we check if the result is different to the right
-      // pointer we read at the beginning of the method because if
-      // both right and result do not have a t1 time stamp at the time
-      // we read the t1 time stamp, then they both have the same time
-      // stamp but we are not allowed to take result except if it is
-      // the same as the one we read in the beginning of the method. 
-      if (result->taken.load() != 0 ||
-         (result->timestamp.load() >= threshold &&
-          result != right)) {
-        return NULL;
-      }
-      return result;
     }
 
     Item* get_right_item(uint64_t thread_id) {
@@ -679,41 +625,23 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
 
       // We start at the right pointer and iterate to the left until we find
       // the first item which has not been taken yet.
-      while (result->taken.load() != 0 &&
-          result->left.load() != result) {
-        result = result->left.load();
-        int64_t timestamp = result->timestamp.load();
+      while (true) {
         // We reached a node further left than the original left-most 
-        // node. we do not have to search any further to the left, we
+        // node. We do not have to search any further to the left, we
         // will not take the element anyways.
-        if (timestamp != 0 && timestamp < threshold) {
+        if (result->timestamp.load() < threshold) {
           return NULL;
         }
-      }
-
-      // We don't return the element if it was taken already or if it
-      // was inserted after we started the search. Otherwise we have the
-      // problem that we may find an element inserted at the left side
-      // which is older than an element which was inserted on the right
-      // side in the meantime.
-      // 
-      // The interpretation of the second clause in the condition is the
-      // following: if the t2-time stamp of the result is less than
-      // the threshold, then the element was inserted during the
-      // execution of this method. We cannot take the element because
-      // there may also exist a new element inserted at the right side
-      // in the meantime and we would have to prefer than one.
-      // Additionally we check if the result is different to the left
-      // pointer we read at the beginning of the method because if
-      // both left and result do not have a t1 time stamp at the time
-      // we read the t1 time stamp, then they both have the same time
-      // stamp but we are not allowed to take result except if it is
-      // the same as the one we read in the beginning of the method. 
-      if (result->taken.load() != 0 || 
-          result->timestamp.load() <= threshold && result != left) {
-        return NULL;
-      } else {
-        return result;
+        // We found a good node, return it.
+        if (result->taken.load() == 0) {
+          return result;
+        }
+        // We have reached the end of the list and found nothing, so we
+        // return NULL.
+        if (result->left.load() == result) {
+          return NULL;
+        }
+        result = result->left.load();
       }
     }
 
