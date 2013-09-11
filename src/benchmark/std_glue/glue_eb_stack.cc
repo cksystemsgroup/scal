@@ -10,7 +10,7 @@
 #include "datastructures/elimination_backoff_stack.h"
 
 DEFINE_uint64(collision, 0, "size of the collision array");
-DEFINE_uint64(delay, 1500, "time waiting in the collision array");
+DEFINE_uint64(delay, 15000, "time waiting in the collision array");
 
 
 EliminationBackoffStack<uint64_t> *ebs;

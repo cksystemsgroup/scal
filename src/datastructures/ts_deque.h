@@ -29,9 +29,9 @@ class TSDequeBuffer {
     virtual void insert_left(T element, TimeStamp *timestamp) = 0;
     virtual void insert_right(T element, TimeStamp *timestamp) = 0;
     virtual bool try_remove_left
-      (T *element, int64_t *threshold, void **potential_element) = 0;
+      (T *element, int64_t *threshold) = 0;
     virtual bool try_remove_right
-      (T *element, int64_t *threshold, void ** potential_element) = 0;
+      (T *element, int64_t *threshold) = 0;
 };
 
 enum DequeSide {
@@ -300,7 +300,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
     // try_remove_left
     /////////////////////////////////////////////////////////////////
     bool try_remove_left
-      (T *element, int64_t *threshold, void ** potential_element) {
+      (T *element, int64_t *threshold) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -336,8 +336,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
           int64_t item_t1 = item->t1.load();
           int64_t item_t2 = item->t2.load();
 
-          if (t1 > item_t2 || 
-              (t1 == INT64_MAX && item == *potential_element)) {
+          if (t1 > item_t2) {
             // We found a new youngest element, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
@@ -382,10 +381,8 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       if (result != NULL) {
         // (t1 == INT64_MAX) means that the element was inserted at the
         // right side and did not get a time stamp yet. We should not take
-        // it then, except if we found the same element already in the
-        // previous iteration (and stored it as potential_element).
+        // it then.
         if ((t1 != INT64_MAX &&t1 <= threshold[0]) 
-            || result == *potential_element
             || (t1 > 0 && t1 < threshold[1])
             || (t2 < 0 && t2 > -threshold[1])
             ){
@@ -409,10 +406,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         // time stamp. 
         if (t1 != INT64_MAX) {
           threshold[0] =  t1;
-          *potential_element = NULL;
-        } else {
-          *potential_element = result;
-        }
+        } 
       }
 
       *element = (T)NULL;
@@ -423,7 +417,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
     // try_remove_right
     ////////////////////////////////////////////////////////////////
     bool try_remove_right
-      (T *element, int64_t *threshold, void ** potential_element) {
+      (T *element, int64_t *threshold) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -458,8 +452,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
           empty = false;
           int64_t item_t1 = item->t1.load();
           int64_t item_t2 = item->t2.load();
-          if (t2 < item_t1 || 
-             (t2 == INT64_MIN && item == *potential_element)) {
+          if (t2 < item_t1) {
             // We found a new youngest element, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
@@ -505,15 +498,13 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
       if (result != NULL) {
         // (t2 == INT64_MIN) means that the element was inserted at the
         // left side and did not get a time stamp yet. We should not take
-        // it then, except if we found the same element already in the
-        // previous iteration (and stored it as potential_element).
+        // it then.
         if ((t2 != INT64_MIN && t2 >= threshold[0]) 
-            || (result == *potential_element)
             || (t1 > 0 && t1 < threshold[1])
             || (t2 < 0 && t2 > -threshold[1])
             ) {
-          // We found a similar element to the one in the last iteration. Let's
-          // try to remove it
+          // We found a similar element to the one in the last iteration.
+          // Let's try to remove it.
           uint64_t expected = 0;
           if (result->taken.load() == 0) {
             if (result->taken.compare_exchange_weak(
@@ -532,10 +523,7 @@ class TL2TSDequeBuffer : public TSDequeBuffer<T> {
         // time stamp. 
         if (t2 != INT64_MIN) {
           threshold[0] =  t2;
-          *potential_element = NULL;
-        } else {
-          *potential_element = result;
-        }
+        }  
       }
 
       *element = (T)NULL;
@@ -769,7 +757,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
     // try_remove_left
     /////////////////////////////////////////////////////////////////
     bool try_remove_left
-      (T *element, int64_t *threshold, void ** potential_element) {
+      (T *element, int64_t *threshold) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -847,10 +835,8 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
       if (result != NULL) {
         // (timestamp == INT64_MAX) means that the element was inserted at
         // the right side and did not get a time stamp yet. We should not
-        // take it then, except if we found the same element already in the
-        // previous iteration (and stored it as potential_element).
+        // take it then.
         if ((timestamp != INT64_MAX && timestamp <= threshold[0])
-            || result == *potential_element
             || (timestamp > 0 && timestamp < threshold[1])
             || (timestamp < 0 && timestamp > -threshold[1])
             ){
@@ -874,9 +860,6 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // time stamp. 
         if (timestamp != INT64_MAX) {
           threshold[0] =  timestamp;
-          *potential_element = NULL;
-        } else {
-          *potential_element = result;
         }
       }
 
@@ -887,8 +870,7 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
     /////////////////////////////////////////////////////////////////
     // try_remove_right
     ////////////////////////////////////////////////////////////////
-    bool try_remove_right
-      (T *element, int64_t *threshold, void ** potential_element) {
+    bool try_remove_right(T *element, int64_t *threshold) {
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -966,10 +948,8 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
       if (result != NULL) {
         // (timestamp == INT64_MIN) means that the element was inserted at
         // the left side and did not get a time stamp yet. We should not
-        // take it then, except if we found the same element already in the
-        // previous iteration (and stored it as potential_element).
+        // take it then.
         if ((timestamp != INT64_MIN && timestamp >= threshold[0])
-            || result == *potential_element
             || (timestamp > 0 && timestamp < threshold[1])
             || (timestamp < 0 && timestamp > -threshold[1])
             ){
@@ -993,9 +973,6 @@ class TLLinkedListDequeBuffer : public TSDequeBuffer<T> {
         // time stamp. 
         if (timestamp != INT64_MIN) {
           threshold[0] = timestamp;
-          *potential_element = NULL;
-        } else {
-          *potential_element = result;
         }
       }
 
@@ -1051,10 +1028,8 @@ bool TSDeque<T>::remove_left(T *element) {
     threshold[1] = INT64_MIN;
   }
 
-  void *potential_element = NULL;
-
   while (
-    buffer_->try_remove_left(element, threshold, &potential_element)) {
+    buffer_->try_remove_left(element, threshold)) {
     if (*element != (T)NULL) {
       return true;
     }
@@ -1077,10 +1052,8 @@ bool TSDeque<T>::remove_right(T *element) {
     threshold[1] = INT64_MIN;
   }
 
-  void *potential_element = NULL;
-
   while (
-    buffer_->try_remove_right(element, threshold, &potential_element)) {
+    buffer_->try_remove_right(element, threshold)) {
     if (*element != (T)NULL) {
       return true;
     }

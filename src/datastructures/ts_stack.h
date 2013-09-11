@@ -289,7 +289,7 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
     Item* get_youngest_item(uint64_t thread_id) {
 
       Item* result = (Item*)get_aba_free_pointer(
-        buckets_[thread_id]->load(std::memory_order_acquire));
+        buckets_[thread_id]->load());
 
       while (true) {
         if (result->taken.load() == 0) {
@@ -342,23 +342,21 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
 
       Item *new_item = scal::tlget_aligned<Item>(scal::kCachePrefetch);
-      new_item->timestamp.store(timestamp->get_timestamp(), 
-          std::memory_order_release);
-      new_item->data.store(element, std::memory_order_release);
+      new_item->timestamp.store(timestamp->get_timestamp());
+      new_item->data.store(element);
       new_item->taken.store(0, std::memory_order_release);
 
-      Item* old_top = buckets_[thread_id]->load(std::memory_order_acquire);
+      Item* old_top = buckets_[thread_id]->load();
 
       Item* top = (Item*)get_aba_free_pointer(old_top);
       while (top->next.load() != top 
-          && top->taken.load(std::memory_order_acquire)) {
+          && top->taken.load()) {
         top = top->next.load();
       }
 
       new_item->next.store(top);
       buckets_[thread_id]->store(
-          (Item*) add_next_aba(new_item, old_top, 1), 
-          std::memory_order_release);
+          (Item*) add_next_aba(new_item, old_top, 1));
     };
 
     /////////////////////////////////////////////////////////////////
@@ -395,7 +393,7 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
         if (item != NULL) {
           empty = false;
           uint64_t item_timestamp = 
-            item->timestamp.load(std::memory_order_acquire);
+            item->timestamp.load();
           if (timestamp < item_timestamp) {
             // We found a new youngest element, so we remember it.
             result = item;
@@ -406,16 +404,13 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
           // Check if we can remove the element immediately.
           if (*threshold <= timestamp) {
             uint64_t expected = 0;
-            if (result->taken.compare_exchange_weak(
-                    expected, 1, 
-                    std::memory_order_acq_rel, std::memory_order_relaxed)) {
+            if (result->taken.compare_exchange_weak(expected, 1)) {
               // Try to adjust the remove pointer. It does not matter if 
               // this CAS fails.
               buckets_[buffer_index]->compare_exchange_weak(
-                  old_top, (Item*)add_next_aba(result, old_top, 0), 
-                  std::memory_order_acq_rel, std::memory_order_relaxed);
+                  old_top, (Item*)add_next_aba(result, old_top, 0));
 
-              *element = result->data.load(std::memory_order_acquire);
+              *element = result->data.load();
               return true;
             }
           }
@@ -430,22 +425,22 @@ class TLLinkedListStackBuffer : public TSStackBuffer<T> {
         }
       }
       if (result != NULL) {
-        // We found a youngest element which is not younger than the threshold.
-        // We try to remove it.
-//        uint64_t expected = 0;
-//        if (result->taken.compare_exchange_weak(
-//                expected, 1, 
-//                std::memory_order_acq_rel, std::memory_order_relaxed)) {
-//          // Try to adjust the remove pointer. It does not matter if this 
-//          // CAS fails.
-//          buckets_[buffer_index]->compare_exchange_weak(
-//              old_top, (Item*)add_next_aba(result, old_top, 0), 
-//              std::memory_order_acq_rel, std::memory_order_relaxed);
-//          *element = result->data.load(std::memory_order_acquire);
-//          return true;
-//        }
-          *threshold = result->timestamp.load();
-          *element = (T)NULL;
+        // We found a youngest element which is not younger than the 
+        // threshold. We try to remove it.
+        uint64_t expected = 0;
+        if (result->taken.load() == 0) {
+          if (result->taken.compare_exchange_weak(expected, 1)) {
+            // Try to adjust the remove pointer. It does not matter if this 
+            // CAS fails.
+            buckets_[buffer_index]->compare_exchange_weak(
+                old_top, (Item*)add_next_aba(result, old_top, 0));
+            *element = result->data.load();
+            return true;
+          }
+        }
+
+        *threshold = result->timestamp.load();
+        *element = (T)NULL;
       }
 
       *element = (T)NULL;
@@ -650,20 +645,19 @@ class TL2TSStackBuffer : public TSStackBuffer<T> {
         }
       }
       if (result != NULL) {
-        // We found a youngest element which is not younger than the threshold.
-        // We try to remove it.
-//        uint64_t expected = 0;
-//        if (result->taken.compare_exchange_weak(
-//                expected, 1, 
-//                std::memory_order_acq_rel, std::memory_order_relaxed)) {
-//          // Try to adjust the remove pointer. It does not matter if this 
-//          // CAS fails.
-//          buckets_[buffer_index]->compare_exchange_weak(
-//              old_top, (Item*)add_next_aba(result, old_top, 0), 
-//              std::memory_order_acq_rel, std::memory_order_relaxed);
-//          *element = result->data.load(std::memory_order_acquire);
-//          return true;
-//        }
+        // We found a youngest element which is not younger than the 
+        // threshold. We try to remove it.
+        uint64_t expected = 0;
+        if (result->taken.load() == 0) {
+        if (result->taken.compare_exchange_weak(expected, 1)) {
+          // Try to adjust the remove pointer. It does not matter if this 
+          // CAS fails.
+          buckets_[buffer_index]->compare_exchange_weak(
+              old_top, (Item*)add_next_aba(result, old_top, 0));
+          *element = result->data.load();
+          return true;
+        }
+        }
 
         uint64_t timestamp = result->t1.load();
         if (timestamp < UINT64_MAX) {

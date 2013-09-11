@@ -22,7 +22,7 @@
 #include "util/platform.h"
 #include "util/threadlocals.h"
 #include "util/random.h"
-#include "util/workloads.h"
+#include "util/time.h"
 
 #define EMPTY 0
 
@@ -250,7 +250,8 @@ bool EliminationBackoffStack<T>::backoff(Opcode opcode, T *item) {
   }
 
   // Wait some time for collisions.
-  calculate_pi(delay_);
+  uint64_t wait = get_hwtime() + delay_;
+  while (get_hwtime() < wait) {}
   
   uint64_t expected = thread_id;
   if (!location_[thread_id]->compare_exchange_strong(
