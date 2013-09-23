@@ -51,25 +51,24 @@ executables = {
              , 'tsatomicarray'   : 'tsstack -atomic_clock -array -init_threshold'
              , 'tshwlist'        : 'tsstack -hw_clock -list -init_threshold'
              , 'tshwarray'       : 'tsstack -hw_clock -array -init_threshold'
-             , 'tshw2ts'       : 'tsstack -hw_clock -2ts -init_threshold -delay 3000'
+             , 'tshw2ts'         : 'tsstack -hw_clock -2ts -init_threshold -delay 7500' #250: 20000 2000: 7500
              , 'tsqueuestutter'  : 'tsqueue -stutter_clock -list'
              , 'tsqueueatomic'   : 'tsqueue -atomic_clock -list'
              , 'tsqueuehw'       : 'tsqueue -hw_clock -list'
-             , 'tsqueue2ts'       : 'tsqueue -hw_clock -2ts -delay 3000'
+             , 'tsqueue2ts'      : 'tsqueue -hw_clock -2ts  -delay 17500' #250: 12500 2000: 17500
              , 'tsdequestutter'  : 'tsdeque -list -stutter_clock -init_threshold'
              , 'tsdequeatomic'   : 'tsdeque -list -atomic_clock -init_threshold'
              , 'tsdequehw'       : 'tsdeque -list -hw_clock -init_threshold'
-             , 'tsdequehw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
-             , 'tsdequestutternt'  : 'tsdeque -list -stutter_clock -noinit_threshold'
-             , 'tsdequeatomicnt'   : 'tsdeque -list -atomic_clock -noinit_threshold'
-             , 'tsdequehwnt'       : 'tsdeque -list -hw_clock -noinit_threshold'
-             , 'tsdequehw2tsnt'       : 'tsdeque -2ts -hw_clock -noinit_threshold'
-             , 'tsdequeshw'       : 'tsdeque -list -hw_clock -init_threshold'
-             , 'tsdequeshw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
-             , 'tsdequeqhw'       : 'tsdeque -list -hw_clock -init_threshold'
-             , 'tsdequeqhw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
-             , 'tsdequedhw'       : 'tsdeque -list -hw_clock -init_threshold'
-             , 'tsdequedhw2ts'       : 'tsdeque -2ts -hw_clock -init_threshold'
+             , 'tsdequehw2ts'    : 'tsdeque -2ts -hw_clock -init_threshold -delay 15000' #250: 17500 2000: 15000
+             , 'tsdequeshw'      : 'tsdeques -list -hw_clock -init_threshold'
+             , 'tsdequeshw2ts'   : 'tsdeques -2ts -hw_clock -init_threshold -delay 10000' #250: 15000 2000: 10000 
+             , 'tsdequeqhw'      : 'tsdequeq -list -hw_clock -init_threshold'
+             , 'tsdequeqhw2ts'   : 'tsdequeq -2ts -hw_clock -init_threshold -delay 25000' #250: 25000 2000: 25000
+             , 'tsdequeqstutter' : 'tsdequeq -list -stutter_clock -init_threshold'
+             , 'tsdequeqatomic'  : 'tsdequeq -list -atomic_clock -init_threshold'
+             , 'tsdequedhw'      : 'tsdequed -list -hw_clock -init_threshold'
+             , 'tsdequedhw2ts'   : 'tsdequed -2ts -hw_clock -init_threshold -delay 15000' #250: 25000 2000: 15000
+             , 'lcrq': 'lcrq -noreuse_memory'
              }
 
 #hasPartials = ['scal2random', 'scalrr', 'uskfifo', 'bskfifo', 'scal1random', 'scaltlrr', 'sq', 'rd']
@@ -121,13 +120,21 @@ maxThreadsB7=24
 # have the same placeholders.
 templates = {
   'prodcon': '@../prodcon-{exe} -producers {thread} ' 
-  + '-consumers {thread} -operations 10000 -c {work} -prealloc_size 500m '
+  + '-consumers {thread} -operations 1000000 -c {work} -prealloc_size 500m '
   + '{partials_param} {partials} {perfParam} -noset_rt_priority '
   + '> {filename}'
 
+  , 'delay250': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
+  + '-operations 1000000 -c 250 {partials_param} {partials} -delay {work} '
+  + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
+
+  , 'delay2000': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
+  + '-operations 1000000 -c 2000 {partials_param} {partials} -delay {work} '
+  + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
+
   , 'enq': '@../prodcon-{exe} -producers {thread} -consumers 0 '
-  + '-operations 10000 -c {work} {partials_param} {partials} '
-  + '{perfParam} -noset_rt_priority -prealloc_size 250m > {filename}'
+  + '-operations 1000000 -c {work} {partials_param} {partials} '
+  + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
 
   , 'infprod': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
   + '-operations 150000 -measure_at 10000 -c {work} '
@@ -135,8 +142,8 @@ templates = {
   + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
 
   , 'deq': '@../prodcon-{exe} -producers {thread} -consumers {thread} '
-  + '-operations 10000 -c {work} {partials_param} {partials} -barrier '
-  + '{perfParam} -noset_rt_priority -prealloc_size 500m > {filename}'
+  + '-operations 1000000 -c {work} {partials_param} {partials} -barrier '
+  + '{perfParam} -noset_rt_priority -prealloc_size 1g > {filename}'
 
   , 'seqalt' : '@../seqalt-{exe} -allow_empty_returns -threads {thread} '
   + '-elements 10000 -c {work} {partials_param} {partials} {perfParam} '
@@ -152,6 +159,12 @@ filenameTemplates = {
     + '-c{work}.txt'
 
     , 'enq': '@{directory}{queue}-t{thread}{partials_param}{partials}'
+    + '-c{work}.txt'
+
+    , 'delay250': '@{directory}{queue}-t{thread}{partials_param}{partials}'
+    + '-c{work}.txt'
+
+    , 'delay2000': '@{directory}{queue}-t{thread}{partials_param}{partials}'
     + '-c{work}.txt'
 
     , 'infprod': '@{directory}{queue}-t{thread}{partials_param}{partials}'
