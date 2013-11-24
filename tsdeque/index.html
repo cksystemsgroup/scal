@@ -30,7 +30,6 @@
         }
       }
     </style>
-    <link href="../assets/css/bootstrap-responsive.min.css" type="text/css" rel="stylesheet" media="all">
     <link href="../assets/css/main.css" type="text/css" rel="stylesheet" media="all">
 
     <script src="http://code.jquery.com/jquery-latest.js"></script>
@@ -40,33 +39,29 @@
   </head>
   <body>
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+    <header class="navbar navbar-inverse navbar-fixed-top bs-docs-nav" role="banner">
+      <div class="container">
+        <div class="navbar-header">
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="brand" href="http://scal.cs.uni-salzburg.at">Scal</a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li><a href="http://scal.cs.uni-salzburg.at/"><i class="icon-home icon-white"></i> Home</a></li>
-              <!--<li class="active"><a href="http://scal.cs.uni-salzburg.at/tsdeque/">TS Deque</a></li>-->
-            </ul>
-            <ul class="nav pull-right">
-              <ul class="nav">
-                <li><a href="http://cs.uni-salzburg.at/~ck">Computational Systems Group</a></li>
-              </ul>
-            </ul>
-          </div><!--/.nav-collapse -->
+          <a href="http://scal.cs.uni-salzburg.at" class="navbar-brand">Scal</a>
         </div>
+        <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="http://scal.cs.uni-salzburg.at/"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+          </ul>
+        </nav>
       </div>
-    </div>
+    </header>
 
     <div class="container">
+
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h1>Fast Concurrent Data-Structures Through Explicit Timestamping</h1>
 
           <p><strong>Abstract</strong></p>
