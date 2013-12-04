@@ -1,0 +1,107 @@
+@inproceedings{PaCT13,
+  author = {C.M. Kirsch and M. Lippautz and H. Payer},
+  title = {Fast and Scalable, Lock-free {k-FIFO} Queues},
+  booktitle = {Proc. International Conference on Parallel Computing Technologies (PaCT)},
+  series = {LNCS},
+  year = {2013},
+  month = oct,
+  publisher = {Springer},
+  doi = {10.1007/978-3-642-39958-9_18},
+  url = {http://www.cs.uni-salzburg.at/~ck/content/publications/conferences/PaCT13-FastScalableQueues.pdf}
+}
+
+@inproceedings{CF13,
+  author = {A. Haas and T.A. Henzinger and C.M. Kirsch and M. Lippautz and H.  Payer and A. Sezgin and A. Sokolova},
+  title = {Distributed Queues in Shared Memory---Multicore Performance and Scalability through Quantitative Relaxation},
+  booktitle = {Proc. International Conference on Computing Frontiers (CF)},
+  year = {2013},
+  month = may,
+  publisher = {ACM},
+  doi = {10.1145/2482767.2482789},
+  url = {http://www.cs.uni-salzburg.at/~ck/content/publications/invited/CF13-DistributedQueues.pdf}
+}
+
+@inproceedings{POPL13,
+  author = {T.A. Henzinger and C.M. Kirsch and H. Payer and A. Sezgin and A.  Sokolova},
+  title = {Quantitative Relaxation of Concurrent Data Structures},
+  booktitle = {Proc. Principles of Programming Languages (POPL)},
+  year = {2013},
+  month = feb,
+  publisher = {ACM},
+  doi = {10.1145/2429069.2429109},
+  url = {http://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL13-QuantitativeRelaxation.pdf}
+}
+
+@inproceedings{RACES12,
+  author = {A. Haas and C.M. Kirsch and M. Lippautz and H. Payer},
+  title = {How {FIFO} is your concurrent {FIFO} queue?},
+  booktitle = {Proc. Workshop on Relaxing Synchronization for Multicore and Manycore Scalability (RACES)},
+  year = {2012},
+  month = oct,
+  publisher = {ACM},
+  doi = {10.1145/2414729.2414731},
+  url = {http://www.cs.uni-salzburg.at/~ck/content/publications/conferences/RACES12-HowFIFO.pdf}
+}
+
+@inproceedings{ICA3PP12,
+  author = {C.M. Kirsch and H. Payer and H. R{\"o}ck and A. Sokolova},
+  title = {Performance, Scalability, and Semantics of Concurrent {FIFO} Queues},
+  booktitle = {Proc. International Conference on Algorithms and Architectures for Parallel Processing (ICA3PP)},
+  series = {LNCS},
+  year = {2012},
+  month = sep,
+  publisher = {Springer},
+  doi = {http://dx.doi.org/10.1007/978-3-642-33078-0_20},
+  pdf = {http://cs.uni-salzburg.at/~ck/content/publications/conferences/ICA3PP12-Scal.pdf}
+}
+
+@techreport{SBG12b,
+  author = {C.M. Kirsch and M. Lippautz and H. Payer},
+  title = {Fast and Scalable k-{FIFO} Queues},
+  institution = {Department of Computer Sciences, University of Salzburg},
+  number = {2012-04},
+  year = {2012},
+  month = jun,
+  pdf = {http://cs.uni-salzburg.at/~ck/content/publications/reports/SBG12-FastScalableQueues.pdf}
+}
+
+@techreport{SBG12a,
+  author = {T.A. Henzinger and C.M. Kirsch and H. Payer and A. Sezgin and A. Sokolova},
+  title = {Quantitative Relaxation of Concurrent Data Structures},
+  institution = {Department of Computer Sciences, University of Salzburg},
+  number = {2012-03},
+  year = {2012},
+  month = may,
+  pdf = {http://cs.uni-salzburg.at/~ck/content/publications/reports/SBG12-QuantitativeRelaxation.pdf}
+}
+
+@inproceedings{DAC12,
+  author = {C.M. Kirsch and H. Payer},
+  title = {Incorrect Systems: It's not the Problem, It's the Solution},
+  booktitle = {Proc. Design Automation Conference (DAC)},
+  publisher = {ACM},
+  year = {2012},
+  month = jun,
+  doi = {http://doi.acm.org/10.1145/2228360.2228523},
+  pdf = {http://cs.uni-salzburg.at/~ck/content/publications/conferences/DAC12-Incorrectness.pdf}
+}
+
+@inproceedings{PODC11,
+  author = {C.M. Kirsch and H. Payer and H. R{\"o}ck and A. Sokolova},
+  title = {Brief Announcement: Scalability versus Semantics of Concurrent {FIFO} Queues},
+  booktitle = {Proc. Symposium on Principles of Distributed Computing (PODC)},
+  publisher = {ACM},
+  year = {2011},
+  doi = {http://doi.acm.org/10.1145/1993806.1993869},
+  pdf = {http://cs.uni-salzburg.at/~ck/content/publications/conferences/PODC11-BA-ScalabilityVersusSemantics.pdf}
+}
+
+@techreport{SBG10,
+  author = {C.M. Kirsch and H. Payer and H. R{\"o}ck},
+  title = {Scal$\skull$: Non-Linearizable Computing Breaks the Scalability Barrier},
+  institution = {Department of Computer Sciences, University of Salzburg},
+  number = {2010-07},
+  year = {2010},
+  month = nov,
+  pdf = {http://cs.uni-salzburg.at/~ck/content/publications/reports/SBG10-Scal.pdf}
+}
