@@ -1,0 +1,20 @@
+
+    <header class="navbar navbar-inverse navbar-fixed-top bs-docs-nav" role="banner">
+      <div class="container">
+        <div class="navbar-header">
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a href="{{ site.baseurl }}/" class="navbar-brand">Scal</a>
+        </div>
+        <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+          <ul class="nav navbar-nav">
+            <li {% if page.title == "High-Performance Multicore-Scalable Computing" %} class="active" {% endif %}><a href="{{ site.baseurl }}/"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+            <li {% if page.title == "Getting Started" %} class="active" {% endif %}><a href="{{ site.baseurl }}/getting-started/">Getting Started</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
