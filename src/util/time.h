@@ -22,4 +22,12 @@ inline uint64_t get_hwtime(void) {
   return ((uint64_t) lo) | (((uint64_t) hi) << 32);
 }
 
+inline uint64_t get_hwptime(void)
+{
+    uint64_t aux;
+    uint64_t rax,rdx;
+    asm volatile ( "rdtscp\n" : "=a" (rax), "=d" (rdx), "=c" (aux) : : );
+    return (rdx << 32) + rax;
+}
+
 #endif  // SCAL_UTIL_TIME_H_

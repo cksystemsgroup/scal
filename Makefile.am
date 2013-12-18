@@ -37,7 +37,14 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/treiber_stack.h \
 	src/datastructures/unboundedsize_kfifo.h \
 	src/datastructures/wf_queue_ppopp11.h \
-	src/datastructures/wf_queue_ppopp12.h 
+	src/datastructures/wf_queue_ppopp12.h \ 
+	src/datastructures/ts_stack.h \
+	src/datastructures/ts_queue.h \
+	src/datastructures/ts_deque.h \
+	src/datastructures/ts_timestamp.h \
+	src/datastructures/ts_stack_buffer.h \
+	src/datastructures/ts_queue_buffer.h \
+	src/datastructures/ts_deque_buffer.h 
 
 noinst_HEADERS = \
 	$(DATASTRUCTURE_INCLUDES) \
@@ -161,6 +168,66 @@ bin_PROGRAMS += prodcon-wf-ppopp12
 prodcon_wf_ppopp12_SOURCES = \
 	$(PRODCON_BASE_OBJS) \
 	src/benchmark/std_glue/glue_wf_ppopp12.cc
+
+bin_PROGRAMS += prodcon-hc-ts-interval-stack
+prodcon_hc_ts_interval_stack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_hardcoded_ts_interval_stack.cc
+
+bin_PROGRAMS += prodcon-hc-ts-interval-queue
+prodcon_hc_ts_interval_queue_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_hardcoded_ts_interval_queue.cc
+
+bin_PROGRAMS += prodcon-hc-ts-hardware-stack
+prodcon_hc_ts_hardware_stack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_hardcoded_ts_hardware_stack.cc
+
+bin_PROGRAMS += prodcon-hc-ts-hardware-queue
+prodcon_hc_ts_hardware_queue_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_hardcoded_ts_hardware_queue.cc
+
+bin_PROGRAMS += prodcon-ts-interval-stack
+prodcon_ts_interval_stack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_interval_stack.cc
+
+bin_PROGRAMS += prodcon-ts-interval-queue
+prodcon_ts_interval_queue_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_interval_queue.cc
+
+bin_PROGRAMS += prodcon-ts-hardware-stack
+prodcon_ts_hardware_stack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_hardware_stack.cc
+
+bin_PROGRAMS += prodcon-ts-hardware-queue
+prodcon_ts_hardware_queue_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_hardware_queue.cc
+
+bin_PROGRAMS += prodcon-ts-interval-deque
+prodcon_ts_interval_deque_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_interval_deque.cc
+
+bin_PROGRAMS += prodcon-ts-hardware-deque
+prodcon_ts_hardware_deque_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_hardware_deque.cc
+
+bin_PROGRAMS += prodcon-ts-atomic-queue
+prodcon_ts_atomic_queue_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_atomic_queue.cc
+
+bin_PROGRAMS += prodcon-ts-stutter-queue
+prodcon_ts_stutter_queue_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_ts_stutter_queue.cc
 
 #
 # SPF benchmark
