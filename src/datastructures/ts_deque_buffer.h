@@ -489,7 +489,7 @@ class TSDequeBuffer {
             old_right = tmp_right;
 
             // Check if we can remove the element immediately.
-            if (inserted_right(result) || !timestamping_->is_later(invocation_time, timestamp)) {
+            if (inserted_right(result) && !timestamping_->is_later(invocation_time, timestamp)) {
               uint64_t expected = 0;
               if (result->taken.load() == 0) {
                 if (result->taken.compare_exchange_weak(
