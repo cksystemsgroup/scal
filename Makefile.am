@@ -1,7 +1,7 @@
 # We'll add the programs throughout the Makefile.
 bin_PROGRAMS =
 noinst_PROGRAMS =
-TESTS = 
+TESTS =
 
 AM_CPPFLAGS = -Werror -mcx16 -m64  -std=c++0x \
         @CC_OPTIMIZATION@ \
@@ -14,7 +14,7 @@ AM_CPPFLAGS = -Werror -mcx16 -m64  -std=c++0x \
         -fno-omit-frame-pointer \
 	@GFLAGS_CFLAGS@
 
-AM_LDFLAGS = -Wl,--as-needed 
+AM_LDFLAGS = -Wl,--as-needed
 LDADD = @GFLAGS_LIBS@
 
 DATASTRUCTURE_INCLUDES = \
@@ -37,14 +37,15 @@ DATASTRUCTURE_INCLUDES = \
 	src/datastructures/treiber_stack.h \
 	src/datastructures/unboundedsize_kfifo.h \
 	src/datastructures/wf_queue_ppopp11.h \
-	src/datastructures/wf_queue_ppopp12.h \ 
+	src/datastructures/wf_queue_ppopp12.h \
 	src/datastructures/ts_stack.h \
 	src/datastructures/ts_queue.h \
 	src/datastructures/ts_deque.h \
 	src/datastructures/ts_timestamp.h \
 	src/datastructures/ts_stack_buffer.h \
 	src/datastructures/ts_queue_buffer.h \
-	src/datastructures/ts_deque_buffer.h 
+	src/datastructures/ts_deque_buffer.h \
+	src/datastructures/dts_queue.h
 
 noinst_HEADERS = \
 	$(DATASTRUCTURE_INCLUDES) \
@@ -229,6 +230,11 @@ prodcon_ts_stutter_queue_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_ts_stutter_queue.cc
 
+bin_PROGRAMS += prodcon-dts-queue
+prodcon_dts_queue_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_dts_queue.cc
+
 #
 # SPF benchmark
 #
@@ -274,7 +280,7 @@ atomic_value128_unittest_CPPFLAGS = \
 	$(TEST_CPPFLAGS)
 atomic_value128_unittest_LDADD = \
         @GFLAGS_LIBS@ \
-        $(GTEST_LIBS) 
+        $(GTEST_LIBS)
 atomic_value128_unittest_SOURCES = \
         src/test/atomic_value128_unittest.cc \
         src/util/malloc.cc
@@ -284,7 +290,7 @@ atomic_value64_no_offset_unittest_CPPFLAGS = \
 	$(TEST_CPPFLAGS)
 atomic_value64_no_offset_unittest_LDADD = \
         @GFLAGS_LIBS@ \
-        $(GTEST_LIBS) 
+        $(GTEST_LIBS)
 atomic_value64_no_offset_unittest_SOURCES = \
         src/test/atomic_value64_no_offset_unittest.cc \
         src/util/malloc.cc
@@ -294,7 +300,7 @@ atomic_value64_offset_unittest_CPPFLAGS = \
 	$(TEST_CPPFLAGS)
 atomic_value64_offset_unittest_LDADD = \
         @GFLAGS_LIBS@ \
-        $(GTEST_LIBS) 
+        $(GTEST_LIBS)
 atomic_value64_offset_unittest_SOURCES = \
         src/test/atomic_value64_offset_unittest.cc \
         src/util/malloc.cc
@@ -304,7 +310,7 @@ random_unittest_CPPFLAGS = \
 	$(TEST_CPPFLAGS)
 random_unittest_LDADD = \
         @GFLAGS_LIBS@ \
-        $(GTEST_LIBS) 
+        $(GTEST_LIBS)
 random_unittest_SOURCES = \
         src/test/random_unittest.cc \
         src/util/random.cc \
