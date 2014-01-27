@@ -221,6 +221,10 @@ class AtomicCounterTimestamp {
       result[0].store(clock_->fetch_add(1));
     }
 
+    inline void set_timestamp_local(uint64_t *result) {
+      result[0] = clock_->fetch_add(1);
+    }
+
     inline void read_time(uint64_t *result) {
       result[0] = clock_->load();
     }
