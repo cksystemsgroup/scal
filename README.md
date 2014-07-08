@@ -16,7 +16,7 @@ Homepage: http://scal.cs.uni-salzburg.at
 
 On Ubuntu (&ge; 12.04) based systems:
 
-    sudo apt-get install google-perftools libgoogle-perftools-dev cmake libgtest-dev
+    sudo apt-get install build-essential autoconf libtool google-perftools libgoogle-perftools-dev cmake libgtest-dev
     wget https://gflags.googlecode.com/files/libgflags0_2.0-1_amd64.deb
     wget https://gflags.googlecode.com/files/libgflags-dev_2.0-1_amd64.deb
     sudo dpkg -i libgflags0_2.0-1_amd64.deb
