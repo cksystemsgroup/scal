@@ -175,6 +175,16 @@ prodcon_hc_ts_interval_stack_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_hardcoded_ts_interval_stack.cc
 
+bin_PROGRAMS += prodcon-hc-ts-atomic-stack
+prodcon_hc_ts_atomic_stack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_hardcoded_ts_atomic_stack.cc
+
+bin_PROGRAMS += prodcon-hc-ts-stutter-stack
+prodcon_hc_ts_stutter_stack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_hardcoded_ts_stutter_stack.cc
+
 bin_PROGRAMS += prodcon-hc-ts-interval-queue
 prodcon_hc_ts_interval_queue_SOURCES = \
         $(PRODCON_BASE_OBJS) \
