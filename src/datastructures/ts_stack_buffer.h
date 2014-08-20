@@ -16,6 +16,7 @@
 #include "util/random.h"
 #include "util/malloc.h"
 #include "util/platform.h"
+#include "util/time.h"
 
 template<typename T, typename Timestamp>
 class TSStackBuffer {
@@ -27,9 +28,17 @@ class TSStackBuffer {
       std::atomic<uint64_t> timestamp[2];
     } Item;
 
+    typedef struct SPBuffer {
+      std::atomic<Item*> *list;
+      std::atomic<SPBuffer*> next;
+      int64_t index;
+    } SPBuffer;
+
     uint64_t num_threads_;
 
-    std::atomic<Item*> **buckets_;
+    std::atomic<uint64_t> unlink_lock;
+    std::atomic<SPBuffer*> *spBuffers_;
+    std::atomic<SPBuffer*> entry_buffer_;
     Item** *emptiness_check_pointers_;
     Timestamp *timestamping_;
     uint64_t* *counter1_;
@@ -53,57 +62,131 @@ class TSStackBuffer {
       return (void*)((result & 0xffffffffffffff8) | aba);
     }
 
+    inline void unlink_SPBuffer(SPBuffer* buffer) {
+
+      if (buffer->index == -1 || spBuffers_[buffer->index] != NULL) {
+        return;
+      }
+
+      uint64_t tmp = 0;
+      if (!unlink_lock.compare_exchange_weak(tmp, 1)) {
+        return;
+      }
+
+      Item* item = get_youngest_item(buffer);
+      if (item != NULL) {
+        unlink_lock.store(0);
+        return;
+      }
+      SPBuffer *prev = entry_buffer_;
+      while (prev->next != entry_buffer_ && prev->next != buffer) {
+        prev = prev->next;
+      }
+
+      SPBuffer *next =prev->next;
+
+      if (next == entry_buffer_) {
+        // The buffer already got removed.
+        unlink_lock.store(0);
+        return;
+      }
+
+      // Unlink the buffer.
+      prev->next.compare_exchange_weak(next, buffer->next);
+      unlink_lock.store(0);
+    }
+
     // Returns the oldest not-taken item from the thread-local list 
     // indicated by thread_id.
-    inline Item* get_youngest_item(uint64_t thread_id) {
+    inline Item* get_youngest_item(SPBuffer *buffer) {
 
       Item* result = (Item*)get_aba_free_pointer(
-        buckets_[thread_id]->load(std::memory_order_acquire));
-
+        buffer->list->load());
       while (true) {
         if (result->taken.load() == 0) {
           return result;
         }
         Item* next = result->next.load();
         if (next == result) {
+          unlink_SPBuffer(buffer);
           return NULL;
         }
         result = next;
       }
     }
 
+    inline SPBuffer *register_thread(uint64_t thread_id) {
+
+      SPBuffer* buffer = scal::tlget_aligned<SPBuffer>(scal::kCachePrefetch);
+      spBuffers_[thread_id].store(buffer);
+      buffer->next.store(buffer);
+
+      buffer->list = static_cast<std::atomic<Item*>*>(
+          scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
+
+      // Add a sentinal node.
+      Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
+      timestamping_->init_sentinel_atomic(new_item->timestamp);
+      new_item->data.store(0);
+      new_item->taken.store(1);
+      new_item->next.store(new_item);
+      buffer->list->store(new_item);
+      buffer->index = thread_id;
+
+      SPBuffer* entry = entry_buffer_.load();
+      SPBuffer* next = entry->next.load();
+      while (true) {
+        buffer->next.store(next);
+        if (entry->next.compare_exchange_weak(next, buffer)) {
+          return buffer;
+        }
+      }
+    }
+
+    inline void unregister_thread(uint64_t thread_id) {
+      spBuffers_[thread_id].store(NULL);
+    }
+
   public:
 
     void initialize(uint64_t num_threads, Timestamp *timestamping) {
 
+      unlink_lock.store(0);
       num_threads_ = num_threads;
       timestamping_ = timestamping; 
 
-      buckets_ = static_cast<std::atomic<Item*>**>(
-          scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
+      spBuffers_ = static_cast<std::atomic<SPBuffer*>*>(
+          scal::calloc_aligned(num_threads_, sizeof(std::atomic<SPBuffer*>), 
             scal::kCachePrefetch * 4));
 
       emptiness_check_pointers_ = static_cast<Item***>(
           scal::calloc_aligned(num_threads_, sizeof(Item**), 
             scal::kCachePrefetch * 4));
 
-      for (int i = 0; i < num_threads_; i++) {
-
-        buckets_[i] = static_cast<std::atomic<Item*>*>(
-            scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
-
-        // Add a sentinal node.
-        Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
-        timestamping_->init_sentinel_atomic(new_item->timestamp);
-        new_item->data.store(0);
-        new_item->taken.store(1);
-        new_item->next.store(new_item);
-        buckets_[i]->store(new_item);
+       for (int i = 0; i < num_threads_; i++) {
+         spBuffers_[i].store(NULL); 
 
         emptiness_check_pointers_[i] = static_cast<Item**> (
             scal::calloc_aligned(num_threads_, sizeof(Item*), 
               scal::kCachePrefetch * 4));
       }
+
+      // Create the entry buffer.
+      SPBuffer* buffer = scal::tlget_aligned<SPBuffer>(scal::kCachePrefetch);
+      buffer->next.store(buffer);
+
+      buffer->list = static_cast<std::atomic<Item*>*>(
+          scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
+
+      // Add a sentinal node.
+      Item *new_item = scal::get<Item>(scal::kCachePrefetch * 4);
+      timestamping_->init_sentinel_atomic(new_item->timestamp);
+      new_item->data.store(0);
+      new_item->taken.store(1);
+      new_item->next.store(new_item);
+      buffer->list->store(new_item);
+      buffer->index = -1;
+      entry_buffer_.store(buffer);
 
       counter1_ = static_cast<uint64_t**>(
           scal::calloc_aligned(num_threads, sizeof(uint64_t*),
@@ -132,8 +215,6 @@ class TSStackBuffer {
     
     char* ds_get_stats(void) {
 
-      return NULL;
-      // We do not print any DS stats at the moment.
       uint64_t sum1 = 0;
       uint64_t sum2 = 1;
 
@@ -165,7 +246,12 @@ class TSStackBuffer {
       new_item->data.store(element);
       new_item->taken.store(0);
 
-      Item* old_top = buckets_[thread_id]->load();
+      SPBuffer *buffer = spBuffers_[thread_id].load();
+      if (buffer == NULL) {
+        buffer = register_thread(thread_id);
+      }
+
+      Item* old_top = spBuffers_[thread_id].load()->list->load();
 
       // Find the topmost item in the thread-local list which has not been
       // removed logically yet.
@@ -177,10 +263,9 @@ class TSStackBuffer {
 
       // Add the new item to the thread-local list.
       new_item->next.store(top);
-      buckets_[thread_id]->store(
-          (Item*) add_next_aba(new_item, old_top, 1), 
-          std::memory_order_release);
 
+      spBuffers_[thread_id].load()->list->store(
+          (Item*) add_next_aba(new_item, old_top, 1));
       // Return a pointer to the timestamp location of the item so that
       // a timestamp can be added.
       return new_item->timestamp;
@@ -192,10 +277,55 @@ class TSStackBuffer {
       return insert_right(element);
     }
 
+    inline void delay() {
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+          __asm__ __volatile__("nop");
+    }
+
     /////////////////////////////////////////////////////////////////
     // try_remove_right
     /////////////////////////////////////////////////////////////////
     inline bool try_remove_right(T *element, uint64_t *invocation_time) {
+//      inc_counter2(1);
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_pointers = 
@@ -220,48 +350,59 @@ class TSStackBuffer {
       Item* old_top = NULL;
 
       // We start iterating over the thread-local lists at a random index.
-      uint64_t start = hwrand();
+      uint64_t start = hwrand() % num_threads_;
+      SPBuffer* current_buffer;
+      SPBuffer* youngest_buffer;
+      current_buffer = entry_buffer_.load();
+      uint64_t entry_counter = 0;
+      // Iterate to a random start buffer.
+      for (uint64_t i = 0; i < start; i++) {
+        current_buffer = current_buffer->next.load();
+      }
+      SPBuffer* start_buffer = current_buffer;
       // We iterate over all thead-local buffers
-      for (uint64_t i = 0; i < num_threads_; i++) {
-        inc_counter1(1);
+        while (true) {      
 
-        // The index of the current buffer.
-        uint64_t tmp_buffer_index = (start + i) % (num_threads_);
-        // We get the remove/insert pointer of the current thread-local buffer.
-        Item* tmp_top = buckets_[tmp_buffer_index]->load();
+        if (current_buffer->index == -1) {
+          entry_counter++;
+        } 
+        if (entry_counter >= 2) {
+          break;
+        }
+        current_buffer = current_buffer->next.load();        
+        Item* tmp_top = current_buffer->list->load();
         // We get the youngest element from that thread-local buffer.
-        Item* item = get_youngest_item(tmp_buffer_index);
+        Item* item = get_youngest_item(current_buffer);
         // If we found an element, we compare it to the youngest element 
         // we have found until now.
         if (item != NULL) {
+
           // We found an element, so the buffer is not empty.
           empty = false;
           uint64_t *item_timestamp;
           timestamping_->load_timestamp(tmp_timestamp[tmp_index], item->timestamp);
           item_timestamp = tmp_timestamp[tmp_index];
 
+          delay();
           // Check if we can remove the element immediately.
           if (!timestamping_->is_later(invocation_time, item_timestamp)) {
             uint64_t expected = 0;
             // We try to set the taken flag and thereby logically remove the item.
-            if (item->taken.compare_exchange_weak(
-                    expected, 1, 
-                    std::memory_order_acq_rel, std::memory_order_relaxed)) {
+            if (item->taken.load() == 0 && item->taken.compare_exchange_weak(
+                    expected, 1)) {
               // Try to adjust the remove pointer. It does not matter if 
               // this CAS fails.
-              buckets_[tmp_buffer_index]->compare_exchange_weak(
-                  tmp_top, (Item*)add_next_aba(item, tmp_top, 0), 
-                  std::memory_order_acq_rel, std::memory_order_relaxed);
+              current_buffer->list->compare_exchange_weak(
+                  tmp_top, (Item*)add_next_aba(item, tmp_top, 0));
 
               // The item has been removed. 
-              *element = item->data.load(std::memory_order_acquire);
+              *element = item->data.load();
               return true;
             } else {
-              inc_counter2(1);
               // Elimination failed, we have to load a new element of that
               // buffer.
-              tmp_top = buckets_[tmp_buffer_index]->load();
-              item = get_youngest_item(tmp_buffer_index);
+              tmp_top = current_buffer->list->load();
+              item = get_youngest_item(current_buffer);
               if (item != NULL) {
                 timestamping_->load_timestamp(tmp_timestamp[tmp_index], item->timestamp);
                 item_timestamp = tmp_timestamp[tmp_index];
@@ -271,7 +412,7 @@ class TSStackBuffer {
           if (item != NULL && timestamping_->is_later(item_timestamp, timestamp)) {
             // We found a new youngest element, so we remember it.
             result = item;
-            buffer_index = tmp_buffer_index;
+            youngest_buffer = current_buffer;
             timestamp = item_timestamp;
             tmp_index ^=1;
             old_top = tmp_top;
@@ -279,12 +420,15 @@ class TSStackBuffer {
           }
         } else {
           // No element was found, work on the emptiness check.
-          if (emptiness_check_pointers[tmp_buffer_index] 
+          if (current_buffer->index != -1 && emptiness_check_pointers[current_buffer->index] 
               != tmp_top) {
             empty = false;
-            emptiness_check_pointers[tmp_buffer_index] = 
+            emptiness_check_pointers[current_buffer->index] = 
               tmp_top;
           }
+        }
+        if (current_buffer == start_buffer) {
+          break;
         }
       }
       if (result != NULL) {
@@ -295,12 +439,10 @@ class TSStackBuffer {
           if (result->taken.compare_exchange_weak(expected, 1)) {
             // Try to adjust the remove pointer. It does not matter if this 
             // CAS fails.
-            buckets_[buffer_index]->compare_exchange_weak(
+            youngest_buffer->list->compare_exchange_weak(
                 old_top, (Item*)add_next_aba(result, old_top, 0));
             *element = result->data.load();
             return true;
-          } else {
-            inc_counter2(1);
           }
         }
 
