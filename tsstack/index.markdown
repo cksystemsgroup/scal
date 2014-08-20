@@ -3,11 +3,12 @@ layout: default
 title: TS Stack
 ---
 
-# Timestamped Stack
 
 <table>
 <tr>
 <td valign="top" width="480">
+
+<h1>Timestamped Stack</h1>
 
 The TS Stack is a linearizable concurrent stack implementation which uses
 timestamps to order elements. A pop operations removes the element with the
