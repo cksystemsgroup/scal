@@ -7,7 +7,7 @@ title: TS Stack
 
 <table>
 <tr>
-<td valign="top" width="410">
+<td valign="top" width="480">
 
 The TS Stack is a linearizable concurrent stack implementation which uses
 timestamps to order elements. A pop operations removes the element with the
@@ -36,8 +36,7 @@ Illustration of order-correctness
 </object>
 
 </td>
-<td>
-<br/>
+<td width="480">
 <h1>Stack Theorem</h1>
 <p>
 The Stack Theorem says that an implementation is linarizable wrt. stack
