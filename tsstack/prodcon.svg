@@ -52,6 +52,34 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
+      <style
+         type="text/css"
+         id="style5038">
+@font-face {
+  font-family: 'Asap';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Asap'), local('Asap-Regular'), url(http://themes.googleusercontent.com/static/fonts/asap/v1/SgBaq0dzhSGNMfqm2JX5ng.woff) format('woff');
+}
+@font-face {
+  font-family: 'Asap';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Asap Bold'), local('Asap-Bold'), url(http://themes.googleusercontent.com/static/fonts/asap/v1/yVILXKVgPzaz72DegpV7Bg.woff) format('woff');
+}
+@font-face {
+  font-family: 'Asap';
+  font-style: italic;
+  font-weight: 400;
+  src: local('Asap Italic'), local('Asap-Italic'), url(http://themes.googleusercontent.com/static/fonts/asap/v1/MdJnJ_Rxy6GcPmasGZsTfQ.woff) format('woff');
+}
+@font-face {
+  font-family: 'Asap';
+  font-style: italic;
+  font-weight: 700;
+  src: local('Asap Bold Italic'), local('Asap-BoldItalic'), url(http://themes.googleusercontent.com/static/fonts/asap/v1/_sVKdO-TLWvaH-ptGimJBT8E0i7KZn-EPnyo3HZu7kw.woff) format('woff');
+}
+</style>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"

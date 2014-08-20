@@ -10,14 +10,16 @@ title: TS Stack
 
 <h1>Timestamped Stack</h1>
 
-The TS Stack is a linearizable concurrent stack implementation which uses
-timestamps to order elements. A pop operations removes the element with the
-youngest timestamp. Insights from the Stack Theorem (see below) allow the
-TS Stack to timestamp some elements unordered timestamps such that these
-elements can be removed in parallel. Thereby the contention on the stack is
-reduced. Additionally timestamps allow highly efficient elimination, which
-is key for high-performance concurrent stacks. The graph to the right shows
-the performance of the TS Stack in a high-contention producer-consumer
+The TS stack is a linearizable high-performance concurrent stack which
+works by attaching timestamps to elements, rather than building a linked
+data-structure in memory. The top element of the stack is then the element
+with the latest timestamp, not the element at the head of a linked list.
+Insights from the Stack Theorem (see below) allow the TS Stack to have
+multiple top elements, implemented with unordered timestamps, which can
+be removed in parallel. Thereby the contention on the stack is reduced.
+Additionally timestamps allow highly efficient elimination, which is key
+for high-performance concurrent stacks. The graph to the right shows the
+performance of the TS Stack in a high-contention producer-consumer
 benchmark on 64-core AMD Opteron cc-NUMA machine. The TS Stack
 implementation is available as part of the <a href="../">Scal</a> project.
 
