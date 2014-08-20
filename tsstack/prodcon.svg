@@ -1,0 +1,619 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="472.21664"
+   height="338.99036"
+   id="svg3312"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="prodcon.svg">
+  <defs
+     id="defs3314" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.97166667"
+     inkscape:cx="72.013757"
+     inkscape:cy="217.66724"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="20"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1366"
+     inkscape:window-height="751"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata3317">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-256.55768,-161.94325)">
+    <rect
+       id="rect14802"
+       height="338.99036"
+       width="451.98709"
+       y="161.94325"
+       x="276.55768"
+       style="fill:none;display:inline;enable-background:new" />
+    <g
+       id="g14822"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;display:inline;enable-background:new"
+       transform="matrix(0.56498391,0,0,0.56498391,276.55767,161.94327)">
+      <path
+         id="path14824"
+         d="m 125.7,468 12.7,0 m 626.1,0 -12.7,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14826"
+         style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(113.9,474.4)">
+        <text
+           id="text14828">0</text>
+      </g>
+      <path
+         id="path14830"
+         d="m 125.7,393.9 12.7,0 m 626.1,0 -12.7,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14832"
+         style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(113.9,400.3)">
+        <text
+           id="text14834">2000</text>
+      </g>
+      <path
+         id="path14836"
+         d="m 125.7,319.9 12.7,0 m 626.1,0 -12.7,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14838"
+         style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(113.9,326.3)">
+        <text
+           id="text14840">4000</text>
+      </g>
+      <path
+         id="path14842"
+         d="m 125.7,245.8 12.7,0 m 626.1,0 -12.7,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14844"
+         style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(113.9,252.2)">
+        <text
+           id="text14846">6000</text>
+      </g>
+      <path
+         id="path14848"
+         d="m 125.7,171.8 12.7,0 m 626.1,0 -12.7,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14850"
+         style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(113.9,178.2)">
+        <text
+           id="text14852">8000</text>
+      </g>
+      <path
+         id="path14854"
+         d="m 125.7,97.7 12.7,0 m 626.1,0 -12.7,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14856"
+         style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(113.9,104.1)">
+        <text
+           id="text14858">10000</text>
+      </g>
+      <path
+         id="path14860"
+         d="m 125.7,23.7 12.7,0 m 626.1,0 -12.7,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14862"
+         style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(113.9,30.1)">
+        <text
+           id="text14864">12000</text>
+      </g>
+      <path
+         id="path14866"
+         d="m 125.7,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14868"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(125.7,499.8)">
+        <text
+           id="text14870">2</text>
+      </g>
+      <path
+         id="path14872"
+         d="m 205.6,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14874"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(205.6,499.8)">
+        <text
+           id="text14876">8</text>
+      </g>
+      <path
+         id="path14878"
+         d="m 285.4,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14880"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(285.4,499.8)">
+        <text
+           id="text14882">16</text>
+      </g>
+      <path
+         id="path14884"
+         d="m 365.3,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14886"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(365.3,499.8)">
+        <text
+           id="text14888">24</text>
+      </g>
+      <path
+         id="path14890"
+         d="m 445.1,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14892"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(445.1,499.8)">
+        <text
+           id="text14894">32</text>
+      </g>
+      <path
+         id="path14896"
+         d="m 525,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14898"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(525,499.8)">
+        <text
+           id="text14900">40</text>
+      </g>
+      <path
+         id="path14902"
+         d="m 604.8,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14904"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(604.8,499.8)">
+        <text
+           id="text14906">48</text>
+      </g>
+      <path
+         id="path14908"
+         d="m 684.7,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14910"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(684.7,499.8)">
+        <text
+           id="text14912">56</text>
+      </g>
+      <path
+         id="path14914"
+         d="m 764.5,468 0,-12.7 m 0,-431.6 0,12.7 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14916"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(764.5,499.8)">
+        <text
+           id="text14918">64</text>
+      </g>
+      <path
+         id="path14920"
+         d="m 125.7,23.7 0,444.3 638.8,0 0,-444.3 -638.8,0 z m 0,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+      <g
+         id="g14922"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="matrix(0,-1,1,0,25,245.9)">
+        <text
+           id="text14924">operations per ms (more is better)</text>
+      </g>
+      <g
+         id="g14926"
+         style="font-size:21.25px;text-anchor:middle;fill:#000000;stroke:none;font-family:Asap"
+         transform="translate(445.1,537.9)">
+        <text
+           id="text14928">number of threads</text>
+      </g>
+      <path
+         id="path14930"
+         d="m 799.9,587.3 -710.1,0 z m 0,0 h 0.01 m -710.11,0 0,-25.4 710.1,0 0.01,25.4"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+    </g>
+    <g
+       style="display:inline;enable-background:new"
+       id="gnuplot_plot_1-32"
+       transform="matrix(0.56498391,0,0,0.56498391,276.55767,161.94327)">
+      <title
+         id="title14933">gnuplot_plot_1</title>
+      <g
+         id="g14935"
+         style="color:#ffffff;fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter" />
+      <g
+         id="g14937"
+         style="color:#0000ff;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter">
+        <g
+           id="g14939"
+           style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+           transform="translate(243.2,581)">
+          <text
+             id="text14941">Treiber Stack</text>
+        </g>
+        <path
+           id="path14943"
+           d="m 255,574.6 59.9,0 m -189.2,-113.7 79.9,-69.8 79.8,-0.9 79.9,-0.1 79.8,1 79.9,2.6 79.8,0.8 79.9,0.6 79.8,0.3 h 0.01"
+           inkscape:connector-curvature="0" />
+        <use
+           id="use14945"
+           transform="matrix(6.35,0,0,6.35,125.7,460.9)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14947"
+           transform="matrix(6.35,0,0,6.35,205.6,391.1)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14949"
+           transform="matrix(6.35,0,0,6.35,285.4,390.2)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14951"
+           transform="matrix(6.35,0,0,6.35,365.3,390.1)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14953"
+           transform="matrix(6.35,0,0,6.35,445.1,391.1)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14955"
+           transform="matrix(6.35,0,0,6.35,525,393.7)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14957"
+           transform="matrix(6.35,0,0,6.35,604.8,394.5)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14959"
+           transform="matrix(6.35,0,0,6.35,684.7,395.1)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14961"
+           transform="matrix(6.35,0,0,6.35,764.5,395.4)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14963"
+           transform="matrix(6.35,0,0,6.35,284.9,574.6)"
+           xlink:href="#gpPt2-6"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+      </g>
+    </g>
+    <g
+       style="display:inline;enable-background:new"
+       id="gnuplot_plot_2-18"
+       transform="matrix(0.56498391,0,0,0.56498391,276.55767,161.94327)">
+      <title
+         id="title14966">gnuplot_plot_2</title>
+      <g
+         id="g14968"
+         style="color:#ff0000;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter">
+        <g
+           id="g14970"
+           style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+           transform="translate(480.1,581)">
+          <text
+             id="text14972">EB Stack</text>
+        </g>
+        <path
+           id="path14974"
+           d="m 491.9,574.6 59.9,0 m -426.1,-116.8 79.9,-28.1 79.8,-33.3 79.9,-30 79.8,-26.7 79.9,-24.8 79.8,-21.7 79.9,-14.2 79.8,0.6 h 0.01"
+           inkscape:connector-curvature="0" />
+        <use
+           id="use14976"
+           transform="matrix(6.35,0,0,6.35,125.7,457.8)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14978"
+           transform="matrix(6.35,0,0,6.35,205.6,429.7)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14980"
+           transform="matrix(6.35,0,0,6.35,285.4,396.4)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14982"
+           transform="matrix(6.35,0,0,6.35,365.3,366.4)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14984"
+           transform="matrix(6.35,0,0,6.35,445.1,339.7)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14986"
+           transform="matrix(6.35,0,0,6.35,525,314.9)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14988"
+           transform="matrix(6.35,0,0,6.35,604.8,293.2)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14990"
+           transform="matrix(6.35,0,0,6.35,684.7,279)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14992"
+           transform="matrix(6.35,0,0,6.35,764.5,279.6)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use14994"
+           transform="matrix(6.35,0,0,6.35,521.8,574.6)"
+           xlink:href="#gpPt3-1"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+      </g>
+    </g>
+    <g
+       style="display:inline;enable-background:new"
+       id="gnuplot_plot_3-4"
+       transform="matrix(0.56498391,0,0,0.56498391,276.55767,161.94327)">
+      <title
+         id="title14997">gnuplot_plot_3</title>
+      <g
+         id="g14999"
+         style="color:#d60078;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter">
+        <g
+           id="g15001"
+           style="font-size:21.25px;text-anchor:end;fill:#000000;stroke:none;font-family:Asap"
+           transform="translate(717,581)">
+          <text
+             id="text15003">TS Stack</text>
+        </g>
+        <path
+           id="path15005"
+           d="m 728.8,574.6 59.9,0 m -663,-127.4 79.9,-57.7 79.8,-73.3 79.9,-68.2 79.8,-68.9 79.9,-72.3 79.8,-44.6 79.9,-30 79.8,6.4 h 0.01"
+           inkscape:connector-curvature="0"
+           style="stroke:#ffa500" />
+        <use
+           id="use15007"
+           transform="matrix(6.35,0,0,6.35,125.7,447.2)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15009"
+           transform="matrix(6.35,0,0,6.35,205.6,389.5)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15011"
+           transform="matrix(6.35,0,0,6.35,285.4,316.2)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15013"
+           transform="matrix(6.35,0,0,6.35,365.3,248)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15015"
+           transform="matrix(6.35,0,0,6.35,445.1,179.1)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15017"
+           transform="matrix(6.35,0,0,6.35,525,106.8)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15019"
+           transform="matrix(6.35,0,0,6.35,604.8,62.2)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15021"
+           transform="matrix(6.35,0,0,6.35,684.7,32.2)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15023"
+           transform="matrix(6.35,0,0,6.35,764.5,38.6)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+        <use
+           id="use15025"
+           transform="matrix(6.35,0,0,6.35,758.7,574.6)"
+           xlink:href="#gpPt11-42"
+           style="color:#ffa500"
+           x="0"
+           y="0"
+           width="744.09448"
+           height="1052.3622" />
+      </g>
+    </g>
+    <g
+       id="g15029"
+       style="color:#000000;fill:none;stroke:currentColor;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;display:inline;enable-background:new"
+       transform="matrix(0.56498391,0,0,0.56498391,276.55767,161.94327)">
+      <path
+         id="path15031"
+         d="m 125.7,23.7 0,444.3 638.8,0 0,-444.3 -638.8,0 z m 0,0 h 0.01"
+         inkscape:connector-curvature="0"
+         style="stroke:#000000" />
+    </g>
+  </g>
+</svg>
