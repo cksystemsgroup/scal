@@ -51,10 +51,10 @@ Illustration of order-correctness
 <p align="justify">
 
 Linearizability requires that the order in which elements are pushed is
-preserved. For concurrently pushed elements, however, are not ordered and
+preserved. Concurrently pushed elements, however, are not ordered and
 thus no order has to be preserved. Therefore a partial order on elements is
 sufficient for a linearizable stack implementation, as illustrated to the
-left. We show in the Stack Theorem that if pop operations always removes
+left. We show in the Stack Theorem that if pop operations always remove
 one of the top elements in the partial order, then the implementation is
 linearizable with respect to stack semantics. The Stack Theorem is proven
 in Isabelle HOL (<a href="stackthm.tgz">sources</a>), slides describing the
@@ -68,7 +68,7 @@ href="http://www.cs.uni-salzburg.at/~ahaas/slides/frida14.svg">here</a>.
 In the TS Stack implementation we use the timestamps to encode the partial
 order on elements. By searching and removing the element with the latest
 timestamp we ensure that the TS Stack satisfies all conditions of the Stack
-Theorem and therefore the TS Stack is linearizable with respect to stack
+Theorem. Therefore the TS Stack is linearizable with respect to stack
 semantics.
 
 </p>
