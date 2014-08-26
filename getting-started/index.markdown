@@ -5,10 +5,9 @@ title: Getting Started
 
 # Getting Started
 
-*December 2013*
+*August 2014*
 
-This basic documentation should help you getting started with the code that can
-be found on [GitHub][gh-scal].
+The code of all data structure implementations is available on [GitHub][gh-scal].
 
 [gh-scal]: https://github.com/cksystemsgroup/scal
 
@@ -54,14 +53,18 @@ them make use of C++ generics (templates).
   * `src/datastructures/unboundedsize_kfifo.h`: unbounded-size k-FIFO queue
 * Random dequeue queue \[7\]:
   * `src/datastructures/random_dequeue_queue.h`
-* TS deque \[8\]:
-  * `src/datastructures/ts_deque.h`: TS deque skeleton
-  * `src/datastructures/ts_queue.h`: TS queue skeleton
+* TS stack \[8\]:
   * `src/datastructures/ts_stack.h`: TS stack skeleton
   * `src/datastructures/ts_timestamp.h`: timestamping algorithms
-  * `src/datastructures/ts_deque_buffer.h`: generic deque TS buffer
-  * `src/datastructures/ts_queue_buffer.h`: hardcoded queue TS buffer
-  * `src/datastructures/ts_stack_buffer.h`: hardcoded stack TS buffer
+  * `src/datastructures/ts_stack_buffer.h`: TS buffer of the TS stack
+* TS queue \[8\]:
+  * `src/datastructures/ts_queue.h`: TS queue skeleton
+  * `src/datastructures/ts_timestamp.h`: timestamping algorithms
+  * `src/datastructures/ts_queue_buffer.h`: TS buffer of the TS queue
+* TS deque \[8\]:
+  * `src/datastructures/ts_deque.h`: TS deque skeleton
+  * `src/datastructures/ts_timestamp.h`: timestamping algorithms
+  * `src/datastructures/ts_deque_buffer.h`: TS buffer of the TS deque
 * DTS queue \[9\]:
   * `src/datastructures/dts_queue.h`
 * Treiber stack \[10\]:
