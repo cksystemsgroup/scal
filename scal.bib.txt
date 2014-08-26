@@ -105,3 +105,12 @@
   month = nov,
   pdf = {http://cs.uni-salzburg.at/~ck/content/publications/reports/SBG10-Scal.pdf}
 }
+
+@TechReport{SBG14,
+author = {M. Dodds and A. Haas and C. M. Kirsch},
+title = {Fast Concurrent Data-Structures Through Explicit Timestamping},
+institution = {Department of Computer Sciences, University of Salzburg},
+number = {TR 2014--03},
+year = {2014},
+  pdf = {http://cs.uni-salzburg.at/~ck/content/publications/reports/SBG14-Timestamping.pdf}
+}
