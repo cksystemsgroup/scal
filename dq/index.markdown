@@ -52,8 +52,8 @@ href="../">Scal</a> project.
 <tr>
 <td>
 
-<object type="image/svg+xml" data="order_correct.svg">
-Illustration of order-correctness
+<object type="image/svg+xml" data="dq.svg">
+Illustration of a distributed queue
 </object>
 
 </td>
