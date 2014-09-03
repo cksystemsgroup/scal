@@ -16,7 +16,7 @@ The TS stack is a linearizable high-performance concurrent stack which
 works by attaching timestamps to elements, rather than building a linked
 data-structure in memory. The top element of the stack is then the element
 with the latest timestamp, not the element at the head of a linked list.
-Insights from the Stack Theorem (see below) allow the TS Stack to have
+Insights from the stack theorem (see below) allow the TS Stack to have
 multiple top elements, implemented with unordered timestamps, which can be
 removed in parallel. Thereby the contention on the head of the stack is
 reduced.  Additionally timestamps allow highly efficient elimination, which
@@ -50,15 +50,25 @@ Illustration of order-correctness
 
 <p align="justify">
 
+Proving linearizability of the TS stack is difficult because existing proof
+techniques turn out to be insufficient (e.g. the TS stack does not provide
+linearization points in the code). We present a generic stack theorem which
+uses partial order information provided by the code to prove
+linearizability. The stack theorem is based on the following insight:
+
+</p>
+
+<p align="justify">
+
 Linearizability requires that the order in which elements are pushed is
-preserved. Concurrently pushed elements, however, are not ordered and
-thus no order has to be preserved. Therefore a partial order on elements is
-sufficient for a linearizable stack implementation, as illustrated to the
-left. We show in the Stack Theorem that if pop operations always remove
-one of the top elements in the partial order, then the implementation is
-linearizable with respect to stack semantics. The Stack Theorem is proven
+preserved. Concurrently pushed elements, however, are not ordered and thus
+no order has to be preserved. We show in the stack theorem that a partial
+order on elements, as illustrated to the left, is sufficient for a
+linearizable stack implementation . If pop operations always remove one of
+the top elements in the partial order, then the implementation is
+linearizable with respect to stack semantics. The stack theorem is proven
 in Isabelle HOL (<a href="stackthm.tgz">sources</a>), slides describing the
-Stack Theorem and the TS Stack implementation are available <a
+stack theorem and the TS Stack implementation are available <a
 href="http://www.cs.uni-salzburg.at/~ahaas/slides/frida14.svg">here</a>.
 
 </p>
@@ -67,8 +77,8 @@ href="http://www.cs.uni-salzburg.at/~ahaas/slides/frida14.svg">here</a>.
 
 In the TS Stack implementation we use the timestamps to encode the partial
 order on elements. By searching and removing the element with the latest
-timestamp we ensure that the TS Stack satisfies all conditions of the Stack
-Theorem. Therefore the TS Stack is linearizable with respect to stack
+timestamp we ensure that the TS Stack satisfies all conditions of the stack
+theorem. Therefore the TS Stack is linearizable with respect to stack
 semantics.
 
 </p>
