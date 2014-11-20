@@ -15,3 +15,10 @@ Makefile.in
 /depcomp
 /install-sh
 /missing
+
+# gyp
+Makefile
+out/
+build/
+*.Makefile
+*.target.mk
