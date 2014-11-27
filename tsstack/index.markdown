@@ -23,8 +23,11 @@ reduced.  Additionally timestamps allow highly efficient elimination, which
 is key for high-performance concurrent stacks. The graph to the right shows
 the performance of the TS Stack in comparison with a Treiber Stack and an
 elimination backoff stack (EB Stack) in a high-contention producer-consumer
-benchmark on a 64-core AMD Opteron cc-NUMA machine. The TS Stack
-implementation is available as part of the <a href="../">Scal</a> project.
+benchmark on a 64-core AMD Opteron cc-NUMA machine. More information about
+the TS stack is available in our <a
+href="ttp://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL15-TSStack.pdf">POPL15
+paper</a>. The TS Stack is implemented as part of the <a
+href="../">Scal</a> project.
 
 </p>
 
@@ -67,9 +70,10 @@ order on elements, as illustrated to the left, is sufficient for a
 linearizable stack implementation . If pop operations always remove one of
 the top elements in the partial order, then the implementation is
 linearizable with respect to stack semantics. The stack theorem is proven
-in Isabelle HOL (<a href="stackthm.tgz">sources</a>), slides describing the
-stack theorem and the TS Stack implementation are available <a
-href="http://www.cs.uni-salzburg.at/~ahaas/slides/frida14.svg">here</a>.
+in Isabelle HOL (<a href="stackthm.tgz">sources</a>). More details about
+the stack theorem is available in our <a
+href="ttp://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL15-TSStack.pdf">POPL15
+paper</a>.
 
 </p>
 
