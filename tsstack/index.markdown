@@ -25,7 +25,7 @@ the performance of the TS Stack in comparison with a Treiber Stack and an
 elimination backoff stack (EB Stack) in a high-contention producer-consumer
 benchmark on a 64-core AMD Opteron cc-NUMA machine. More information about
 the TS stack is available in our <a
-href="ttp://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL15-TSStack.pdf">POPL15
+href="http://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL15-TSStack.pdf">POPL15
 paper</a>. The TS Stack is implemented as part of the <a
 href="../">Scal</a> project.
 
@@ -72,7 +72,7 @@ the top elements in the partial order, then the implementation is
 linearizable with respect to stack semantics. The stack theorem is proven
 in Isabelle HOL (<a href="stackthm.tgz">sources</a>). More details about
 the stack theorem is available in our <a
-href="ttp://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL15-TSStack.pdf">POPL15
+href="http://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL15-TSStack.pdf">POPL15
 paper</a>.
 
 </p>
