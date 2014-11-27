@@ -1,5 +1,3 @@
 name: Scal
 markdown: kramdown
 highlighter: true
-
-baseurl:.
