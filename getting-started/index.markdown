@@ -80,7 +80,7 @@ relaxed allocator, or threadlocal storage can be found in here.
 ### References:
 
 1. M. Michael, M. Scott. Simple, fast, and practical non-blocking and blocking concurrent queue algorithms. In Proc. PODC, 1996.
-2. D. H. I. Incze, N. Shavit, M. Tzafrir. Flat combining and the synchronization-parallelism tradeoff. In Proc. SPAA, 2010.
+2. D. Hendler, I. Incze, N. Shavit, M. Tzafrir. Flat combining and the synchronization-parallelism tradeoff. In Proc. SPAA, 2010.
 3. A. Kogan, E. Petrank. Wait-free queues with multiple enqueuers and dequeuers. In Proc. PPoPP, 2011.
 4. A. Kogan, E. Petrank. A methodology for creating fast wait-free data structures. In Proc. PPoPP, 2012.
 5. A. Haas, T. A. Henzinger, C. M. Kirsch, M. Lippautz, H. Payer, A. Sezgin, A. Sokolova. Distributed queues in shared memory - multicore performance and scalability through quantitative relaxation. In Proc. CF, 2013.
