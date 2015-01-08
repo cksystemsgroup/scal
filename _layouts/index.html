@@ -2,9 +2,11 @@
 layout: base
 ---
       <div class="jumbotron ribbon-parent">
+        <!--
         <div class="ribbon">
           <a href="https://github.com/cksystemsgroup/scal">Fork us on GitHub</a>
         </div>
+        -->
 
         <h1>Scal<img src="assets/img/skull.png" style="margin-left: 5px; margin-top: -10px;"/> <small style="font-size: 50%;">High-Performance Multicore-Scalable Computing</small></h1>
         <p>
@@ -13,6 +15,7 @@ layout: base
           trade-off between adherence to concurrent data structure semantics and
           scalability.
         </p>
+
       </div>
 
       <div class="row">
@@ -40,16 +43,21 @@ layout: base
         </div>
 
         <div class="col-md-3">
-          <h2>Code</h2>
+          <h2>Code
+            <a class="nolink" href="https://drone.io/github.com/cksystemsgroup/scal/latest">
+              <img src="https://drone.io/github.com/cksystemsgroup/scal/status.png" />
+            </a>
+          </h2>
 
           <p> All code is released under a <a href="https://github.com/cksystemsgroup/scal/blob/master/LICENSE">BSD style license</a>
-          and can be found on <a href="https://github.com/cksystemsgroup/scal">github</a>. Consult
+          and can be found on <a href="https://github.com/cksystemsgroup/scal">GitHub</a>. Consult
           the <a href="https://github.com/cksystemsgroup/scal/blob/master/README.md">README</a>
           file for instructions on how to build and run the benchmarks.</p>
+          
+          <div style="text-align:center; width:100%">
+          <img src="assets/img/aec-badge-popl.png" style="width:60%;">
+          </div>
 
-          <a class="nolink" href="https://drone.io/github.com/cksystemsgroup/scal/latest">
-            <img src="https://drone.io/github.com/cksystemsgroup/scal/status.png" />
-          </a>
           <h2>Data Structures</h2>
           <ul>
             <li><a href="dq/">Distributed Queue</a>
