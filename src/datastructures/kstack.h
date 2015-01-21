@@ -40,7 +40,7 @@ class KSegment : public ThreadLocalMemory<128> {
   AtomicSegmentPtr  next;
   AtomicItem* items;
 
-  explicit KSegment(uint64_t k) 
+  explicit KSegment(uint64_t k)
       : remove(0),
         next(SegmentPtr(NULL, 0)),
         items(static_cast<AtomicItem*>(
@@ -79,8 +79,8 @@ class KStack : public Stack<T> {
 
 
 template<typename T>
-KStack<T>::KStack(uint64_t k, uint64_t num_threads) 
-    : top_(new AtomicTopPtr(SegmentPtr(new KSegment(k), 0))), 
+KStack<T>::KStack(uint64_t k, uint64_t num_threads)
+    : top_(new AtomicTopPtr(SegmentPtr(new KSegment(k), 0))),
       k_(k) {
 }
 
@@ -91,7 +91,7 @@ bool KStack<T>::is_empty(KSegment* segment) {
   const uint64_t random_index = pseudorand() % k_;
   uint64_t index;
   Item item_old;
-  Item old_records[k_];
+  Item old_records[k_];  // NOLINT
   for (uint64_t i =0; i < k_; i++) {
     index = (random_index + i) % k_;
     item_old = segment->items[index].load();
@@ -159,7 +159,7 @@ bool KStack<T>::committed(
         return true;
       }
       if (!top_old.value()->items[index].swap(
-            item_new, Item((T)NULL, item_new.tag() +1 ))) {
+            item_new, Item((T)NULL, item_new.tag() + 1))) {
         return true;
       }
     }
