@@ -46,6 +46,10 @@ class MSQueue : public Queue<T>, public DistributedQueueInterface<T> {
     return tail_old.aba() - head_old.aba();
   }
 
+  inline bool empty() {
+    return head_->value() == tail_->value();
+  }
+
   inline AtomicPointer<ms_details::Node<T>*> get_head(void) const {
     return *head_;
   }
