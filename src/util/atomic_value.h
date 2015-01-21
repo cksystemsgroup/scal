@@ -12,6 +12,8 @@
 #define USE_CAS128
 #endif  // HAVE_CONFIG_H
 
+#define SUPPORTS_TEMPLATE_ALIAS 1
+
 #ifdef USE_CAS128
 
 #include "util/atomic_value128.h"
