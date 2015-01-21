@@ -8,9 +8,9 @@
 #include "datastructures/ms_queue.h"
 
 void* ds_new(void) {
-  MSQueue<uint64_t> *msq = new MSQueue<uint64_t>();
-  return static_cast<void*>(msq);
+  return static_cast<void*>(new scal::MSQueue<uint64_t>());
 }
+
 
 char* ds_get_stats(void) {
   return NULL;
