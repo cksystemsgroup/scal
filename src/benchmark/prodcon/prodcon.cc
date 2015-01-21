@@ -15,7 +15,8 @@
 #include "benchmark/common.h"
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "datastructures/pool.h"
-#include "util/malloc.h"
+#include "util/allocation.h"
+#include "util/malloc-compat.h"
 #include "util/operation_logger.h"
 #include "util/random.h"
 #include "util/threadlocals.h"
@@ -58,13 +59,13 @@ int main(int argc, const char **argv) {
   google::SetUsageMessage(usage);
   google::ParseCommandLineFlags(&argc, const_cast<char***>(&argv), true);
 
-  uint64_t tlsize = scal::human_size_to_pages(FLAGS_prealloc_size.c_str(),
-                                              FLAGS_prealloc_size.size());
+  size_t tlsize = scal::HumanSizeToPages(
+      FLAGS_prealloc_size.c_str(), FLAGS_prealloc_size.size());
 
   // Init the main program as executing thread (may use rnd generator or tl
   // allocs).
   g_num_threads = FLAGS_producers + FLAGS_consumers;
-  scal::tlalloc_init(tlsize, true /* touch pages */);
+  scal::ThreadLocalAllocator::Get().Init(tlsize, true);
   //threadlocals_init();
   scal::ThreadContext::prepare(g_num_threads + 1);
   scal::ThreadContext::assign_context();
@@ -137,10 +138,10 @@ void ProdConBench::producer(void) {
 
 void ProdConBench::consumer(void) {
   Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
-  uint64_t thread_id = scal::ThreadContext::get().thread_id();
+  const uint64_t thread_id = scal::ThreadContext::get().thread_id();
   // Calculate the items each consumer has to collect.
   uint64_t operations = FLAGS_producers * FLAGS_operations / FLAGS_consumers;
-  uint64_t rest = (FLAGS_producers * FLAGS_operations) % FLAGS_consumers;
+  const uint64_t rest = (FLAGS_producers * FLAGS_operations) % FLAGS_consumers;
   // We assume that thread ids are increasing, starting from 1.
   if (rest >= thread_id) {
     operations++;

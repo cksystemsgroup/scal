@@ -8,7 +8,8 @@
 #include <pthread.h>
 #include <sched.h>
 
-#include "util/malloc.h"
+#include "util/allocation.h"
+#include "util/malloc-compat.h"
 #include "util/platform.h"
 #include "util/time.h"
 #include "util/threadlocals.h"
@@ -75,7 +76,7 @@ void Benchmark::setup_pthread_attr(pthread_attr_t *attr) {
   if (s != 0) {
     handle_pthread_error(s, "pthread_attr_setschedpolicy");
   }
-  param.sched_priority = 40;
+  param.sched_priority = 99;
   s = pthread_attr_setschedparam(attr, &param);
   if (s != 0) {
     handle_pthread_error(s, "pthread_attr_setschedparam");
@@ -134,7 +135,7 @@ void Benchmark::set_core_affinity() {
 }
 
 void Benchmark::startup_thread() {
-  scal::tlalloc_init(thread_prealloc_size_, true /* touch pages */);
+  scal::ThreadLocalAllocator::Get().Init(thread_prealloc_size_, true);
   //set_core_affinity();
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
   if (thread_id == 0) {
