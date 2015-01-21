@@ -56,6 +56,12 @@ class MSQueue : public Queue<T> {
     return tail_->load();
   }
 
+  inline AtomicRaw empty_state() {
+    return tail_->load().tag();
+  }
+
+  inline bool get_return_empty_state(T *item, AtomicRaw *state);
+
  private:
   typedef TaggedValue<Node*> NodePtr;
   typedef AtomicTaggedValue<Node*, scal::kCachePrefetch> AtomicNodePtr;
@@ -123,6 +129,36 @@ bool MSQueue<T>::dequeue(T *item) {
       }
     }
   }
+  return true;
+}
+
+
+template<typename T>
+bool MSQueue<T>::get_return_empty_state(T *item, AtomicRaw* state) {
+  NodePtr head_old;
+  NodePtr tail_old;
+  NodePtr next;
+  while (true) {
+    head_old = head_->load();
+    tail_old = tail_->load();
+    next = head_old.value()->next.load();
+    if (head_->load() == head_old) {
+      if (head_old.value() == tail_old.value()) {
+        if (next.value() == NULL) {
+          *state = head_old.tag();
+          return false;
+        }
+        tail_->swap(tail_old, NodePtr(next.value(), tail_old.tag() + 1));
+      } else {
+        *item = next.value()->value;
+        if (head_->swap(
+                head_old, NodePtr(next.value(), head_old.tag() + 1))) {
+          break;
+        }
+      }
+    }
+  }
+  *state = head_old.tag();
   return true;
 }
 

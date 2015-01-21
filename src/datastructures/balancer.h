@@ -12,7 +12,7 @@
 class BalancerInterface {
  public:
   virtual uint64_t get(uint64_t num_queues,
-                       MSQueue<uint64_t> **queues,
+                       scal::MSQueue<uint64_t> **queues,
                        bool enqueue) = 0;
   virtual ~BalancerInterface() {}
 };

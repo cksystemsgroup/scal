@@ -67,5 +67,15 @@
         'glue.gypi:kstack',
       ],
     },
+    {
+      'target_name': 'prodcon-dq-1random-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:dq-1random-ms',
+      ],
+    },
   ]
 }

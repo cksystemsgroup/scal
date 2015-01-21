@@ -24,5 +24,12 @@
         'src/benchmark/std_glue/glue_kstack.cc'
       ],
     },
+    {
+      'target_name': 'dq-1random-ms',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_dq_1random_ms.cc'
+      ],
+    },
   ]
 }

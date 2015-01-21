@@ -17,13 +17,15 @@ DEFINE_uint64(p, 80, "number of partial queues");
 DEFINE_bool(hw_random, false, "use hardware random generator instead "
                               "of pseudo");
 
+
 void* ds_new(void) {
-  Balancer1Random *balancer = new Balancer1Random(FLAGS_hw_random);
-  DistributedQueue<uint64_t, MSQueue<uint64_t> > *sp =
-      new DistributedQueue<uint64_t, MSQueue<uint64_t> >(
-          FLAGS_p, g_num_threads + 1, balancer);
-  return static_cast<void*>(sp);
+  return static_cast<void*>(
+      new scal::DistributedQueue<uint64_t, scal::MSQueue<uint64_t> >(
+          FLAGS_p,
+          g_num_threads + 1,
+          new Balancer1Random(FLAGS_hw_random)));
 }
+
 
 char* ds_get_stats(void) {
   char buffer[255] = { 0 };
