@@ -16,41 +16,41 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <limits>
-
 #include "datastructures/stack.h"
-#include "util/atomic_value.h"
-#include "util/malloc.h"
+#include "util/allocation.h"
+#include "util/atomic_value_new.h"
 #include "util/platform.h"
 #include "util/random.h"
 #include "util/threadlocals.h"
 
-namespace kstack_details {
+namespace scal {
+
+namespace detail {
 
 template<typename T>
-struct KSegment {
-  static uint64_t K;
+class KSegment : public ThreadLocalMemory<128> {
+ public:
+  typedef TaggedValue<T> Item;
+  typedef AtomicTaggedValue<T, 0, 128> AtomicItem;
+  typedef TaggedValue<KSegment*> SegmentPtr;
+  typedef AtomicTaggedValue<KSegment*, 0, 128> AtomicSegmentPtr;
 
-  uint64_t *remove;
-  AtomicPointer<KSegment*> *next;
-  AtomicValue<T> **items;
+  uint8_t remove;
+  uint8_t _pad1[63];
+  AtomicSegmentPtr  next;
+  AtomicItem* items;
 
-  KSegment() {
-    this->remove = scal::tlget<uint64_t>(128);
-    *(this->remove) = 0;
-    this->next = scal::tlget<AtomicPointer<KSegment*> >(128);
-    this->items = static_cast<AtomicValue<T>**>(scal::tlcalloc_aligned(
-        K, sizeof(*items), 128));
-    for (uint64_t i = 0; i < K; i++) {
-      this->items[i] = scal::tlget<AtomicValue<T> >(128*4);
-    }
+  explicit KSegment(uint64_t k) 
+      : remove(0),
+        next(SegmentPtr(NULL, 0)),
+        items(static_cast<AtomicItem*>(
+            ThreadLocalAllocator::Get().CallocAligned(
+                k, sizeof(*items), 128))) {
   }
 };
 
-template<typename T>
-uint64_t KSegment<T>::K = 1;
+}  // namespace detail
 
-}  // namespace kstack_details
 
 template<typename T>
 class KStack : public Stack<T> {
@@ -60,121 +60,106 @@ class KStack : public Stack<T> {
   bool pop(T *item);
 
  private:
-  typedef kstack_details::KSegment<T> KSegment;
-
-  static const uint64_t kNoIndexFound = std::numeric_limits<uint64_t>::max();
-  static const uint64_t kSegmentSize = scal::kPageSize;
-  static const uint64_t kPtrAlignment = scal::kCachePrefetch;
-
+  typedef detail::KSegment<T> KSegment;
+  typedef typename detail::KSegment<T>::Item Item;
+  typedef typename detail::KSegment<T>::SegmentPtr SegmentPtr;
+  typedef AtomicTaggedValue<KSegment*, 128, 128> AtomicTopPtr;
 
   inline bool is_empty(KSegment* segment);
-  inline void find_index(KSegment *segment,
-                         bool empty,
-                         uint64_t *item_index,
-                         AtomicValue<T> *old);
-  void try_add_new_ksegment(AtomicPointer<KSegment*> top_old);
-  void try_remove_ksegment(AtomicPointer<KSegment*> top_old);
-  bool committed(AtomicPointer<KSegment*> top_old,
-                 AtomicValue<T> item_new,
-                 uint64_t index);
+  inline bool find_index(
+      KSegment *segment, bool empty, uint64_t *item_index, TaggedValue<T>* old);
+  void try_add_new_ksegment(TaggedValue<KSegment*> top_old);
+  void try_remove_ksegment(TaggedValue<KSegment*> top_old);
+  bool committed(
+      TaggedValue<KSegment*> top_old, TaggedValue<T> item_new, uint64_t index);
 
-  AtomicPointer<KSegment*> *top_;
-  AtomicRaw **item_records_;
+  AtomicTopPtr* top_;
   uint64_t k_;
-  uint64_t num_threads_;
 };
 
+
 template<typename T>
-KStack<T>::KStack(uint64_t k, uint64_t num_threads) {
-  k_ = k;
-  num_threads_ = num_threads;
-  KSegment::K = k_;
-  top_ = scal::tlget<AtomicPointer<KSegment*> >(kSegmentSize);
-  top_->weak_set_value(scal::tlget<KSegment>(kSegmentSize));
-  item_records_ = static_cast<AtomicRaw**>(scal::calloc_aligned(
-      num_threads_, sizeof(*item_records_), kPtrAlignment));
-  for (uint64_t i = 0; i < num_threads_; i++) {
-    item_records_[i] = static_cast<AtomicRaw*>(scal::tlcalloc_aligned(
-        k_, sizeof(*(item_records_[i])), kPtrAlignment));
-  }
+KStack<T>::KStack(uint64_t k, uint64_t num_threads) 
+    : top_(new AtomicTopPtr(SegmentPtr(new KSegment(k), 0))), 
+      k_(k) {
 }
+
 
 template<typename T>
 bool KStack<T>::is_empty(KSegment* segment) {
   // Distributed Queue style empty check.
-  uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  uint64_t random_index = pseudorand() % k_;
+  const uint64_t random_index = pseudorand() % k_;
   uint64_t index;
-  AtomicValue<T> item_old;
+  Item item_old;
+  Item old_records[k_];
   for (uint64_t i =0; i < k_; i++) {
     index = (random_index + i) % k_;
-    item_old = *(segment->items[index]);
-    AtomicValue<T> item_empty((T)NULL, item_old.aba() + 1);
+    item_old = segment->items[index].load();
     if (item_old.value() != (T)NULL) {
       return false;
     } else {
-     item_records_[thread_id][index] = item_old.raw(); 
+     old_records[index] = item_old;
     }
   }
   for (uint64_t i = 0; i < k_; i++) {
     index = (random_index + i) % k_;
-    item_old = *(segment->items[index]);
-    AtomicValue<T> item_empty((T)NULL, item_old.aba() + 1);
-    if (item_old.raw() != item_records_[thread_id][index]) {
+    item_old = segment->items[index].load();
+    if (item_old != old_records[index]) {
       return false;
     }
   }
   return true;
 }
 
-template<typename T>
-void KStack<T>::try_add_new_ksegment(AtomicPointer<KSegment*> top_old) {
-  if (top_->raw() == top_old.raw()) {
-    KSegment *segment_new = scal::tlget<KSegment>(kSegmentSize);
-    segment_new->next->weak_set_value(top_old.value());
-    AtomicPointer<KSegment*> top_new(segment_new, top_old.aba());
-    top_->cas(top_old, top_new);
-  }
-}
 
 template<typename T>
-void KStack<T>::try_remove_ksegment(AtomicPointer<KSegment*> top_old) {
-  AtomicPointer<KSegment*> next = *(top_->value()->next);
-  if (top_->raw() == top_old.raw()) {
-    if (next.value() != NULL) {
-      __sync_fetch_and_add((top_old.value()->remove), 1);
-      if (is_empty(top_old.value())) {
-        AtomicPointer<KSegment*> top_new(top_old.value()->next->value(),
-                                         top_old.aba() + 1);
-        if (top_->cas(top_old, top_new)) {
-          return;
-        }
-      }
-      __sync_fetch_and_sub((top_old.value()->remove), 1);
+void KStack<T>::try_add_new_ksegment(TaggedValue<KSegment*> top_old) {
+  if (top_->load() == top_old) {
+    KSegment* segment_new = new KSegment(k_);
+    segment_new->next.store(SegmentPtr(top_old.value(), 0));
+    if (!top_->swap(top_old, SegmentPtr(segment_new, top_old.tag()+ 1))) {
+      ThreadLocalAllocator::Get().TryFreeLast();
     }
   }
 }
 
+
 template<typename T>
-bool KStack<T>::committed(AtomicPointer<KSegment*> top_old,
-                          AtomicValue<T> item_new,
-                          uint64_t index) {
-  if (top_old.value()->items[index]->raw() != item_new.raw()) {
+void KStack<T>::try_remove_ksegment(TaggedValue<KSegment*> top_old) {
+  SegmentPtr next = top_->load().value()->next.load();
+  if (top_->load() == top_old) {
+    if (next.value() != NULL) {
+      __sync_fetch_and_add(&top_old.value()->remove, 1);
+      if (is_empty(top_old.value())) {
+        if (top_->swap(top_old, SegmentPtr(next.value(), top_old.tag() + 1))) {
+          return;
+        }
+      }
+      __sync_fetch_and_sub(&top_old.value()->remove, 1);
+    }
+  }
+}
+
+
+template<typename T>
+bool KStack<T>::committed(
+    TaggedValue<KSegment*> top_old, TaggedValue<T> item_new, uint64_t index) {
+  if (top_old.value()->items[index].load() != item_new) {
     return true;
-  } else if (*(top_old.value()->remove) == 0) {
+  } else if (top_old.value()->remove == 0) {
     return true;
-  } else if (*(top_old.value()->remove) >= 1) {
-    AtomicValue<T> item_empty((T)NULL, item_new.aba() + 1);
-    if (top_->raw() != top_old.raw()) {
-      if (!top_old.value()->items[index]->cas(item_new, item_empty)) {
+  } else if (top_old.value()->remove >= 1) {
+    if (top_->load() != top_old) {
+      if (!top_old.value()->items[index].swap(
+            item_new, Item((T)NULL, item_new.tag() + 1))) {
         return true;
       }
     } else {
-      AtomicPointer<KSegment*> top_new(top_old.value(), top_old.aba() + 1);
-      if (top_->cas(top_old, top_new)) {
+      if (top_->swap(top_old, SegmentPtr(top_old.value(), top_old.tag() +1))) {
         return true;
       }
-      if (!top_old.value()->items[index]->cas(item_new, item_empty)) {
+      if (!top_old.value()->items[index].swap(
+            item_new, Item((T)NULL, item_new.tag() +1 ))) {
         return true;
       }
     }
@@ -182,37 +167,38 @@ bool KStack<T>::committed(AtomicPointer<KSegment*> top_old,
   return false;
 }
 
+
 template<typename T>
-void KStack<T>::find_index(KSegment *segment,
-                           bool empty,
-                           uint64_t *item_index,
-                           AtomicValue<T> *old) {
-  uint64_t random_index = pseudorand() % k_;
+bool KStack<T>::find_index(
+    KSegment *segment, bool empty, uint64_t *item_index, TaggedValue<T>* old) {
+  const uint64_t random_index = pseudorand() % k_;
   uint64_t i;
-  *item_index = kNoIndexFound;
   for (uint64_t _cnt = 0; _cnt < k_; _cnt++) {
     i = (random_index + _cnt) % k_;
-    *old = *(segment->items[i]);
+    *old = segment->items[i].load();
     if ((empty && old->value() == (T)NULL) ||
         (!empty && old->value() != (T)NULL)) {
       *item_index = i;
-      return;
+      return true;
     }
   }
+  return false;
 }
+
 
 template<typename T>
 bool KStack<T>::push(T item) {
-  AtomicPointer<KSegment*> top_old;
-  AtomicValue<T> item_old;
+  SegmentPtr top_old;
+  Item item_old;
   uint64_t item_index;
+  bool found_idx;
   while (true) {
-    top_old = *top_;
-    find_index(top_old.value(), true, &item_index, &item_old);
-    if (top_->raw() == top_old.raw()) {
-      if (item_index != kNoIndexFound) {
-        AtomicValue<T> item_new(item, item_old.aba() + 1);
-        if (top_old.value()->items[item_index]->cas(item_old, item_new)) {
+    top_old = top_->load();
+    found_idx = find_index(top_old.value(), true, &item_index, &item_old);
+    if (top_->load() == top_old) {
+      if (found_idx) {
+        Item item_new(item, item_old.tag() + 1);
+        if (top_old.value()->items[item_index].swap(item_old, item_new)) {
           if (committed(top_old, item_new, item_index)) {
             return true;
           }
@@ -224,25 +210,27 @@ bool KStack<T>::push(T item) {
   }
 }
 
+
 template<typename T>
 bool KStack<T>::pop(T *item) {
-  AtomicPointer<KSegment*> top_old;
-  AtomicValue<T> item_old;
+  SegmentPtr top_old;
+  Item item_old;
   uint64_t item_index;
+  bool found_idx;
   while (true) {
-    top_old = *top_;
-    find_index(top_old.value(), false, &item_index, &item_old);
-    if (top_->raw() == top_old.raw()) {
-      if (item_index != kNoIndexFound) {
-        AtomicValue<T> item_empty((T)NULL, item_old.aba() + 1);
-        if (top_->value()->items[item_index]->cas(item_old, item_empty)) {
+    top_old = top_->load();
+    found_idx = find_index(top_old.value(), false, &item_index, &item_old);
+    if (top_->load() == top_old) {
+      if (found_idx) {
+        if (top_old.value()->items[item_index].swap(
+              item_old, Item((T)NULL, item_old.tag() + 1))) {
           *item = item_old.value();
           return true;
         }
       } else {
-        if (top_old.value()->next->value() == NULL) {  // is last segment
+        if (top_old.value()->next.load().value() == NULL) {  // is last segment
           if (is_empty(top_old.value())) {
-            if (top_->raw() == top_old.raw()) {
+            if (top_->load() == top_old) {
               return false;
             }
           }
@@ -253,5 +241,7 @@ bool KStack<T>::pop(T *item) {
     }
   }
 }
+
+}  // namespace scal
 
 #endif  // SCAL_DATASTRUCTURES_KSTACK_H_

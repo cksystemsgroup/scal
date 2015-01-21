@@ -11,9 +11,10 @@
 DEFINE_uint64(k, 80, "k-segment size");
 
 void* ds_new() {
-  KStack<uint64_t> *kstack = new KStack<uint64_t>(FLAGS_k, g_num_threads + 1);
-  return static_cast<void*>(kstack);
+  return static_cast<void*>(
+      new scal::KStack<uint64_t>(FLAGS_k, g_num_threads + 1));
 }
+
 
 char* ds_get_stats(void) {
   return NULL;
