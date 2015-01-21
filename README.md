@@ -26,6 +26,10 @@ A similar script is executed on our [continuous integration test.](https://drone
 
 ## Building [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://drone.io/github.com/cksystemsgroup/scal/latest)
 
+Note: We switched from autotools to gyp for building the framework. The old
+files are still present in the checkout but will be removed once everything is
+converted.
+
 This is as easy as
 
     tools/get_gyp.sh
