@@ -28,21 +28,12 @@ A similar script is executed on our [continuous integration test.](https://drone
 
 This is as easy as
 
-    ./autogen.sh
-    ./configure
+    tools/get_gyp.sh
+    build/gyp/gyp --depth-. scal.gyp
     make
+    BUILDTYPE=Release make
 
-See `./configure --help` for optional features, for instance compiling with
-debugging symbols.
-
-The format for the resulting binaries is `<benchmark>-<datastructure>`. Each
-binary supports the `--help` parameter to show a list of supported configuration
-flags.
-
-The Scal framework should work on any recent x86 platform. However, various
-tests can be performed after building the framework.
-
-    make check
+The debug and release builds reside in `out/`.
 
 Additional data files, such as graph files, are available as submodule
 
