@@ -47,5 +47,15 @@
         'glue.gypi:ms',
       ],
     },
+    {
+      'target_name': 'prodcon-kstack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:kstack',
+      ],
+    },
   ]
 }

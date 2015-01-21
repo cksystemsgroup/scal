@@ -10,5 +10,12 @@
         'src/benchmark/std_glue/glue_ms_queue.cc'
       ],
     },
+    {
+      'target_name': 'kstack',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_kstack.cc'
+      ],
+    },
   ]
 }
