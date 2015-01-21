@@ -11,6 +11,8 @@ class Pool {
   virtual bool put(T item) = 0;
   virtual bool get(T *item) = 0;
 
+  virtual void Terminate() {}
+
   virtual ~Pool() {}
 };
 
