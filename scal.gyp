@@ -48,6 +48,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:treiber',
+      ],
+    },
+    {
       'target_name': 'prodcon-kstack',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],

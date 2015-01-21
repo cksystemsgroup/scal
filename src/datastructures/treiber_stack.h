@@ -12,19 +12,24 @@
 
 #include "datastructures/distributed_queue_interface.h"
 #include "datastructures/stack.h"
-#include "util/atomic_value.h"
-#include "util/malloc.h"
+#include "util/allocation.h"
+#include "util/atomic_value_new.h"
 #include "util/platform.h"
 
-namespace ts_internal {
+namespace scal {
+
+namespace detail {
 
 template<typename T>
-struct Node {
-  AtomicPointer<Node*> next;
+struct Node : ThreadLocalMemory<64> {
+  explicit Node(T item) : next(NULL), data(item) { }
+
+  Node<T>* next;
   T data;
 };
 
-}  // namespace ts_internal
+}  // namespace detail
+
 
 template<typename T>
 class TreiberStack : public Stack<T> {
@@ -40,69 +45,76 @@ class TreiberStack : public Stack<T> {
   }
 
   inline AtomicRaw empty_state() {
-    return top_->raw();
+    return top_->load().tag();
+  }
+
+  inline bool empty() {
+    return top_->load().value() == NULL;
   }
 
   inline bool get_return_empty_state(T *item, AtomicRaw *state);
 
  private:
-  typedef ts_internal::Node<T> Node;
+  typedef detail::Node<T> Node;
+  typedef TaggedValue<Node*> NodePtr;
+  typedef AtomicTaggedValue<Node*, 64, 64> AtomicNodePtr;
 
-  AtomicPointer<Node*> *top_;
+  AtomicNodePtr* top_;
 };
 
+
 template<typename T>
-TreiberStack<T>::TreiberStack() {
-  top_ = scal::get<AtomicPointer<Node*> >(scal::kCachePrefetch);
+TreiberStack<T>::TreiberStack() : top_(new AtomicNodePtr()) {
 }
+
 
 template<typename T>
 bool TreiberStack<T>::push(T item) {
-  Node *n = scal::tlget<Node>(0);
-  n->data = item;
-  AtomicPointer<Node*> top_old;
-  AtomicPointer<Node*> top_new;
-  top_new.weak_set_value(n);
+  Node* n = new Node(item);
+  NodePtr top_old;
+  NodePtr top_new;
   do {
-    top_old = *top_;
-    n->next.weak_set_value(top_old.value());
-    top_new.weak_set_aba(top_old.aba() + 1);
-  } while (!top_->cas(top_old, top_new));
+    top_old = top_->load();
+    n->next = top_old.value();
+    top_new = NodePtr(n, top_old.tag() + 1);
+  } while (!top_->swap(top_old, top_new));
   return true;
 }
+
 
 template<typename T>
 bool TreiberStack<T>::pop(T *item) {
-  AtomicPointer<Node*> top_old;
-  AtomicPointer<Node*> top_new;
+  NodePtr top_old;
+  NodePtr top_new;
   do {
-    top_old = *top_;
+    top_old = top_->load();
     if (top_old.value() == NULL) {
       return false;
     }
-    top_new.weak_set_value(top_old.value()->next.value());
-    top_new.weak_set_aba(top_old.aba() + 1);
-  } while (!top_->cas(top_old, top_new));
+    top_new = NodePtr(top_old.value()->next, top_old.tag() + 1);
+  } while (!top_->swap(top_old, top_new));
   *item = top_old.value()->data;
   return true;
 }
 
+
 template<typename T>
-inline bool TreiberStack<T>::get_return_empty_state(T *item, AtomicRaw *state) {
-  AtomicPointer<Node*> top_old;
-  AtomicPointer<Node*> top_new;
+bool TreiberStack<T>::get_return_empty_state(T* item, AtomicRaw* state) {
+  NodePtr top_old;
+  NodePtr top_new;
   do {
-    top_old = *top_;
+    top_old = top_->load();
     if (top_old.value() == NULL) {
-      *state = top_old.raw();
+      *state = top_old.tag();
       return false;
     }
-    top_new.weak_set_value(top_old.value()->next.value());
-    top_new.weak_set_aba(top_old.aba() + 1);
-  } while (!top_->cas(top_old, top_new));
+    top_new = NodePtr(top_old.value()->next, top_old.tag() + 1);
+  } while (!top_->swap(top_old, top_new));
   *item = top_old.value()->data;
-  *state = top_old.raw();
+  *state = top_old.tag();
   return true;
 }
+
+}  // namespace scal
 
 #endif  // SCAL_DATASTRUCTURES_TREIBER_STACK_H_

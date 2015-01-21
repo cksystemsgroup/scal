@@ -8,7 +8,7 @@
 #include "datastructures/treiber_stack.h"
 
 void* ds_new() {
-  TreiberStack<uint64_t> *ts = new TreiberStack<uint64_t>();
+  scal::TreiberStack<uint64_t> *ts = new scal::TreiberStack<uint64_t>();
   return static_cast<void*>(ts);
 }
 
