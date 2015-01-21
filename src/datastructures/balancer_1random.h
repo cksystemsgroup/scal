@@ -14,7 +14,7 @@ class Balancer1Random : public BalancerInterface {
     use_hw_random_ = use_hw_random;
   }
 
-  uint64_t get(uint64_t num_queues, scal::MSQueue<uint64_t> **queues, bool enqueue) {
+  uint64_t get(uint64_t num_queues, bool enqueue) {
     if (num_queues == 1) {
       return 0;
     }

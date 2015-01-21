@@ -31,5 +31,12 @@
         'src/benchmark/std_glue/glue_dq_1random_ms.cc'
       ],
     },
+    {
+      'target_name': 'dq-1random-treiber',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_dq_1random_treiber.cc'
+      ],
+    },
   ]
 }

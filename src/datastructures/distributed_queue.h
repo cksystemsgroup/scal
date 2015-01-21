@@ -47,7 +47,7 @@ DistributedQueue<T, P>::DistributedQueue(
 
 template<typename T, class P>
 bool DistributedQueue<T, P>::put(T item) {
-  const uint64_t index = balancer_->get(num_queues_, NULL, true);
+  const uint64_t index = balancer_->get(num_queues_, true);
   return backend_[index]->put(item);
 }
 
@@ -55,7 +55,7 @@ bool DistributedQueue<T, P>::put(T item) {
 template<typename T, class P>
 bool DistributedQueue<T, P>::get(T *item) {
   size_t i;
-  uint64_t start = balancer_->get(num_queues_, NULL, false);
+  uint64_t start = balancer_->get(num_queues_, false);
   size_t index;
   AtomicRaw tails[num_queues_];  // NOLINT
   while (true) {

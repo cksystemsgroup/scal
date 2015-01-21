@@ -77,5 +77,15 @@
         'glue.gypi:dq-1random-ms',
       ],
     },
+    {
+      'target_name': 'prodcon-dq-1random-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:dq-1random-treiber',
+      ],
+    },
   ]
 }
