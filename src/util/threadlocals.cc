@@ -50,6 +50,7 @@ void ThreadContext::prepare(uint64_t num_threads) {
     context->thread_id_ = i;
     context->new_random_seed();
     contexts[i] = context;
+    context->data_ = NULL;
   }
 };
 
