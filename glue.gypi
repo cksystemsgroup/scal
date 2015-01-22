@@ -45,5 +45,12 @@
         'src/benchmark/std_glue/glue_fc_queue.cc'
       ],
     },
+    {
+      'target_name': 'rd',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_rd_queue.cc'
+      ],
+    },
   ]
 }

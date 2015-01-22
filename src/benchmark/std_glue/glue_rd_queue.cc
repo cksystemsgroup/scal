@@ -11,10 +11,11 @@ DEFINE_uint64(quasi_factor, 80, "random dequeue quasi factor");
 DEFINE_uint64(max_retries, 10, "number of retries in dequeue");
 
 void* ds_new(void) {
-  RandomDequeueQueue<uint64_t> *rdq =
-      new RandomDequeueQueue<uint64_t>(FLAGS_quasi_factor, FLAGS_max_retries);
-  return static_cast<void*>(rdq);
+  return static_cast<void*>(
+      new scal::RandomDequeueQueue<uint64_t>(
+          FLAGS_quasi_factor, FLAGS_max_retries));
 }
+
 
 char* ds_get_stats(void) {
   return NULL;

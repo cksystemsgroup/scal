@@ -97,5 +97,15 @@
         'glue.gypi:fc',
       ],
     },
+    {
+      'target_name': 'prodcon-rd',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:rd',
+      ],
+    },
   ]
 }
