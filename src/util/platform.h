@@ -21,6 +21,9 @@ inline long number_of_cores() {
   return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
+// Data structures may rely on this constant to statically limit any buffers.
+const uint64_t  kMaxThreads = 128;
+
 }  // namespace scal
 
 #endif  // SCAL_UTIL_PLATFORM_H_

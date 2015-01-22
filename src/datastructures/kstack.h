@@ -16,6 +16,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef LOCALLY_LINEARIZABLE
+#include <string.h>
+#endif  // LOCALLY_LINEARIZABLE
+
 #include "datastructures/stack.h"
 #include "util/allocation.h"
 #include "util/atomic_value_new.h"
@@ -35,10 +39,15 @@ class KSegment : public ThreadLocalMemory<128> {
   typedef TaggedValue<KSegment*> SegmentPtr;
   typedef AtomicTaggedValue<KSegment*, 0, 128> AtomicSegmentPtr;
 
-  uint8_t remove;
-  uint8_t _pad1[63];
-  AtomicSegmentPtr  next;
-  AtomicItem* items;
+#ifdef LOCALLY_LINEARIZABLE
+  inline void mark() {
+    markers[scal::ThreadContext::get().thread_id()] = 1;
+  }
+
+  inline bool is_marked() {
+    return markers[scal::ThreadContext::get().thread_id()] != 0;
+  }
+#endif  // LOCALLY_LINEARIZABLE
 
   explicit KSegment(uint64_t k)
       : remove(0),
@@ -46,7 +55,21 @@ class KSegment : public ThreadLocalMemory<128> {
         items(static_cast<AtomicItem*>(
             ThreadLocalAllocator::Get().CallocAligned(
                 k, sizeof(*items), 128))) {
+#ifdef LOCALLY_LINEARIZABLE
+    memset(markers, 0, sizeof(markers));
+#endif  // LOCALLY_LINEARIZABLE
   }
+
+  uint8_t remove;
+  uint8_t _pad1[63];
+  AtomicSegmentPtr  next;
+  AtomicItem* items;
+
+#ifdef LOCALLY_LINEARIZABLE
+  // Ideally, the markers would be padded and aligned as well but they take up
+  // too much memory.
+  intptr_t markers[kMaxThreads];
+#endif  // LOCALLY_LINEARIZABLE
 };
 
 }  // namespace detail
@@ -92,7 +115,7 @@ bool KStack<T>::is_empty(KSegment* segment) {
   uint64_t index;
   Item item_old;
   Item old_records[k_];  // NOLINT
-  for (uint64_t i =0; i < k_; i++) {
+  for (uint64_t i = 0; i < k_; i++) {
     index = (random_index + i) % k_;
     item_old = segment->items[index].load();
     if (item_old.value() != (T)NULL) {
@@ -194,12 +217,23 @@ bool KStack<T>::push(T item) {
   bool found_idx;
   while (true) {
     top_old = top_->load();
+
+#ifdef LOCALLY_LINEARIZABLE
+    if (top_old.value()->is_marked()) {
+      try_add_new_ksegment(top_old);
+      continue;
+    }
+#endif  // LOCALLY_LINEARIZABLE
+
     found_idx = find_index(top_old.value(), true, &item_index, &item_old);
     if (top_->load() == top_old) {
       if (found_idx) {
         Item item_new(item, item_old.tag() + 1);
         if (top_old.value()->items[item_index].swap(item_old, item_new)) {
           if (committed(top_old, item_new, item_index)) {
+#ifdef LOCALLY_LINEARIZABLE
+            top_old.value()->mark();
+#endif  // LOCALLY_LINEARIZABLE
             return true;
           }
         }

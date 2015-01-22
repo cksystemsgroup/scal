@@ -68,6 +68,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-ll-kstack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-kstack',
+      ],
+    },
+    {
       'target_name': 'prodcon-dq-1random-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],

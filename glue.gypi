@@ -25,6 +25,14 @@
       ],
     },
     {
+      'target_name': 'll-kstack',
+      'type': 'static_library',
+      'cflags': [ '-DLOCALLY_LINEARIZABLE' ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ll_kstack.cc'
+      ],
+    },
+    {
       'target_name': 'dq-1random-ms',
       'type': 'static_library',
       'sources': [
