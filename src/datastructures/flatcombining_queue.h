@@ -19,10 +19,13 @@
 
 #include "datastructures/queue.h"
 #include "datastructures/single_list.h"
+#include "util/lock.h"
 #include "util/malloc.h"
 #include "util/threadlocals.h"
 
-namespace fc_details {
+namespace scal {
+
+namespace detail {
 
 enum Opcode {
   Done = 0,
@@ -30,12 +33,29 @@ enum Opcode {
   Dequeue = 2
 };
 
+
 template<typename T>
 struct Operation {
+  Operation() : opcode(Done) {}
+
   Opcode opcode;
   T data;
+
+#define REST (128 - sizeof(T) - sizeof(Opcode))
+  uint8_t pad1[REST];
+#undef REST
+
+  void* operator new(size_t size) {
+    return MallocAligned(size, 128);
+  }
+
+  void* operator new[](size_t size) {
+    return MallocAligned(size, 128);
+  }
 };
-}  // fc_details
+
+}  // namespace detail
+
 
 template<typename T>
 class FlatCombiningQueue : public Queue<T> {
@@ -45,47 +65,43 @@ class FlatCombiningQueue : public Queue<T> {
   bool dequeue(T *item);
 
  private:
-  typedef fc_details::Opcode Opcode;
-  typedef fc_details::Operation<T> Operation;
+  typedef detail::Operation<T> Operation;
+  typedef detail::Opcode Opcode;
 
-  uint64_t num_ops_;
-  volatile fc_details::Operation<T>* *operations_;
-  SingleList<T> *queue_;
-  bool *global_lock_;
+  void ScanCombineApply();
 
-  inline void set_op(uint64_t index, Opcode opcode, T data) {
-    operations_[index]->data = data;
-    operations_[index]->opcode = opcode;
+  inline void SetOp(uint64_t index, Opcode opcode, T data) {
+    operations_[index].data = data;
+    operations_[index].opcode = opcode;
   }
 
-  void scan_combine_apply(void);
+  SpinLock<64> global_lock_;
+  uint64_t num_ops_;
+  SingleList<T> queue_;
+  volatile Operation* operations_;
 };
 
-template<typename T>
-FlatCombiningQueue<T>::FlatCombiningQueue(uint64_t num_ops) {
-  num_ops_ = num_ops;
-  operations_ = static_cast<volatile Operation**>(calloc(
-      num_ops, sizeof(*operations_)));
-  for (uint64_t i = 0; i < num_ops; i++) {
-    operations_[i] = scal::get<Operation>(128);
-  }
-  queue_ = new SingleList<T>();
-  global_lock_ = scal::get<bool>(128);
-}
 
 template<typename T>
-void FlatCombiningQueue<T>::scan_combine_apply(void) {
+FlatCombiningQueue<T>::FlatCombiningQueue(uint64_t num_ops)
+    : num_ops_(num_ops),
+      operations_(new Operation[num_ops]) {
+}
+
+
+template<typename T>
+void FlatCombiningQueue<T>::ScanCombineApply() {
   for (uint64_t i = 0; i < num_ops_; i++) {
-    if (operations_[i]->opcode == Opcode::Enqueue) {
-      queue_->enqueue(operations_[i]->data);
-      set_op(i, Opcode::Done, (T)NULL);
-    } else if (operations_[i]->opcode == Opcode::Dequeue) {
-      if (!queue_->is_empty()) {
+    if (operations_[i].opcode == Opcode::Enqueue) {
+      queue_.enqueue(operations_[i].data);
+      SetOp(i, Opcode::Done, (T)NULL);
+    } else if (operations_[i].opcode == Opcode::Dequeue) {
+      if (!queue_.is_empty()) {
         T item;
-        queue_->dequeue(&item);
-        set_op(i, Opcode::Done, item);
+        queue_.dequeue(&item);
+        SetOp(i, Opcode::Done, item);
       } else {
-        set_op(i, Opcode::Done, (T)NULL);
+        SetOp(i, Opcode::Done, (T)NULL);
       }
     }
   }
@@ -94,43 +110,46 @@ void FlatCombiningQueue<T>::scan_combine_apply(void) {
 
 template<typename T>
 bool FlatCombiningQueue<T>::enqueue(T item) {
-  uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  set_op(thread_id, Opcode::Enqueue, item);
+  const uint64_t thread_id = scal::ThreadContext::get().thread_id();
+  SetOp(thread_id, Opcode::Enqueue, item);
   while (true) {
-    if (!__sync_bool_compare_and_swap(global_lock_, false, true)) {
-      if (operations_[thread_id]->opcode == Opcode::Done) {
+    if (!global_lock_.TryLock()) {
+      if (operations_[thread_id].opcode == Opcode::Done) {
         return true;
       }
     } else {
-      scan_combine_apply();
-      *global_lock_ = false;
+      ScanCombineApply();
+      global_lock_.Unlock();
       return true;
     }
   }
 }
 
+
 template<typename T>
 bool FlatCombiningQueue<T>::dequeue(T *item) {
-  uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  set_op(thread_id, Opcode::Dequeue, (T)NULL);
+  const uint64_t thread_id = scal::ThreadContext::get().thread_id();
+  SetOp(thread_id, Opcode::Dequeue, (T)NULL);
   while (true) {
-    if (!__sync_bool_compare_and_swap(global_lock_, false, true)) {
-      if (operations_[thread_id]->opcode == Opcode::Done) {
+    if (!global_lock_.TryLock()) {
+      if (operations_[thread_id].opcode == Opcode::Done) {
         break;
       }
     } else {
-      scan_combine_apply();
-      *global_lock_ = false;
+      ScanCombineApply();
+      global_lock_.Unlock();
       break;
     }
   }
-  *item = operations_[thread_id]->data;
-  set_op(thread_id, Opcode::Done, (T)NULL);
+  *item = operations_[thread_id].data;
+  SetOp(thread_id, Opcode::Done, (T)NULL);
   if (*item == (T)NULL) {
     return false;
   } else {
     return true;
   }
 }
+
+}  // namespace scal
 
 #endif  // SCAL_DATASTRUCTURES_FLATCOMBINING_QUEUE_H_

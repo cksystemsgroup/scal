@@ -2,8 +2,8 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-// A singly-linked list using a sentinel node that can only be used in
-// single-threaded.
+// A singly-linked list lacking synchronization, i.e., it can only be used in
+// sequential workloads (or within critical sections).
 
 #ifndef SCAL_DATASTRUCTURES_SINGLE_LIST_H_
 #define SCAL_DATASTRUCTURES_SINGLE_LIST_H_
@@ -28,9 +28,10 @@ class SingleList : public Queue<T> {
     S value;
   };
 
-  Node<T> *head_;
-  Node<T> *tail_;
+  Node<T>* head_;
+  Node<T>* tail_;
 };
+
 
 template<typename T>
 SingleList<T>::SingleList() {
@@ -38,6 +39,7 @@ SingleList<T>::SingleList() {
   head_ = n;
   tail_ = n;
 }
+
 
 template<typename T>
 bool SingleList<T>::is_empty() const {
@@ -48,6 +50,7 @@ bool SingleList<T>::is_empty() const {
   }
 }
 
+
 template<typename T>
 bool SingleList<T>::enqueue(T item) {
   Node<T> *n = scal::tlget<Node<T> >(0);
@@ -56,6 +59,7 @@ bool SingleList<T>::enqueue(T item) {
   tail_ = n;
   return true;
 }
+
 
 template<typename T>
 bool SingleList<T>::dequeue(T *item) {

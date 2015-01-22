@@ -5,28 +5,35 @@
 #ifndef SCAL_UTIL_LOCK_H_
 #define SCAL_UTIL_LOCK_H_
 
+template<int PAD = 0>
 class SpinLock {
  public:
-  SpinLock() : lock_word_(0) {}
+  inline SpinLock() : lock_word_(0) {}
 
-  void Lock() {
+  inline void Lock() {
     while (!__sync_bool_compare_and_swap(&lock_word_, 0, 1)) {
       __asm__("PAUSE");
     }
   }
 
-  void Unlock() {
+  inline bool TryLock() {
+    return __sync_bool_compare_and_swap(&lock_word_, 0, 1);
+  }
+
+  inline void Unlock() {
     __sync_bool_compare_and_swap(&lock_word_, 1, 0);
   }
 
  private:
-  intptr_t lock_word_ ;
+  intptr_t lock_word_;
+  uint8_t _padding[ (PAD != 0) ?
+      PAD - sizeof(lock_word_) : 0 ];
 };
 
 
 class LockHolder {
  public:
-  LockHolder(SpinLock* lock) : lock_(lock) {
+  explicit LockHolder(SpinLock<>* lock) : lock_(lock) {
     lock_->Lock();
   }
 
@@ -35,7 +42,7 @@ class LockHolder {
   }
 
  private:
-  SpinLock* lock_;
+  SpinLock<>* lock_;
 };
 
 #endif  // SCAL_UTIL_LOCK_H_

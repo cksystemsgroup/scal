@@ -38,5 +38,12 @@
         'src/benchmark/std_glue/glue_dq_1random_treiber.cc'
       ],
     },
+    {
+      'target_name': 'fc',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_fc_queue.cc'
+      ],
+    },
   ]
 }

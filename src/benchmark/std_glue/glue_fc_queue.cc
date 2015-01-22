@@ -10,10 +10,10 @@
 DEFINE_uint64(array_size, 100, "operations array size");
 
 void* ds_new() {
-  FlatCombiningQueue<uint64_t> *fcq =
-      new FlatCombiningQueue<uint64_t>(FLAGS_array_size);
-  return static_cast<void*>(fcq);
+  return static_cast<void*>(
+      new scal::FlatCombiningQueue<uint64_t>(FLAGS_array_size));
 }
+
 
 char* ds_get_stats(void) {
   return NULL;
