@@ -12,15 +12,10 @@
 #ifndef SCAL_DATASTRUCTURES_FLATCOMBINING_QUEUE_H_
 #define SCAL_DATASTRUCTURES_FLATCOMBINING_QUEUE_H_
 
-#include <errno.h>
-#include <malloc.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "datastructures/queue.h"
 #include "datastructures/single_list.h"
+#include "util/allocation.h"
 #include "util/lock.h"
-#include "util/malloc.h"
 #include "util/threadlocals.h"
 
 namespace scal {
