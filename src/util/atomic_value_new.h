@@ -5,13 +5,14 @@
 #ifndef SCAL_UTIL_ATOMIC_VALUE_NEW_H_
 #define SCAL_UTIL_ATOMIC_VALUE_NEW_H_
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <atomic>
 #include <limits>
 
-//#define TAGGED_VALUE_CHECKED_MODE 1
+// #define TAGGED_VALUE_CHECKED_MODE 1
 
 template<typename T, int ALIGN, int PAD> class AtomicTaggedValue;
 
@@ -22,19 +23,25 @@ class TaggedValue {
   typedef uint16_t tag_type;
   typedef T value_type;
 
+  static inline void CheckCompatibility(T value) {
+#ifdef TAGGED_VALUE_CHECKED_MODE
+    assert((value & kValueMask) == value);
+#endif  // TAGGED_VALUE_CHECKED_MODE
+  }
+
   inline TaggedValue() : raw_(0) {}
 
-  explicit inline TaggedValue(T value, tag_type tag) 
+  explicit inline TaggedValue(T value, tag_type tag)
       : raw_((reinterpret_cast<raw_type>(value) & kValueMask) |
              (static_cast<raw_type>(tag) << 48)) {
 #ifdef TAGGED_VALUE_CHECKED_MODE
     if ((this->value() != value) || (this->tag() != tag)) {
       fprintf(stderr, "TaggedValue inconsistency: tried creating with "
                       "value: %p, tag: %d. result: value(): %p, tag(): %d.\n",
-                      value, tag, this->value(), this->tag());
+                      (void*)value, tag, (void*)this->value(), this->tag());  // NOLINT
       abort();
     }
-#endif
+#endif  // TAGGED_VALUE_CHECKED_MODE
     static_assert(sizeof(T) <= 8, /* only approximate check */
                  "tagging requires the value to have less than 48 bits, "
                  "or 48 bits with the 48'th bit being extended");
@@ -47,7 +54,7 @@ class TaggedValue {
 
   inline T value() const {
     return reinterpret_cast<T>(
-        (raw_ & kValueMask) | 
+        (raw_ & kValueMask) |
         (((raw_ >> (kValueBits - 1)) & 0x1) * kExtendMask));
   }
 
@@ -71,7 +78,7 @@ class TaggedValue {
 
  private:
   static const uint64_t kValueBits = 48;
-  static const uint64_t kValueMask = (1UL << kValueBits ) - 1;
+  static const uint64_t kValueMask = (1UL << kValueBits) - 1;
   static const uint64_t kExtendMask =
       std::numeric_limits<raw_type>::max() - kValueMask;
 
@@ -100,7 +107,7 @@ class AtomicTaggedValue {
     raw_atomic_.store(tagged_value.raw_);
   }
 
-  inline bool swap(const TaggedValue<T>& expected,
+  inline bool swap(const TaggedValue<T>& expected,  // NOLINT
                    const TaggedValue<T>& desired) {
     uint64_t val = expected.raw_;
     return raw_atomic_.compare_exchange_strong(val, desired.raw_);
@@ -124,7 +131,7 @@ class AtomicTaggedValue {
 
  private:
   std::atomic<typename TaggedValue<T>::raw_type> raw_atomic_;
-  uint8_t _padding[ (PAD != 0) ? 
+  uint8_t _padding[ (PAD != 0) ?
       PAD - sizeof(std::atomic<typename TaggedValue<T>::raw_type>) : 0 ];
 };
 

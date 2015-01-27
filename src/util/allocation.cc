@@ -13,7 +13,8 @@
 
 #include <new>
 
-DEFINE_bool(reuse_memory_new, true, "reuse memory, no matter what");
+DEFINE_bool(reuse_memory, true, "reuse memory, no matter what");
+DEFINE_bool(warn_on_overflow, false, "print a warning on overflowing");
 
 namespace {
 
@@ -134,7 +135,10 @@ void* ThreadLocalAllocator::Malloc(size_t size) {
   }
   last_size_ = size;
   if ((current_ + static_cast<intptr_t>(size)) >= end_) {
-    if (FLAGS_reuse_memory_new) {
+    if (FLAGS_reuse_memory) {
+      if (FLAGS_warn_on_overflow) {
+        fprintf(stderr, "%p: overflowing buffer. resetting.\n", this);
+      }
       ResetBuffer();
     } else {
       fprintf(stderr, "warning: allocating new buffer\n");
