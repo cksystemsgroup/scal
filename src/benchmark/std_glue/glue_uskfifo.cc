@@ -13,10 +13,9 @@ DEFINE_uint64(num_segments, 1000000, "number of k-segments in the "
                                      "bounded-size version");
 
 void* ds_new() {
-  UnboundedSizeKFifo<uint64_t> *kfifo =
-      new UnboundedSizeKFifo<uint64_t>(FLAGS_k);
-  return static_cast<void*>(kfifo);
+  return static_cast<void*>(new scal::UnboundedSizeKFifo<uint64_t>(FLAGS_k));
 }
+
 
 char* ds_get_stats(void) {
   return NULL;

@@ -60,5 +60,20 @@
         'src/benchmark/std_glue/glue_rd_queue.cc'
       ],
     },
+    {
+      'target_name': 'us-kfifo',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_uskfifo.cc'
+      ],
+    },
+    {
+      'target_name': 'll-us-kfifo',
+      'type': 'static_library',
+      'cflags': [ '-DLOCALLY_LINEARIZABLE' ],
+      'sources': [
+        'src/benchmark/std_glue/glue_uskfifo.cc'
+      ],
+    },
   ]
 }

@@ -2,11 +2,11 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-// Implementing the queue from:
+// Implementing the k-relaxed queue from:
 //
-// C.M. Kirsch, M. Lippautz, and H. Payer. Fast and Scalable k-FIFO Queues.
-// Technical Report 2012-04, Department of Computer Sciences, University of
-// Salzburg, June 2012.
+// C.M. Kirsch, M. Lippautz, and H. Payer. Fast and scalable, lock-free k-fifo
+// queues. In Proc. International Conference on Parallel Computing Technologies
+// (PaCT), LNCS, pages 208-223. Springer, October 2013.
 
 #ifndef SCAL_DATASTRUCTURES_UNBOUNDEDSIZE_KFIFO_H_
 #define SCAL_DATASTRUCTURES_UNBOUNDEDSIZE_KFIFO_H_
@@ -16,22 +16,58 @@
 #include <stdlib.h>
 
 #include "datastructures/queue.h"
-#include "util/atomic_value.h"
-#include "util/malloc.h"
+#include "util/allocation.h"
+#include "util/atomic_value_new.h"
 #include "util/platform.h"
 #include "util/random.h"
+#include "util/threadlocals.h"
 
-namespace uskfifo_details {
+namespace scal {
+
+namespace detail {
 
 template<typename T>
-struct KSegment {
-  AtomicPointer<KSegment*> next;
-  uint64_t k;
-  bool deleted;
-  AtomicValue<T> **items;
+class KSegment : public ThreadLocalMemory<128> {
+ public:
+  typedef TaggedValue<T> Item;
+  typedef AtomicTaggedValue<T, 0, 0> AtomicItem;
+  typedef TaggedValue<KSegment*> SegmentPtr;
+  typedef AtomicTaggedValue<KSegment*, 64, 64> AtomicSegmentPtr;
+
+  explicit KSegment(uint64_t k)
+      : k_(k)
+      , deleted_(false)
+      , next_(SegmentPtr(NULL, 0))
+      , items_(static_cast<AtomicItem*>(
+            ThreadLocalAllocator::Get().CallocAligned(
+                k_, sizeof(AtomicItem), 64))) {
+  }
+
+  inline uint64_t k() { return k_; }
+  inline bool deleted() { return deleted_; }
+  inline void set_deleted(bool deleted) { deleted_ = deleted; }
+
+  inline SegmentPtr next() { return next_.load(); }
+  inline bool atomic_set_next(
+      const SegmentPtr& old_next, const SegmentPtr& new_next) {
+    return next_.swap(old_next, new_next);
+  }
+
+  inline Item item(uint64_t index) { return items_[index].load(); }
+  inline bool atomic_set_item(
+      uint64_t index, const Item& old_item, const Item& new_item) {
+    return items_[index].swap(old_item, new_item);
+  }
+
+ private:
+  uint64_t k_;
+  bool deleted_;
+  AtomicSegmentPtr next_;
+  AtomicItem* items_;
 };
 
-}  // namespace uskfifo_details
+}  // namespace detail
+
 
 template<typename T>
 class UnboundedSizeKFifo : public Queue<T> {
@@ -41,183 +77,174 @@ class UnboundedSizeKFifo : public Queue<T> {
   bool dequeue(T *item);
 
  private:
-  typedef uskfifo_details::KSegment<T> KSegment;
+  typedef detail::KSegment<T> KSegment;
+  typedef typename KSegment::SegmentPtr SegmentPtr;
+  typedef typename KSegment::AtomicSegmentPtr AtomicSegmentPtr;
+  typedef typename KSegment::Item Item;
 
-  static const uint64_t kPtrAlignment = scal::kCachePrefetch;
-  static const int64_t kNoIndexFound = -1;
+  void advance_head(SegmentPtr head_old);
+  void advance_tail(SegmentPtr tail_old);
+  bool find_index(KSegment *start_index, bool empty,
+                  int64_t *item_index, Item* old);
+  bool committed(SegmentPtr tail_old,
+                 const Item& new_item, uint64_t item_index);
 
-  AtomicPointer<KSegment*> *head_;
-  AtomicPointer<KSegment*> *tail_;
+#ifdef LOCALLY_LINEARIZABLE
+  struct Marker {
+    SegmentPtr value;
+    uint8_t padding[64 - sizeof(SegmentPtr)];
+  };
+
+  inline void SetLastSegment(SegmentPtr tail) {
+    markers[ThreadContext::get().thread_id()].value = tail;
+  }
+
+  inline bool IsLastSegment(SegmentPtr tail) {
+    return markers[ThreadContext::get().thread_id()].value == tail;
+  }
+
+  Marker markers[kMaxThreads];
+#endif  // LOCALLY_LINEARIZABLE
+  AtomicSegmentPtr* head_;
+  AtomicSegmentPtr* tail_;
   uint64_t k_;
-
-  inline KSegment* ksegment_new(void);
-  void advance_head(AtomicPointer<KSegment*> head_old);
-  void advance_tail(AtomicPointer<KSegment*> tail_old);
-  void find_index(KSegment *start_index, bool empty,
-                  int64_t *item_index, AtomicValue<T> *old);
-  bool committed(AtomicPointer<KSegment*> tail_old,
-                 AtomicValue<T> *new_item, uint64_t item_index);
-
-  inline AtomicPointer<KSegment*> get_head(void) {
-    return *head_;
-  }
-
-  inline AtomicPointer<KSegment*> get_tail(void) {
-    return *tail_;
-  }
 };
 
+
 template<typename T>
-uskfifo_details::KSegment<T>* UnboundedSizeKFifo<T>::ksegment_new() {
-  KSegment *ksegment = static_cast<KSegment*>(scal::tlcalloc(
-      1, sizeof(KSegment)));
-  ksegment->k = k_;
-  ksegment->items = static_cast<AtomicValue<T>**>(scal::tlcalloc(
-      ksegment->k, sizeof(AtomicValue<T>*)));
-  for (uint64_t i = 0; i < ksegment->k; i++) {
-    // Segments are contiguous without any alignment.
-    ksegment->items[i] = scal::tlget<AtomicValue<T> >(0);
-  }
-  ksegment->deleted = false;
-  return ksegment;
+UnboundedSizeKFifo<T>::UnboundedSizeKFifo(uint64_t k)
+    : k_(k) {
+  const SegmentPtr new_segment(new KSegment(k_), 0);
+  head_ = new AtomicSegmentPtr(new_segment);
+  tail_ = new AtomicSegmentPtr(new_segment);
 }
 
-template<typename T>
-UnboundedSizeKFifo<T>::UnboundedSizeKFifo(uint64_t k) {
-  k_ = k;
-  KSegment *ksegment = ksegment_new();
-
-  head_ = scal::get<AtomicPointer<KSegment*> >(scal::kPageSize);
-  tail_ = scal::get<AtomicPointer<KSegment*> >(scal::kPageSize);
-  head_->weak_set_value(ksegment);
-  tail_->weak_set_value(ksegment);
-}
 
 template<typename T>
-void UnboundedSizeKFifo<T>::advance_head(
-    AtomicPointer<uskfifo_details::KSegment<T>*> head_old) {
-  AtomicPointer<KSegment*> head_current = get_head();
-  if (head_current.raw() == head_old.raw()) {
-    AtomicPointer<KSegment*> tail_current = get_tail();
-    AtomicPointer<KSegment*> tail_next_ksegment = tail_current.value()->next;
-    AtomicPointer<KSegment*> head_next_ksegment = head_current.value()->next;
-    if (head_current.raw() == get_head().raw()) {
+void UnboundedSizeKFifo<T>::advance_head(SegmentPtr head_old) {
+  const SegmentPtr head_current = head_->load();
+  if (head_current == head_old) {
+    const SegmentPtr tail_current = tail_->load();
+    const SegmentPtr tail_next_ksegment = tail_current.value()->next();
+    const SegmentPtr head_next_ksegment = head_current.value()->next();
+    if (head_current == head_->load()) {
       if (head_current.value() == tail_current.value()) {
         if (tail_next_ksegment.value() == NULL) {
           return;
         }
-        if (tail_current.raw() == get_tail().raw()) {
-          tail_next_ksegment.set_aba(tail_current.aba() + 1);
-          tail_->cas(tail_current, tail_next_ksegment);
+        if (tail_current == tail_->load()) {
+          tail_->swap(tail_current, SegmentPtr(tail_next_ksegment.value(),
+                                               tail_current.tag() + 1));
         }
       }
-      head_old.value()->deleted = true;
-      head_next_ksegment.set_aba(head_old.aba() + 1);
-      head_->cas(head_old, head_next_ksegment);
+      head_old.value()->set_deleted(true);
+      head_->swap(
+          head_old, SegmentPtr(head_next_ksegment.value(), head_old.tag() + 1));
     }
   }
 }
 
+
 template<typename T>
-void UnboundedSizeKFifo<T>::advance_tail(
-    AtomicPointer<uskfifo_details::KSegment<T>*> tail_old) {
-  AtomicPointer<KSegment*> tail_current = get_tail();
-  AtomicPointer<KSegment*> next_ksegment;
-  if (tail_current.raw() == tail_old.raw()) {
-    next_ksegment = tail_old.value()->next;
-    if (tail_old.raw() == get_tail().raw()) {
+void UnboundedSizeKFifo<T>::advance_tail(SegmentPtr tail_old) {
+  const SegmentPtr tail_current = tail_->load();
+  SegmentPtr next_ksegment;
+  if (tail_current == tail_old) {
+    next_ksegment = tail_old.value()->next();
+    if (tail_old == tail_->load()) {
       if (next_ksegment.value() != NULL) {
-        next_ksegment.set_aba(next_ksegment.aba() + 1);
-        tail_->cas(tail_old, next_ksegment);
+        tail_->swap(tail_old, SegmentPtr(next_ksegment.value(),
+                                         next_ksegment.tag() + 1));
       } else {
-        KSegment *ksegment = ksegment_new();
-        AtomicPointer<KSegment*> new_ksegment(
-            ksegment, next_ksegment.aba() + 1);
-        if (tail_old.value()->next.cas(next_ksegment, new_ksegment)) {
-          new_ksegment.set_aba(tail_old.aba() + 1);
-          tail_->cas(tail_old, new_ksegment);
+        const SegmentPtr new_ksegment(
+            new KSegment(k_), next_ksegment.tag() + 1);
+        if (tail_old.value()->atomic_set_next(next_ksegment, new_ksegment)) {
+          tail_->swap(
+              tail_old, SegmentPtr(new_ksegment.value(), tail_old.tag() + 1));
         }
       }
     }
   }
 }
 
+
 template<typename T>
-void UnboundedSizeKFifo<T>::find_index(
-    uskfifo_details::KSegment<T> *start_index, bool empty, int64_t *item_index,
-    AtomicValue<T> *old) {
-  uint64_t random_index = pseudorand() % start_index->k;
+bool UnboundedSizeKFifo<T>::find_index(
+    detail::KSegment<T> *start_index, bool empty, int64_t *item_index,
+    Item* old) {
+  const uint64_t k = start_index->k();
+  const uint64_t random_index = pseudorand() % k;
   uint64_t index;
-  *item_index = kNoIndexFound;
-  for (size_t i = 0; i < start_index->k; i++) {
-    index = ((random_index + i) % start_index->k);
-    *old = *start_index->items[index];
+  for (size_t i = 0; i < k; i++) {
+    index = ((random_index + i) % k);
+    *old = start_index->item(index);
     if ((empty && old->value() == (T)NULL)
         || (!empty && old->value() != (T)NULL)) {
       *item_index = index;
-      return;
-    }
-  }
-}
-
-template<typename T>
-bool UnboundedSizeKFifo<T>::committed(
-    AtomicPointer<uskfifo_details::KSegment<T>*> tail_old,
-    AtomicValue<T> *new_item,
-    uint64_t item_index) {
-  if (tail_old.value()->items[item_index]->raw() != new_item->raw()) {
-    return true;
-  }
-  AtomicPointer<KSegment*> head_current = get_head();
-  AtomicValue<T> empty_item((T)NULL, 0);
-
-  if (tail_old.value()->deleted == true) {
-    // Not in queue anymore.
-    if (!tail_old.value()->items[item_index]->cas(*new_item, empty_item)) {
-      return true;
-    }
-  } else if (tail_old.value() == head_current.value()) {
-    AtomicPointer<KSegment*> head_new = head_current;
-    head_new.weak_set_aba(head_new.aba() + 1);
-    if (head_->cas(head_current, head_new)) {
-      return true;
-    }
-    if (!tail_old.value()->items[item_index]->cas(*new_item, empty_item)) {
-      return true;
-    }
-  } else if (tail_old.value()->deleted == false) {
-    // In queue and inserted tail not head.
-    return true;
-  } else {
-    if (!tail_old.value()->items[item_index]->cas(*new_item, empty_item)) {
       return true;
     }
   }
   return false;
 }
 
+
+template<typename T>
+bool UnboundedSizeKFifo<T>::committed(
+    SegmentPtr tail_old, const Item& new_item, uint64_t item_index) {
+  if (tail_old.value()->item(item_index) != new_item) {
+    return true;
+  }
+  SegmentPtr head_current = head_->load();
+  const Item empty_item((T)NULL, 0);
+
+  if (tail_old.value()->deleted() == true) {
+    // Not in queue anymore.
+    if (!tail_old.value()->atomic_set_item(item_index, new_item, empty_item)) {
+      return true;
+    }
+  } else if (tail_old == head_current) {
+    SegmentPtr head_new(head_current.value(), head_current.tag() + 1);
+    if (head_->swap(head_current, head_new)) {
+      return true;
+    }
+    if (!tail_old.value()->atomic_set_item(item_index, new_item, empty_item)) {
+      return true;
+    }
+  } else if (tail_old.value()->deleted() == false) {
+    // In queue and inserted tail not head.
+    return true;
+  } else {
+    if (!tail_old.value()->atomic_set_item(item_index, new_item, empty_item)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 template<typename T>
 bool UnboundedSizeKFifo<T>::dequeue(T *item) {
-  AtomicPointer<KSegment*> tail_old;
-  AtomicPointer<KSegment*> head_old;
-  int64_t item_index;
-  AtomicValue<T> old_item;
+  SegmentPtr tail_old;
+  SegmentPtr head_old;
+  int64_t item_index = 0;
+  Item old_item;
+  bool found_idx;
   while (true) {
-    head_old = get_head();
-    find_index(head_old.value(), false, &item_index, &old_item);
-    tail_old = get_tail();
-    if (head_old.raw() == head_->raw()) {
-      if (item_index != kNoIndexFound) {
-        if (head_old.value() == tail_old.value()) {
+    head_old = head_->load();
+    found_idx = find_index(head_old.value(), false, &item_index, &old_item);
+    tail_old = tail_->load();
+    if (head_old == head_->load()) {
+      if (found_idx) {
+        if (head_old == tail_old) {
           advance_tail(tail_old);
         }
-        AtomicValue<T> newcp((T)NULL, old_item.aba() + 1);
-        if (head_old.value()->items[item_index]->cas(old_item, newcp)) {
+        const Item newcp((T)NULL, old_item.tag() + 1);
+        if (head_old.value()->atomic_set_item(item_index, old_item, newcp)) {
           *item = old_item.value();
           return true;
         }
       } else {
-        if (head_old.value() == tail_old.value()) {
+        if (head_old == tail_old) {
           return false;
         }
         advance_head(head_old);
@@ -226,25 +253,37 @@ bool UnboundedSizeKFifo<T>::dequeue(T *item) {
   }
 }
 
+
 template<typename T>
 bool UnboundedSizeKFifo<T>::enqueue(T item) {
+  TaggedValue<T>::CheckCompatibility(item);
   if (item == (T)NULL) {
     printf("%s: unable to enqueue NULL or equivalent value\n", __func__);
     abort();
   }
-  AtomicPointer<KSegment*> tail_old;
-  AtomicPointer<KSegment*> head_old;
-  int64_t item_index;
-  AtomicValue<T> old_item;
+  SegmentPtr tail_old;
+  SegmentPtr head_old;
+  int64_t item_index = 0;
+  Item old_item;
+  bool found_idx;
   while (true) {
-    tail_old = get_tail();
-    head_old = get_head();
-    find_index(tail_old.value(), true, &item_index, &old_item);
-    if (tail_old.raw() == tail_->raw()) {
-      if (item_index != kNoIndexFound) {
-        AtomicValue<T> newcp(item, old_item.aba() + 1);
-        if (tail_old.value()->items[item_index]->cas(old_item, newcp)) {
-          if (committed(tail_old, &newcp, item_index)) {
+    tail_old = tail_->load();
+#ifdef LOCALLY_LINEARIZABLE
+    if (IsLastSegment(tail_old)) {
+      advance_tail(tail_old);
+      continue;
+    }
+#endif  // LOCALLY_LINEARIZABLE
+    head_old = head_->load();
+    found_idx = find_index(tail_old.value(), true, &item_index, &old_item);
+    if (tail_old == tail_->load()) {
+      if (found_idx) {
+        const Item newcp(item, old_item.tag() + 1);
+        if (tail_old.value()->atomic_set_item(item_index, old_item, newcp)) {
+          if (committed(tail_old, newcp, item_index)) {
+#ifdef LOCALLY_LINEARIZABLE
+            SetLastSegment(tail_old);
+#endif  // LOCALLY_LINEARIZABLE
             return true;
           }
         }
@@ -254,5 +293,7 @@ bool UnboundedSizeKFifo<T>::enqueue(T item) {
     }
   }
 }
+
+}  // namespace scal
 
 #endif  // SCAL_DATASTRUCTURES_UNBOUNDEDSIZE_KFIFO_H_

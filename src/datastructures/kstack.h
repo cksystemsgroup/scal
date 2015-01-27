@@ -211,6 +211,7 @@ bool KStack<T>::find_index(
 
 template<typename T>
 bool KStack<T>::push(T item) {
+  TaggedValue<T>::CheckCompatibility(item);
   SegmentPtr top_old;
   Item item_old;
   uint64_t item_index;

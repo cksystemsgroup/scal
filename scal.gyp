@@ -117,5 +117,25 @@
         'glue.gypi:rd',
       ],
     },
+    {
+      'target_name': 'prodcon-us-kfifo',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:us-kfifo',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ll-us-kfifo',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-us-kfifo',
+      ],
+    },
   ]
 }
