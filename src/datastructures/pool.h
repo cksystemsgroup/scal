@@ -5,6 +5,10 @@
 #ifndef SCAL_DATASTRUCTURES_POOL_H_
 #define SCAL_DATASTRUCTURES_POOL_H_
 
+#include "util/atomic_value_new.h"
+
+typedef uint64_t State;
+
 template<typename T>
 class Pool {
  public:

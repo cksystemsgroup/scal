@@ -137,5 +137,25 @@
         'glue.gypi:ll-us-kfifo',
       ],
     },
+    {
+      'target_name': 'prodcon-ll-dq-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-dq-ms',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ll-dq-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-dq-treiber',
+      ],
+    },
   ]
 }

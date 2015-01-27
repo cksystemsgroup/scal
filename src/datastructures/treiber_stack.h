@@ -44,7 +44,7 @@ class TreiberStack : public Stack<T> {
     return push(item);
   }
 
-  inline AtomicRaw empty_state() {
+  inline State put_state() {
     return top_->load().tag();
   }
 
@@ -52,7 +52,7 @@ class TreiberStack : public Stack<T> {
     return top_->load().value() == NULL;
   }
 
-  inline bool get_return_empty_state(T *item, AtomicRaw *state);
+  inline bool get_return_put_state(T *item, State* put_state);
 
  private:
   typedef detail::Node<T> Node;
@@ -99,19 +99,19 @@ bool TreiberStack<T>::pop(T *item) {
 
 
 template<typename T>
-bool TreiberStack<T>::get_return_empty_state(T* item, AtomicRaw* state) {
+bool TreiberStack<T>::get_return_put_state(T* item, State* put_state) {
   NodePtr top_old;
   NodePtr top_new;
   do {
     top_old = top_->load();
     if (top_old.value() == NULL) {
-      *state = top_old.tag();
+      *put_state = top_old.tag();
       return false;
     }
     top_new = NodePtr(top_old.value()->next, top_old.tag() + 1);
   } while (!top_->swap(top_old, top_new));
   *item = top_old.value()->data;
-  *state = top_old.tag();
+  *put_state = top_old.tag();
   return true;
 }
 

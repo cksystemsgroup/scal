@@ -75,5 +75,21 @@
         'src/benchmark/std_glue/glue_uskfifo.cc'
       ],
     },
+    {
+      'target_name': 'll-dq-ms',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ll_dq_ms.cc'
+      ],
+    },
+    {
+      'target_name': 'll-dq-treiber',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ll_dq_treiber.cc'
+      ],
+    },
   ]
 }

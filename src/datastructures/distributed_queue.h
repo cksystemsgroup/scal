@@ -11,6 +11,7 @@
 #include "datastructures/distributed_queue_interface.h"
 #include "datastructures/pool.h"
 #include "util/allocation.h"
+#include "util/atomic_value_new.h"
 #include "util/platform.h"
 
 namespace scal {
@@ -30,6 +31,7 @@ class DistributedQueue : public Pool<T> {
   BalancerInterface* balancer_;
   P **backend_;
 };
+
 
 template<typename T, class P>
 DistributedQueue<T, P>::DistributedQueue(
@@ -57,18 +59,18 @@ bool DistributedQueue<T, P>::get(T *item) {
   size_t i;
   uint64_t start = balancer_->get(num_queues_, false);
   size_t index;
-  AtomicRaw tails[num_queues_];  // NOLINT
+  State tails[num_queues_];  // NOLINT
   while (true) {
     for (i = 0; i < num_queues_; i++) {
       index = (start + i) % num_queues_;
-      if (backend_[index]->get_return_empty_state(
+      if (backend_[index]->get_return_put_state(
               item, &(tails[index]))) {
         return true;
       }
     }
     for (i = 0; i < num_queues_; i++) {
       index = (start + i) % num_queues_;
-      if (backend_[index]->empty_state() != tails[index]) {
+      if (backend_[index]->put_state() != tails[index]) {
         start = index;
         break;
       }

@@ -56,11 +56,11 @@ class MSQueue : public Queue<T> {
     return tail_->load();
   }
 
-  inline AtomicRaw empty_state() {
+  inline State put_state() {
     return tail_->load().tag();
   }
 
-  inline bool get_return_empty_state(T *item, AtomicRaw *state);
+  inline bool get_return_put_state(T* item, State* put_state);
 
  private:
   typedef TaggedValue<Node*> NodePtr;
@@ -134,7 +134,7 @@ bool MSQueue<T>::dequeue(T *item) {
 
 
 template<typename T>
-bool MSQueue<T>::get_return_empty_state(T *item, AtomicRaw* state) {
+bool MSQueue<T>::get_return_put_state(T *item, State* put_state) {
   NodePtr head_old;
   NodePtr tail_old;
   NodePtr next;
@@ -145,7 +145,7 @@ bool MSQueue<T>::get_return_empty_state(T *item, AtomicRaw* state) {
     if (head_->load() == head_old) {
       if (head_old.value() == tail_old.value()) {
         if (next.value() == NULL) {
-          *state = head_old.tag();
+          *put_state = head_old.tag();
           return false;
         }
         tail_->swap(tail_old, NodePtr(next.value(), tail_old.tag() + 1));
@@ -158,7 +158,7 @@ bool MSQueue<T>::get_return_empty_state(T *item, AtomicRaw* state) {
       }
     }
   }
-  *state = head_old.tag();
+  *put_state = head_old.tag();
   return true;
 }
 
