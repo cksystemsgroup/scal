@@ -36,11 +36,15 @@
 #include <stdint.h>
 #include <sched.h>
 
-#include "config.h"
 #include "primitives.h"
-#include "rand.h"
-#include "pool.h"
-#include "thread.h"
+
+#include "util/allocation.h"
+
+static void SHARED_OBJECT_INIT();
+void lcrq_init() {
+  SHARED_OBJECT_INIT();
+}
+
 
 // Definition: RING_POW
 // --------------------
@@ -173,7 +177,7 @@ inline int crq_is_closed(uint64_t t) {
 static void SHARED_OBJECT_INIT() {
      int i;
 
-     RingQueue *rq = getMemory(sizeof(RingQueue));
+     RingQueue* rq = (RingQueue*)tla_malloc(sizeof(RingQueue));
      init_ring(rq);
      head = tail = rq;
 
@@ -190,8 +194,6 @@ static void SHARED_OBJECT_INIT() {
 
 
 inline void fixState(RingQueue *rq) {
-
-    uint64_t t, h, n;
 
     while (1) {
         uint64_t t = FAA64(&rq->tail, 0);
@@ -239,7 +241,7 @@ inline int close_crq(RingQueue *rq, const uint64_t t, const int tries) {
         return BIT_TEST_AND_SET(&rq->tail, 63);
 }
 
-inline void enqueue(Object arg, int pid) {
+bool lcrq_enqueue(uint64_t arg) {
 
     int try_close = 0;
 
@@ -264,7 +266,7 @@ inline void enqueue(Object arg, int pid) {
         if (crq_is_closed(t)) {
 alloc:
             if (nrq == null) {
-                nrq = getMemory(sizeof(RingQueue));
+                nrq = (RingQueue*)tla_malloc(sizeof(RingQueue));
                 init_ring(nrq);
             }
 
@@ -274,7 +276,7 @@ alloc:
             if (CASPTR(&rq->next, null, nrq)) {
                 CASPTR(&tail, rq, nrq);
                 nrq = null;
-                return;
+                return true;
             }
             continue;
         }
@@ -288,7 +290,7 @@ alloc:
         if (likely(is_empty(val))) {
             if (likely(node_index(idx) <= t)) {
                 if ((likely(!node_unsafe(idx)) || rq->head < t) && CAS2((uint64_t*)cell, -1, idx, arg, t)) {
-                    return;
+                    return true;
                 }
             }
         } 
@@ -302,7 +304,8 @@ alloc:
     }
 }
 
-inline Object dequeue(int pid) {
+//inline Object dequeue(int pid) {
+bool lcrq_dequeue(int64_t* item) {
 
     while (1) {
         RingQueue *rq = head;
@@ -320,7 +323,7 @@ inline Object dequeue(int pid) {
         RingNode* cell = &rq->array[h & (RING_SIZE-1)];
         StorePrefetch(cell);
 
-        uint64_t tt;
+        uint64_t tt = 0;
         int r = 0;
 
         while (1) {
@@ -334,8 +337,9 @@ inline Object dequeue(int pid) {
 
             if (likely(!is_empty(val))) {
                 if (likely(idx == h)) {
-                    if (CAS2((uint64_t*)cell, val, cell_idx, -1, unsafe | h + RING_SIZE))
-                        return val;
+                    if (CAS2((uint64_t*)cell, val, cell_idx, -1, unsafe | (h + RING_SIZE)))
+                        *item = val;
+                        return true;
                 } else {
                     if (CAS2((uint64_t*)cell, val, cell_idx, val, set_unsafe(idx))) {
                         count_unsafe_node();
@@ -351,10 +355,10 @@ inline Object dequeue(int pid) {
                 uint64_t t = tail_index(tt);
 
                 if (unlikely(unsafe)) { // Nothing to do, move along
-                    if (CAS2((uint64_t*)cell, val, cell_idx, val, unsafe | h + RING_SIZE))
+                    if (CAS2((uint64_t*)cell, val, cell_idx, val, unsafe | (h + RING_SIZE)))
                         break;
                 } else if (t < h + 1 || r > 200000 || crq_closed) {
-                    if (CAS2((uint64_t*)cell, val, idx, val, h + RING_SIZE)) {
+                    if (CAS2((uint64_t*)cell, val, idx, val, (h + RING_SIZE))) {
                         if (r > 200000 && tt > RING_SIZE)
                             BIT_TEST_AND_SET(&rq->tail, 63);
                         break;
@@ -370,113 +374,10 @@ inline Object dequeue(int pid) {
             // try to return empty
             next = rq->next;
             if (next == null)
-                return -1;  // EMPTY
+                return false;
             if (tail_index(rq->tail) <= h + 1)
                 CASPTR(&head, rq, next);
         }
     }
 }
 
-pthread_barrier_t barr;
-
-int64_t d1 CACHE_ALIGN, d2;
-
-inline void Execute(void* Arg) {
-    long i, rnum;
-    volatile int j;
-    long id = (long) Arg;
-
-    _thread_pin(id);
-    simSRandom(id + 1);
-    nrq = null;
-
-    if (id == N_THREADS - 1)
-        d1 = getTimeMillis();
-    // Synchronization point
-    int rc = pthread_barrier_wait(&barr);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        printf("Could not wait on barrier\n");
-        exit(-1);
-    }
-
-    start_cpu_counters(id);
-    for (i = 0; i < RUNS; i++) {
-        // perform an enqueue operation
-        enqueue(id, id);
-        rnum = simRandomRange(1, MAX_WORK);
-        for (j = 0; j < rnum; j++)
-            ; 
-        // perform a dequeue operation
-        dequeue(id);
-        rnum = simRandomRange(1, MAX_WORK);
-        for (j = 0; j < rnum; j++)
-            ; 
-    }
-    stop_cpu_counters(id);
-
-#ifdef RING_STATS
-    FAA64(&closes, mycloses);
-    FAA64(&unsafes, myunsafes);
-#endif
-}
-
-inline static void* EntryPoint(void* Arg) {
-    Execute(Arg);
-    return NULL;
-}
-
-inline pthread_t StartThread(int arg) {
-    long id = (long) arg;
-    void *Arg = (void*) id;
-    pthread_t thread_p;
-    int thread_id;
-
-    pthread_attr_t my_attr;
-    pthread_attr_init(&my_attr);
-    thread_id = pthread_create(&thread_p, &my_attr, EntryPoint, Arg);
-
-    return thread_p;
-}
-
-int main(int argc, char **argv) {
-    pthread_t threads[N_THREADS];
-    int i;
-
-    init_cpu_counters();
-
-    if (argc < 2) {
-        fprintf(stderr, "Please specify whether to fill queue prior to benchmark!\n");
-        exit(EXIT_SUCCESS);
-    } else {
-        sscanf(argv[1], "%d", &FULL);
-    }
-
-    // Barrier initialization
-    if (pthread_barrier_init(&barr, NULL, N_THREADS)) {
-        printf("Could not create the barrier\n");
-        return -1;
-    }
-
-    int full = FULL;
-
-    SHARED_OBJECT_INIT();
-
-    for (i = 0; i < N_THREADS; i++)
-        threads[i] = StartThread(i);
-
-    for (i = 0; i < N_THREADS; i++)
-        pthread_join(threads[i], NULL);
-    d2 = getTimeMillis();
-
-    printf("time=%d full=%d ", (int) (d2 - d1), full);
-#ifdef RING_STATS
-    printf("closes=%ld unsafes=%ld ", closes, unsafes);
-#endif
-    printStats();
-
-    if (pthread_barrier_destroy(&barr)) {
-        printf("Could not destroy the barrier\n");
-        return -1;
-    }
-    return 0;
-}
