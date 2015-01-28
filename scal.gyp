@@ -166,6 +166,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-lcrq',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:lcrq',
+      ],
+    },
+    {
       'target_name': 'prodcon-hc-ts-cas-stack',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],

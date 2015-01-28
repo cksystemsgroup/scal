@@ -92,6 +92,17 @@
       ],
     },
     {
+      'target_name': 'lcrq',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_lcrq.cc'
+      ],
+      'dependencies': [
+        'upstream.gypi:lcrq-base',
+      ],
+    },
+    {
       'target_name': 'hc-ts-cas-stack',
       'type': 'static_library',
       'cflags': [ ],
