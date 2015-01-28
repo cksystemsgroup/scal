@@ -8,6 +8,8 @@
 #include <pthread.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+
 namespace scal {
 
 void* MallocAligned(size_t size, size_t alignment);
@@ -72,9 +74,24 @@ inline void* ThreadLocalMemory<0>::operator new(size_t size) {
 
 
 template<int ALIGN>
-inline void ThreadLocalMemory<ALIGN>::operator delete(void* ptr) { 
+inline void ThreadLocalMemory<ALIGN>::operator delete(void* ptr) {
 }
 
 }  // namespace scal
+
+#endif  // __cplusplus
+
+// Provide a C interface.
+//
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
+
+void* tla_malloc(size_t size);
+void* tla_malloc_aligned(size_t size, size_t alignment);
+
+#ifdef __cplusplus
+}
+#endif  // __cpluscplus
 
 #endif  // SCAL_UTIL_ALLOCATION_H_
