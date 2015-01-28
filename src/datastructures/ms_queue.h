@@ -60,7 +60,9 @@ class MSQueue : public Queue<T> {
     return tail_->load().tag();
   }
 
-  inline bool get_return_put_state(T* item, State* put_state);
+  bool get_return_put_state(T* item, State* put_state);
+
+  bool empty();
 
  private:
   typedef TaggedValue<Node*> NodePtr;
@@ -102,6 +104,26 @@ bool MSQueue<T>::enqueue(T item) {
     }
   }
   return true;
+}
+
+
+template<typename T>
+bool MSQueue<T>::empty() {
+  NodePtr head_old;
+  NodePtr tail_old;
+  NodePtr next;
+  while (true) {
+    head_old = head_->load();
+    tail_old = tail_->load();
+    next = head_old.value()->next.load();
+    if (head_->load() == head_old) {
+      if ((head_old.value() == tail_old.value()) &&
+          (next.value() == NULL)) {
+        return true;
+      }
+      return false;
+    }
+  }
 }
 
 
