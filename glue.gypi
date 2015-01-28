@@ -131,5 +131,45 @@
         'src/benchmark/std_glue/glue_hardcoded_ts_hardware_stack.cc'
       ],
     },
+    {
+      'target_name': 'hc-ts-cas-queue',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_cas_queue.cc'
+      ],
+    },
+    {
+      'target_name': 'hc-ts-stutter-queue',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_stutter_queue.cc'
+      ],
+    },
+    {
+      'target_name': 'hc-ts-interval-queue',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_interval_queue.cc'
+      ],
+    },
+    {
+      'target_name': 'hc-ts-atomic-queue',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_atomic_queue.cc'
+      ],
+    },
+    {
+      'target_name': 'hc-ts-hardware-queue',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_hardware_queue.cc'
+      ],
+    },
   ]
 }

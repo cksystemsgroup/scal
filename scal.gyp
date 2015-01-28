@@ -216,6 +216,56 @@
       ],
     },
     {
+      'target_name': 'prodcon-hc-ts-cas-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:hc-ts-cas-queue',
+      ],
+    },
+    {
+      'target_name': 'prodcon-hc-ts-stutter-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:hc-ts-stutter-queue',
+      ],
+    },
+    {
+      'target_name': 'prodcon-hc-ts-interval-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:hc-ts-interval-queue',
+      ],
+    },
+    {
+      'target_name': 'prodcon-hc-ts-atomic-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:hc-ts-atomic-queue',
+      ],
+    },
+    {
+      'target_name': 'prodcon-hc-ts-hardware-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:hc-ts-hardware-queue',
+      ],
+    },
+    {
       'target_name': 'seqalt-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -383,6 +433,56 @@
         'libscal',
         'seqalt-base',
         'glue.gypi:hc-ts-hardware-stack',
+      ],
+    },
+    {
+      'target_name': 'seqalt-hc-ts-cas-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:hc-ts-cas-queue',
+      ],
+    },
+    {
+      'target_name': 'seqalt-hc-ts-stutter-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:hc-ts-stutter-queue',
+      ],
+    },
+    {
+      'target_name': 'seqalt-hc-ts-interval-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:hc-ts-interval-queue',
+      ],
+    },
+    {
+      'target_name': 'seqalt-hc-ts-atomic-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:hc-ts-atomic-queue',
+      ],
+    },
+    {
+      'target_name': 'seqalt-hc-ts-hardware-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:hc-ts-hardware-queue',
       ],
     },
   ]
