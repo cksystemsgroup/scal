@@ -2,7 +2,7 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-#include "allocation.h"
+#include "util/allocation.h"
 
 #include <assert.h>
 #include <gflags/gflags.h>
@@ -27,7 +27,7 @@ pthread_once_t tla_key_once = PTHREAD_ONCE_INIT;
 inline size_t RoundSize(uint64_t size, uint64_t round_to) {
   if ((round_to == 0) || (size % round_to) == 0) {
     return size;
-  } 
+  }
   return ((size / round_to) + 1) * round_to;
 }
 
@@ -43,7 +43,7 @@ size_t HumanSizeToPages(const char* hsize, size_t len) {
   if (hsize[len] != 0) {
     fprintf(stderr, "%s: epected valid c string\n", __func__);
     abort();
-  } 
+  }
   size_t multiplier;
   switch (hsize[len-1]) {
   case 'k':
@@ -162,17 +162,18 @@ void* ThreadLocalAllocator::Calloc(size_t size, size_t num) {
 
 
 void* ThreadLocalAllocator::MallocAligned(size_t size, size_t alignment) {
-  // TODO: Check alignment.
+  // TODO(ckgroup): Check alignment.
   size = RoundSize(size, 2 * kWordSize);
   const size_t alloc_size = size + alignment;
   intptr_t start = reinterpret_cast<intptr_t>(Malloc(alloc_size));
   start += alignment - (start % alignment);
   assert((start % alignment) == 0);
-  return reinterpret_cast<void*>(start);   
+  return reinterpret_cast<void*>(start);
 }
 
 
-void* ThreadLocalAllocator::CallocAligned(size_t num, size_t size, size_t alignment) {
+void* ThreadLocalAllocator::CallocAligned(
+    size_t num, size_t size, size_t alignment) {
   const size_t alloc_size = RoundSize(num * size, 2 * kWordSize);
   void* object = MallocAligned(alloc_size, alignment);
   memset(object, 0, alloc_size);
@@ -190,3 +191,13 @@ bool ThreadLocalAllocator::TryFreeLast() {
 }
 
 }  // namespace scal
+
+
+void* tla_malloc(size_t size) {
+  return scal::ThreadLocalAllocator::Get().Malloc(size);
+}
+
+
+void* tla_malloc_aligned(size_t size, size_t alignment) {
+  return scal::ThreadLocalAllocator::Get().MallocAligned(size, alignment);
+}
