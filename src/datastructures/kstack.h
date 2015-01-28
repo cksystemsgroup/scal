@@ -91,7 +91,7 @@ class KStack : public Stack<T> {
   inline bool is_empty(KSegment* segment);
   inline bool find_index(
       KSegment *segment, bool empty, uint64_t *item_index, TaggedValue<T>* old);
-  void try_add_new_ksegment(TaggedValue<KSegment*> top_old);
+  void try_add_new_ksegment(TaggedValue<KSegment*> top_old, const T& item);
   void try_remove_ksegment(TaggedValue<KSegment*> top_old);
   bool committed(
       TaggedValue<KSegment*> top_old, TaggedValue<T> item_new, uint64_t index);
@@ -136,9 +136,11 @@ bool KStack<T>::is_empty(KSegment* segment) {
 
 
 template<typename T>
-void KStack<T>::try_add_new_ksegment(TaggedValue<KSegment*> top_old) {
+void KStack<T>::try_add_new_ksegment(
+    TaggedValue<KSegment*> top_old, const T& item) {
   if (top_->load() == top_old) {
     KSegment* segment_new = new KSegment(k_);
+    segment_new->items[0].store(Item(item,0));
     segment_new->next.store(SegmentPtr(top_old.value(), 0));
     if (!top_->swap(top_old, SegmentPtr(segment_new, top_old.tag()+ 1))) {
       ThreadLocalAllocator::Get().TryFreeLast();
@@ -221,7 +223,7 @@ bool KStack<T>::push(T item) {
 
 #ifdef LOCALLY_LINEARIZABLE
     if (top_old.value()->is_marked()) {
-      try_add_new_ksegment(top_old);
+      try_add_new_ksegment(top_old, item);
       continue;
     }
 #endif  // LOCALLY_LINEARIZABLE
@@ -239,7 +241,7 @@ bool KStack<T>::push(T item) {
           }
         }
       } else {
-        try_add_new_ksegment(top_old);
+        try_add_new_ksegment(top_old, item);
       }
     }
   }
