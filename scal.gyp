@@ -38,6 +38,14 @@
       ],
     },
     {
+      'target_name': 'seqalt-base',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/common.cc',
+        'src/benchmark/seqalt/seqalt.cc',
+      ],
+    },
+    {
       'target_name': 'prodcon-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -154,6 +162,126 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
+        'glue.gypi:ll-dq-treiber',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ms',
+      ],
+    },
+    {
+      'target_name': 'seqalt-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:treiber',
+      ],
+    },
+    {
+      'target_name': 'seqalt-kstack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:kstack',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ll-kstack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ll-kstack',
+      ],
+    },
+    {
+      'target_name': 'seqalt-dq-1random-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:dq-1random-ms',
+      ],
+    },
+    {
+      'target_name': 'seqalt-dq-1random-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:dq-1random-treiber',
+      ],
+    },
+    {
+      'target_name': 'seqalt-fc',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:fc',
+      ],
+    },
+    {
+      'target_name': 'seqalt-rd',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:rd',
+      ],
+    },
+    {
+      'target_name': 'seqalt-us-kfifo',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:us-kfifo',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ll-us-kfifo',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ll-us-kfifo',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ll-dq-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ll-dq-ms',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ll-dq-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
         'glue.gypi:ll-dq-treiber',
       ],
     },

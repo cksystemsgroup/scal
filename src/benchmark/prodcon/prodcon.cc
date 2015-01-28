@@ -38,11 +38,9 @@ class ProdConBench : public Benchmark {
  public:
   ProdConBench(uint64_t num_threads,
                uint64_t thread_prealloc_size,
-               uint64_t histogram_size,
                void *data)
                    : Benchmark(num_threads,
                                thread_prealloc_size,
-                               histogram_size,
                                data) {}
  protected:
   void bench_func(void);
@@ -80,7 +78,6 @@ int main(int argc, const char **argv) {
   ProdConBench *benchmark = new ProdConBench(
       g_num_threads,
       tlsize,
-      FLAGS_operations * (g_num_threads + 1),
       ds);
   benchmark->run();
 

@@ -21,7 +21,6 @@ namespace scal {
 
 Benchmark::Benchmark(uint64_t num_threads,
                      uint64_t thread_prealloc_size,
-                     uint64_t histogram_size,
                      void *data) {
   num_threads_ = num_threads;
   data_ = data;
