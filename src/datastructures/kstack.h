@@ -140,7 +140,7 @@ bool KStack<T>::try_add_new_ksegment(
     TaggedValue<KSegment*> top_old, const T& item) {
   if (top_->load() == top_old) {
     KSegment* segment_new = new KSegment(k_);
-    segment_new->items[0].store(Item(item,0));
+    segment_new->items[0].store(Item(item, 0));
     segment_new->next.store(SegmentPtr(top_old.value(), 0));
     if (top_->swap(top_old, SegmentPtr(segment_new, top_old.tag()+ 1))) {
       return true;
