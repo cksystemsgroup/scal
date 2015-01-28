@@ -198,23 +198,30 @@ bool UnboundedSizeKFifo<T>::committed(
   const Item empty_item((T)NULL, 0);
 
   if (tail_old.value()->deleted() == true) {
-    // Not in queue anymore.
+    // Insert tail segment has been removed.
     if (!tail_old.value()->atomic_set_item(item_index, new_item, empty_item)) {
+      // We are fine if element still has been removed.
       return true;
     }
   } else if (tail_old == head_current) {
+    // Insert tail segment is now head.
     SegmentPtr head_new(head_current.value(), head_current.tag() + 1);
     if (head_->swap(head_current, head_new)) {
+      // We are fine if we can update head and thus fail any concurrent
+      // advance_head attempts.
       return true;
     }
     if (!tail_old.value()->atomic_set_item(item_index, new_item, empty_item)) {
+      // We are fine if element still has been removed.
       return true;
     }
   } else if (tail_old.value()->deleted() == false) {
-    // In queue and inserted tail not head.
+    // Insert tail segment still not deleted.
     return true;
   } else {
+    // Head and tail moved beyond this segment. Try to remove the item.
     if (!tail_old.value()->atomic_set_item(item_index, new_item, empty_item)) {
+      // We are fine if element still has been removed.
       return true;
     }
   }
@@ -244,7 +251,7 @@ bool UnboundedSizeKFifo<T>::dequeue(T *item) {
           return true;
         }
       } else {
-        if (head_old == tail_old) {
+        if ((head_old == tail_old) && (tail_old == tail_->load())) {
           return false;
         }
         advance_head(head_old);
