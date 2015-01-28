@@ -197,23 +197,24 @@ class TSStackBuffer {
       timestamping_ = timestamping; 
 
       spBuffers_ = static_cast<std::atomic<SPBuffer*>*>(
-          scal::calloc_aligned(num_threads_, sizeof(std::atomic<SPBuffer*>), 
-            scal::kCachePrefetch * 4));
-
-      emptiness_check_pointers_ = static_cast<Item***>(
-          scal::calloc_aligned(num_threads_, sizeof(Item**), 
-            scal::kCachePrefetch * 4));
-
-       prealloc_buffers_ = static_cast<SPBuffer*> (
-            scal::calloc_aligned(num_threads_, sizeof(SPBuffer), 
+            scal::ThreadLocalAllocator::Get().CallocAligned(
+              num_threads_, sizeof(std::atomic<SPBuffer*>), 
               scal::kCachePrefetch * 4));
 
-       for (int i = 0; i < num_threads_; i++) {
+      emptiness_check_pointers_ = static_cast<Item***>(
+            scal::ThreadLocalAllocator::Get().CallocAligned(
+              num_threads_, sizeof(Item**), scal::kCachePrefetch * 4));
+
+       prealloc_buffers_ = static_cast<SPBuffer*> (
+            scal::ThreadLocalAllocator::Get().CallocAligned(
+              num_threads_, sizeof(SPBuffer), scal::kCachePrefetch * 4));
+
+       for (uint64_t i = 0; i < num_threads_; i++) {
          spBuffers_[i].store(NULL); 
 
         emptiness_check_pointers_[i] = static_cast<Item**> (
-            scal::calloc_aligned(num_threads_, sizeof(Item*), 
-              scal::kCachePrefetch * 4));
+            scal::ThreadLocalAllocator::Get().CallocAligned(
+              num_threads_, sizeof(Item*), scal::kCachePrefetch * 4));
       }
 
       // Create the entry buffer.
@@ -235,11 +236,11 @@ class TSStackBuffer {
       entry_buffer_.store(buffer);
 
       counter1_ = static_cast<uint64_t**>(
-          scal::calloc_aligned(num_threads, sizeof(uint64_t*),
-            scal::kCachePrefetch * 4));
+          scal::ThreadLocalAllocator::Get().CallocAligned(
+            num_threads, sizeof(uint64_t*), scal::kCachePrefetch * 4));
       counter2_ = static_cast<uint64_t**>(
-          scal::calloc_aligned(num_threads, sizeof(uint64_t*),
-            scal::kCachePrefetch * 4));
+          scal::ThreadLocalAllocator::Get().CallocAligned(
+            num_threads, sizeof(uint64_t*), scal::kCachePrefetch * 4));
 
       for (uint64_t i = 0; i < num_threads; i++) {
         counter1_[i] = scal::get<uint64_t>(scal::kCachePrefetch * 4);
@@ -510,7 +511,6 @@ class TSStackBuffer {
       if (result != NULL) {
         // We found a youngest element which is not younger than the 
         // invocation time. We try to remove it.
-        uint64_t expected = 0;
         if (remove(result, youngest_buffer, old_top)) {
           *element = result->data.load();
           return true;

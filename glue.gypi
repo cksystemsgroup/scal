@@ -91,5 +91,45 @@
         'src/benchmark/std_glue/glue_ll_dq_treiber.cc'
       ],
     },
+    {
+      'target_name': 'hc-ts-cas-stack',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_cas_stack.cc'
+      ],
+    },
+    {
+      'target_name': 'hc-ts-stutter-stack',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_stutter_stack.cc'
+      ],
+    },
+    {
+      'target_name': 'hc-ts-interval-stack',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_interval_stack.cc'
+      ],
+    },
+    {
+      'target_name': 'hc-ts-atomic-stack',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_atomic_stack.cc'
+      ],
+    },
+    {
+      'target_name': 'hc-ts-hardware-stack',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_hardcoded_ts_hardware_stack.cc'
+      ],
+    },
   ]
 }
