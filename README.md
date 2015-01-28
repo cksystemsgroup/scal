@@ -33,7 +33,7 @@ converted.
 This is as easy as
 
     tools/get_gyp.sh
-    build/gyp/gyp --depth-. scal.gyp
+    build/gyp/gyp --depth=. scal.gyp
     make
     BUILDTYPE=Release make
 
