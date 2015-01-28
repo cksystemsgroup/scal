@@ -1,0 +1,43 @@
+From da60cdc94e368a2a8c41d45d6fde6ba0c36a033a Sun Apr 7 16:27:13 2013
+From: Adam Morrison <adamx@tau.ac.il>
+Date: Sun, 7 Apr 2013 16:27:13 +0300
+Subject: [PATCH] Fix memory leaks in CC-Queue and H-Queue.
+
+---
+ ccqueue.c |    4 +++-
+ hqueue.c  |    4 +++-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/ccqueue.c b/ccqueue.c
+index bdaedc5..154fe5b 100644
+--- a/ccqueue.c
++++ b/ccqueue.c
+@@ -48,7 +48,9 @@ inline static RetVal dequeue(ArgVal arg, int pid) {
+      ListNode *node = (ListNode *)first;
+ 	 if (first->next != null){
+         first = first->next;
+-        return node->val;
++        RetVal rv = node->val;
++        free_obj(&pool_node, node);
++        return rv;
+ 	 } 
+ 	 else {
+          return -1;
+diff --git a/hqueue.c b/hqueue.c
+index 36bad68..98f6d4d 100644
+--- a/hqueue.c
++++ b/hqueue.c
+@@ -46,7 +46,9 @@ inline static RetVal dequeue(ArgVal arg, int pid) {
+      ListNode *node = (ListNode *)first;
+      if (first->next != null){
+         first = first->next;
+-        return node->val;
++        RetVal rv = node->val;
++        free_obj(&pool_node, node);
++        return rv;
+      } else {
+          return -1;
+      }
+-- 
+1.7.9.5
+
