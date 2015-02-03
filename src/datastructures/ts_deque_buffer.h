@@ -136,23 +136,23 @@ class TSDequeBuffer {
       timestamping_ = timestamping;
 
       left_ = static_cast<std::atomic<Item*>**>(
-          scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 4));
 
       right_ = static_cast<std::atomic<Item*>**>(
-          scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 4));
 
       next_index_ = static_cast<int64_t**>(
-          scal::calloc_aligned(num_threads_, sizeof(int64_t*), 
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(int64_t*), 
             scal::kCachePrefetch * 4));
 
       emptiness_check_left_ = static_cast<Item***>(
-          scal::calloc_aligned(num_threads_, sizeof(Item**), 
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(Item**), 
             scal::kCachePrefetch * 4));
 
       emptiness_check_right_ = static_cast<Item***>(
-          scal::calloc_aligned(num_threads_, sizeof(Item**), 
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(Item**), 
             scal::kCachePrefetch * 4));
 
       for (int i = 0; i < num_threads_; i++) {
@@ -179,11 +179,11 @@ class TSDequeBuffer {
         *next_index_[i] = 1;
 
         emptiness_check_left_[i] = static_cast<Item**> (
-            scal::calloc_aligned(num_threads_, sizeof(Item*), 
+            scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(Item*), 
               scal::kCachePrefetch * 4));
 
         emptiness_check_right_[i] = static_cast<Item**> (
-            scal::calloc_aligned(num_threads_, sizeof(Item*), 
+            scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(Item*), 
               scal::kCachePrefetch * 4));
       }
     }

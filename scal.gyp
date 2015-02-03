@@ -276,6 +276,76 @@
       ],
     },
     {
+      'target_name': 'prodcon-ts-cas-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ts-cas-deque',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ts-stutter-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ts-stutter-deque',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ts-interval-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ts-interval-deque',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ts-atomic-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ts-atomic-deque',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ts-hardware-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ts-hardware-deque',
+      ],
+    },
+    {
+      'target_name': 'prodcon-dts-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:dts-queue',
+      ],
+    },
+    {
+      'target_name': 'prodcon-lts-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:lts-queue',
+      ],
+    },
+    {
       'target_name': 'seqalt-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -493,6 +563,76 @@
         'libscal',
         'seqalt-base',
         'glue.gypi:hc-ts-hardware-queue',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ts-cas-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ts-cas-deque',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ts-stutter-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ts-stutter-deque',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ts-interval-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ts-interval-deque',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ts-atomic-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ts-atomic-deque',
+      ],
+    },
+    {
+      'target_name': 'seqalt-ts-hardware-deque',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:ts-hardware-deque',
+      ],
+    },
+    {
+      'target_name': 'seqalt-dts-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:dts-queue',
+      ],
+    },
+    {
+      'target_name': 'seqalt-lts-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:lts-queue',
       ],
     },
   ]

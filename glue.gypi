@@ -182,5 +182,59 @@
         'src/benchmark/std_glue/glue_hardcoded_ts_hardware_queue.cc'
       ],
     },
+    {
+      'target_name': 'dts-queue',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_dts_queue.cc'
+      ],
+    },
+    {
+      'target_name': 'lts-queue',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_lts_queue.cc'
+      ],
+    },
+    {
+      'target_name': 'ts-cas-deque',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ts_cas_deque.cc'
+      ],
+    },
+    {
+      'target_name': 'ts-stutter-deque',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ts_stutter_deque.cc'
+      ],
+    },
+    {
+      'target_name': 'ts-interval-deque',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ts_interval_deque.cc'
+      ],
+    },
+    {
+      'target_name': 'ts-atomic-deque',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ts_atomic_deque.cc'
+      ],
+    },
+    {
+      'target_name': 'ts-hardware-deque',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ts_hardware_deque.cc'
+      ],
+    },
   ]
 }
