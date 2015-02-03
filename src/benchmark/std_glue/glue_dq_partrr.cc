@@ -29,7 +29,7 @@ char* ds_get_stats(void) {
   char buffer[255] = { 0 };
   uint32_t n = snprintf(buffer,
                         sizeof(buffer),
-                        "%" PRIu64 " %" PRIu64,
+                        " ,\"p\": %" PRIu64 " ,\"partitions\":%" PRIu64,
                         FLAGS_p,
                         FLAGS_partitions);
   if (n != strlen(buffer)) {

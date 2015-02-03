@@ -151,7 +151,7 @@ class DTSQueue : Queue<T>{
       char buffer[255] = { 0 };
       uint32_t n = snprintf(buffer,
                             sizeof(buffer),
-                            ";c1: %.2f ;c2: %.2f",
+                            " ,\"c1\": %.2f ,\"c2\": %.2f",
                             avg1, avg2);
       if (n != strlen(buffer)) {
         fprintf(stderr, "%s: error creating stats string\n", __func__);

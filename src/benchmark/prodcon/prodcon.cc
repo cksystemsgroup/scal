@@ -122,7 +122,7 @@ int main(int argc, const char **argv) {
     }
 
     char buffer[1024] = {0};
-    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
+    uint32_t n = snprintf(buffer, sizeof(buffer), "{\"threads\": %" PRIu64 " ,\"producers\": %" PRIu64 " ,\"consumers\": %" PRIu64 " ,\"runtime\": %" PRIu64 " ,\"operations\": %" PRIu64 " ,\"c\": %" PRIu64 " ,\"throughput\": %" PRIu64 "",
         g_num_threads,
         FLAGS_producers,
         FLAGS_consumers,
@@ -142,6 +142,7 @@ int main(int argc, const char **argv) {
       }
       strcat(buffer, " ");
       strcat(buffer, ds_stats);
+      strcat(buffer, "}");
     }
     printf("%s\n", buffer);
   }

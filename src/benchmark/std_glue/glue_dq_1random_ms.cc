@@ -31,7 +31,7 @@ char* ds_get_stats(void) {
   char buffer[255] = { 0 };
   uint32_t n = snprintf(buffer,
                         sizeof(buffer),
-                        "%" PRIu64 " %hu",
+                        " ,\"p\": %" PRIu64 " ,\"hw_random\": %hu",
                         FLAGS_p,
                         FLAGS_hw_random);
   if (n != strlen(buffer)) {

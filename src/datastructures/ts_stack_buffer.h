@@ -262,7 +262,7 @@ class TSStackBuffer {
       char buffer[255] = { 0 };
       uint32_t n = snprintf(buffer,
                             sizeof(buffer),
-                            ";c1: %lu ;c2: %lu",
+                            " ,\"c1\": %lu ,\"c2\": %lu",
                             sum1, sum2);
       if (n != strlen(buffer)) {
         fprintf(stderr, "%s: error creating stats string\n", __func__);
