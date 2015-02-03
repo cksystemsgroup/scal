@@ -74,11 +74,11 @@ class DTSQueue : Queue<T>{
       dequeue_timestamping_->initialize(0, num_threads);
 
       insert_ = static_cast<std::atomic<Item*>**>(
-          scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 4));
 
       remove_ = static_cast<std::atomic<Item*>**>(
-          scal::calloc_aligned(num_threads_, sizeof(std::atomic<Item*>*), 
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 4));
 
       for (int i = 0; i < num_threads_; i++) {
@@ -100,10 +100,10 @@ class DTSQueue : Queue<T>{
 
 #ifdef DTS_DEBUG
       counter1_ = static_cast<uint64_t**>(
-          scal::calloc_aligned(num_threads, sizeof(uint64_t*),
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads, sizeof(uint64_t*),
             scal::kCachePrefetch * 4));
       counter2_ = static_cast<uint64_t**>(
-          scal::calloc_aligned(num_threads, sizeof(uint64_t*),
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads, sizeof(uint64_t*),
             scal::kCachePrefetch * 4));
 
       for (uint64_t i = 0; i < num_threads; i++) {
@@ -229,7 +229,6 @@ class DTSQueue : Queue<T>{
 
           // Check if we can remove the element immediately.
           if (!timestamping_->is_later(item_timestamp, dequeue_timestamp)) {
-            uint64_t expected = 0;
             if ((remove_[tmp_buffer_index]->load() == tmp_remove) &&
                 remove_[tmp_buffer_index]->compare_exchange_weak(
                     tmp_remove, (Item*)add_next_aba(item, tmp_remove, 1))) {
