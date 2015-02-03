@@ -46,6 +46,7 @@ class TSQueue : public Queue<T> {
     }
 
     bool dequeue(T *element) {
+      buffer_->inc_counter1(1);
       uint64_t invocation_time[2];
       // The invocation time of this operation is only needed for the
       // elimination optimization, which is not possible for a queue.

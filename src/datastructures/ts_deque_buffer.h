@@ -40,6 +40,8 @@ class TSDequeBuffer {
     Item** *emptiness_check_left_;
     Item** *emptiness_check_right_;
     TimeStamp *timestamping_;
+    uint64_t* *counter1_;
+    uint64_t* *counter2_;
 
     // Helper function to remove the ABA counter from a pointer.
     void *get_aba_free_pointer(void *pointer) {
@@ -186,10 +188,50 @@ class TSDequeBuffer {
             scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(Item*), 
               scal::kCachePrefetch * 4));
       }
+      counter1_ = static_cast<uint64_t**>(
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads, sizeof(uint64_t*),
+            scal::kCachePrefetch * 4));
+      counter2_ = static_cast<uint64_t**>(
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads, sizeof(uint64_t*),
+            scal::kCachePrefetch * 4));
+
+      for (uint64_t i = 0; i < num_threads; i++) {
+        counter1_[i] = scal::get<uint64_t>(scal::kCachePrefetch * 4);
+        *(counter1_[i]) = 0;
+        counter2_[i] = scal::get<uint64_t>(scal::kCachePrefetch * 4);
+        *(counter2_[i]) = 0;
+      }
     }
 
+    inline void inc_counter1(uint64_t value) {
+      uint64_t thread_id = scal::ThreadContext::get().thread_id();
+      (*counter1_[thread_id]) += value;
+    }
+    inline void inc_counter2(uint64_t value) {
+      uint64_t thread_id = scal::ThreadContext::get().thread_id();
+      (*counter2_[thread_id]) += value;
+    }
     char* ds_get_stats(void) {
-      return NULL;
+      uint64_t sum1 = 0;
+      uint64_t sum2 = 1;
+
+      for (int i = 0; i < num_threads_; i++) {
+        sum1 += *counter1_[i];
+        sum2 += *counter2_[i];
+      }
+
+      char buffer[255] = { 0 };
+      uint32_t n = snprintf(buffer,
+                            sizeof(buffer),
+                            ";c1: %lu ;c2: %lu",
+                            sum1, sum2);
+      if (n != strlen(buffer)) {
+        fprintf(stderr, "%s: error creating stats string\n", __func__);
+        abort();
+      }
+      char *newbuf = static_cast<char*>(calloc(
+          strlen(buffer) + 1, sizeof(*newbuf)));
+      return strncpy(newbuf, buffer, strlen(buffer));
     }
 
     inline std::atomic<uint64_t> *insert_left(T element) {
@@ -217,11 +259,14 @@ class TSDequeBuffer {
         left = left->right.load();
       }
 
-      if (left->right.load() == left) {
+      if (left->taken.load() && left->right.load() == left) {
         // The buffer is empty. We have to increase the aba counter of the
         // right pointer too to guarantee that a pending right-pointer
         // update of a remove operation does not make the left and the
         // right pointer point to different lists.
+
+        left = (Item*)get_aba_free_pointer(old_left);
+        left->right.store(left);
         Item* old_right = right_[thread_id]->load();
         right_[thread_id]->store((Item*) add_next_aba(left, old_right, 1));
       }
@@ -261,11 +306,13 @@ class TSDequeBuffer {
         right = right->left.load();
       }
 
-      if (right->left.load() == right) {
+      if (right->taken.load() && right->left.load() == right) {
         // The buffer is empty. We have to increase the aba counter of the
         // left pointer too to guarantee that a pending left-pointer
         // update of a remove operation does not make the left and the
         // right pointer point to different lists.
+        right = (Item*)get_aba_free_pointer(old_right);
+        right->left.store(right);
         Item* old_left = left_[thread_id]->load();
         left_[thread_id]->store( (Item*) add_next_aba(right, old_left, 1)); }
 
@@ -324,6 +371,7 @@ class TSDequeBuffer {
     }
 
     bool try_remove_left(T *element, uint64_t *invocation_time) {
+      inc_counter2(1);
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -368,8 +416,26 @@ class TSDequeBuffer {
           uint64_t *item_timestamp;
           timestamping_->load_timestamp(tmp_timestamp[tmp_index], item->timestamp);
           item_timestamp = tmp_timestamp[tmp_index];
+
+          if (inserted_left(item) && !timestamping_->is_later(invocation_time, item_timestamp)) {
+            uint64_t expected = 0;
+            if (item->taken.load() == 0 && item->taken.compare_exchange_weak(expected, 1)) {
+              // Try to adjust the remove pointer. It does not matter if 
+              // this CAS fails.
+              left_[tmp_buffer_index]->compare_exchange_weak(
+                  tmp_left, (Item*)add_next_aba(item, tmp_left, 0));
+              *element = item->data.load();
+              return true;
+            } else {
+              item = get_left_item(tmp_buffer_index);
+              if (item != NULL) {
+                timestamping_->load_timestamp(tmp_timestamp[tmp_index], item->timestamp);
+                item_timestamp = tmp_timestamp[tmp_index];
+              }
+            }
+          }
           
-          if (result == NULL || is_more_left(item, item_timestamp, result, timestamp)) {
+          if (item != NULL && (result == NULL || is_more_left(item, item_timestamp, result, timestamp))) {
             // We found a new leftmost item, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
@@ -435,6 +501,7 @@ class TSDequeBuffer {
     }
 
     bool try_remove_right(T *element, uint64_t *invocation_time) {
+      inc_counter2(1);
       // Initialize the data needed for the emptiness check.
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_left = 
@@ -480,31 +547,31 @@ class TSDequeBuffer {
           timestamping_->load_timestamp(tmp_timestamp[tmp_index], item->timestamp);
           item_timestamp = tmp_timestamp[tmp_index];
           
-          if (result == NULL || is_more_right(item, item_timestamp, result, timestamp)) {
+          if (inserted_right(item) && !timestamping_->is_later(invocation_time, item_timestamp)) {
+            uint64_t expected = 0;
+            if (item->taken.load() == 0 && item->taken.compare_exchange_weak(expected, 1)) {
+              // Try to adjust the remove pointer. It does not matter if 
+              // this CAS fails.
+              right_[tmp_buffer_index]->compare_exchange_weak(
+                  tmp_right, (Item*)add_next_aba(item, tmp_right, 0));
+              *element = item->data.load();
+              return true;
+            } else {
+              item = get_right_item(tmp_buffer_index);
+              if (item != NULL) {
+                timestamping_->load_timestamp(tmp_timestamp[tmp_index], item->timestamp);
+                item_timestamp = tmp_timestamp[tmp_index];
+              }
+            }
+          }
+
+          if (item != NULL && (result == NULL || is_more_right(item, item_timestamp, result, timestamp))) {
             // We found a new youngest element, so we remember it.
             result = item;
             buffer_index = tmp_buffer_index;
             timestamp = item_timestamp;
             tmp_index ^=1;
             old_right = tmp_right;
-
-            // Check if we can remove the element immediately.
-            if (inserted_right(result) && !timestamping_->is_later(invocation_time, timestamp)) {
-              uint64_t expected = 0;
-              if (result->taken.load() == 0) {
-                if (result->taken.compare_exchange_weak(
-                      expected, 1)) {
-
-                  // Try to adjust the remove pointer. It does not matter if 
-                  // this CAS fails.
-                  right_[buffer_index]->compare_exchange_weak(
-                      old_right, (Item*)add_next_aba(result, old_right, 0));
-
-                  *element = result->data.load();
-                  return true;
-                }
-              }
-            }
           }
         } else {
           // No element was found, work on the emptiness check.

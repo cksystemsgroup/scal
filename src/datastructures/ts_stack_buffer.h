@@ -49,11 +49,6 @@ class TSStackBuffer {
 
     // Adding and removing SP buffers is protected by this lock.
     std::atomic<uint64_t> unlink_lock;
-
-    // Two counters which count the number of and unregistered SP pools.
-    std::atomic<uint64_t> *registration_counter_;
-    std::atomic<uint64_t> *unregistration_counter_;
-
     // A map from thread IDs to SP buffers needed for insertion. We know the 
     // maximum number of threads and therefore use an array to implement the 
     // map. Hashmaps could be used otherwise.
@@ -140,8 +135,6 @@ class TSStackBuffer {
         return;
       }
 
-      unregistration_counter_->fetch_add(1);
-
       // Unlink the buffer.
       prev->next.compare_exchange_weak(next, buffer->next);
       unlink_lock.store(0);
@@ -172,7 +165,6 @@ class TSStackBuffer {
       while (true) {
         buffer->next.store(next);
         if (entry->next.compare_exchange_weak(next, buffer)) {
-          registration_counter_->fetch_add(1);
           return buffer;
         }
       }
@@ -189,32 +181,27 @@ class TSStackBuffer {
     void initialize(uint64_t num_threads, Timestamp *timestamping) {
 
       unlink_lock.store(0);
-      registration_counter_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 4);
-      unregistration_counter_ = scal::get<std::atomic<uint64_t>>(scal::kCachePrefetch * 4);
-      registration_counter_->store(0);
-      unregistration_counter_->store(0);
       num_threads_ = num_threads;
       timestamping_ = timestamping; 
 
       spBuffers_ = static_cast<std::atomic<SPBuffer*>*>(
-            scal::ThreadLocalAllocator::Get().CallocAligned(
-              num_threads_, sizeof(std::atomic<SPBuffer*>), 
-              scal::kCachePrefetch * 4));
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(std::atomic<SPBuffer*>), 
+            scal::kCachePrefetch * 4));
 
       emptiness_check_pointers_ = static_cast<Item***>(
-            scal::ThreadLocalAllocator::Get().CallocAligned(
-              num_threads_, sizeof(Item**), scal::kCachePrefetch * 4));
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(Item**), 
+            scal::kCachePrefetch * 4));
 
        prealloc_buffers_ = static_cast<SPBuffer*> (
-            scal::ThreadLocalAllocator::Get().CallocAligned(
-              num_threads_, sizeof(SPBuffer), scal::kCachePrefetch * 4));
+            scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(SPBuffer), 
+              scal::kCachePrefetch * 4));
 
-       for (uint64_t i = 0; i < num_threads_; i++) {
+       for (int i = 0; i < num_threads_; i++) {
          spBuffers_[i].store(NULL); 
 
         emptiness_check_pointers_[i] = static_cast<Item**> (
-            scal::ThreadLocalAllocator::Get().CallocAligned(
-              num_threads_, sizeof(Item*), scal::kCachePrefetch * 4));
+            scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(Item*), 
+              scal::kCachePrefetch * 4));
       }
 
       // Create the entry buffer.
@@ -236,11 +223,11 @@ class TSStackBuffer {
       entry_buffer_.store(buffer);
 
       counter1_ = static_cast<uint64_t**>(
-          scal::ThreadLocalAllocator::Get().CallocAligned(
-            num_threads, sizeof(uint64_t*), scal::kCachePrefetch * 4));
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads, sizeof(uint64_t*),
+            scal::kCachePrefetch * 4));
       counter2_ = static_cast<uint64_t**>(
-          scal::ThreadLocalAllocator::Get().CallocAligned(
-            num_threads, sizeof(uint64_t*), scal::kCachePrefetch * 4));
+          scal::ThreadLocalAllocator::Get().CallocAligned(num_threads, sizeof(uint64_t*),
+            scal::kCachePrefetch * 4));
 
       for (uint64_t i = 0; i < num_threads; i++) {
         counter1_[i] = scal::get<uint64_t>(scal::kCachePrefetch * 4);
@@ -412,10 +399,6 @@ class TSStackBuffer {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       Item* *emptiness_check_pointers = 
         emptiness_check_pointers_[thread_id];
-
-      uint64_t reg_counter = registration_counter_->load();
-      uint64_t unreg_counter;
-
       // Initialize the result pointer to NULL, which means that no 
       // element has been found yet.
       Item *result = NULL;
@@ -472,6 +455,7 @@ class TSStackBuffer {
           if (!timestamping_->is_later(invocation_time, item_timestamp)) {
             // We try to set the taken flag and thereby logically remove the item.
             if (remove(item, current_buffer, tmp_top)) {
+      inc_counter2(1);
               // The item has been removed. 
               *element = item->data.load();
               return true;
@@ -519,16 +503,7 @@ class TSStackBuffer {
         *element = (T)NULL;
       } else {
         // Emptiness check.
-        unreg_counter = unregistration_counter_->load();
         empty = true;
-
-        if (reg_counter != registration_counter_->load()) {
-          // A new SP pool has been registered during the iteration above, 
-          // we cannot be sure that we did not miss anything.
-          *element = (T)NULL;
-          return false;
-        }
-
         start_buffer = current_buffer;
         entry_counter = 0;
         // We iterate over all thead-local buffers
@@ -557,13 +532,6 @@ class TSStackBuffer {
           if (current_buffer == start_buffer) {
             break;
           }
-        }
-
-        if (unreg_counter != unregistration_counter_->load()) {
-          // A new SP pool has been registered during the iteration above, 
-          // we cannot be sure that we did not miss anything.
-          *element = (T)NULL;
-          return false;
         }
       }
 
