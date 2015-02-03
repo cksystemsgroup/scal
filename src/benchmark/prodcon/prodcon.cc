@@ -31,6 +31,9 @@ DEFINE_uint64(c, 5000, "computational workload");
 DEFINE_bool(print_summary, true, "print execution summary");
 DEFINE_bool(log_operations, false, "log invocation/response/linearization "
                                    "of all operations");
+DEFINE_bool(barrier, false, "uses a barrier between the enqueues and "
+    "dequeues such that first all elements are enqueued, then all elements"
+    "are dequeued");
 
 using scal::Benchmark;
 
@@ -41,13 +44,20 @@ class ProdConBench : public Benchmark {
                void *data)
                    : Benchmark(num_threads,
                                thread_prealloc_size,
-                               data) {}
+                               data) {
+    if (pthread_barrier_init(&prod_con_barrier_, NULL, num_threads)) {
+      fprintf(stderr, "%s: error: Unable to init start barrier.\n", __func__);
+      abort();
+    }
+  }
  protected:
   void bench_func(void);
 
  private:
   void producer(void);
   void consumer(void);
+
+  pthread_barrier_t prod_con_barrier_;
 };
 
 uint64_t g_num_threads;
@@ -62,7 +72,15 @@ int main(int argc, const char **argv) {
 
   // Init the main program as executing thread (may use rnd generator or tl
   // allocs).
-  g_num_threads = FLAGS_producers + FLAGS_consumers;
+  if (FLAGS_barrier) {
+    if (FLAGS_producers > FLAGS_consumers) {
+      g_num_threads = FLAGS_producers;
+    } else {
+      g_num_threads = FLAGS_consumers;
+    }
+  } else {
+    g_num_threads = FLAGS_producers + FLAGS_consumers;
+  }
   scal::ThreadLocalAllocator::Get().Init(tlsize, true);
   //threadlocals_init();
   scal::ThreadContext::prepare(g_num_threads + 1);
@@ -87,15 +105,31 @@ int main(int argc, const char **argv) {
 
   if (FLAGS_print_summary) {
     uint64_t exec_time = benchmark->execution_time();
+
+    uint64_t num_operations;
+    
+    if (FLAGS_barrier) {
+      // We only measure the time needed for the all consuming operations
+      // which is the same as the number of all produced elements.
+      num_operations = FLAGS_operations * FLAGS_producers;
+    } else if (FLAGS_consumers == 0) {
+      // We measure the time needed of all producer operations.
+      num_operations = FLAGS_operations * FLAGS_producers;
+    } else {
+      // Each element produced is also consumed. Therefore the number of
+      // operations is two times the number of elements produced.
+      num_operations = FLAGS_operations * FLAGS_producers * 2;
+    }
+
     char buffer[1024] = {0};
-    uint32_t n = snprintf(buffer, sizeof(buffer), "%" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "",
-        FLAGS_producers + FLAGS_consumers,
+    uint32_t n = snprintf(buffer, sizeof(buffer), "threads: %" PRIu64 " ;producers: %" PRIu64 " consumers: %" PRIu64 " ;runtime: %" PRIu64 " ;operations: %" PRIu64 " ;c: %" PRIu64 " ;aggr: %" PRIu64 " ;ds_stats: ",
+        g_num_threads,
         FLAGS_producers,
         FLAGS_consumers,
         exec_time,
         FLAGS_operations,
         FLAGS_c,
-        (uint64_t)((FLAGS_operations * FLAGS_producers * 2) / (static_cast<double>(exec_time) / 1000)));
+        (uint64_t)(num_operations / (static_cast<double>(exec_time) / 1000)));
     if (n != strlen(buffer)) {
       fprintf(stderr, "%s: error: failed to create summary string\n", __func__);
       abort();
@@ -167,9 +201,30 @@ void ProdConBench::bench_func(void) {
   // fashion because because thread-id based load balancers significantly
   // benefit from such a thread id assignment.
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
-  if (thread_id <= FLAGS_producers) {
-    producer();
-  } else {
-    consumer();
+  if (FLAGS_barrier) {
+    if (thread_id <= FLAGS_producers) {
+      producer();
+    }
+
+    global_start_time_ = 0;
+    int rc = pthread_barrier_wait(&prod_con_barrier_);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+      fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
+      abort();
+    }
+
+    if (thread_id <= FLAGS_consumers) {
+      if (global_start_time_ == 0) {
+        __sync_bool_compare_and_swap(&global_start_time_, 0, get_utime());
+      }
+      consumer();
+    }
+
+  }else {
+    if (thread_id <= FLAGS_producers) {
+      producer();
+    } else {
+      consumer();
+    }
   }
 }
