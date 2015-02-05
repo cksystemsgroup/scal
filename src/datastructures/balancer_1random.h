@@ -19,9 +19,9 @@ class Balancer1Random : public BalancerInterface {
       return 0;
     }
     if (use_hw_random_) {
-      return hwrand() % num_queues;
+      return scal::hwrand() % num_queues;
     } else {
-      return pseudorand() % num_queues;
+      return scal::pseudorand() % num_queues;
     }
   }
 
