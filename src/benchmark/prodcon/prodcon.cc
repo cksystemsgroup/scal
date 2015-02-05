@@ -151,10 +151,10 @@ ProdConBench::ProdConBench(
     uint64_t num_threads, uint64_t thread_prealloc_size, void* data)
         : Benchmark(num_threads, thread_prealloc_size, data) {
   if (FLAGS_shuffle_threads) {
-    prodon_distribution_ = new scal::RandomProdConDistribution(
+    prodcon_distribution_ = new scal::RandomProdConDistribution(
         FLAGS_producers, FLAGS_consumers);
   } else {
-    prodon_distribution_ = new scal::DefaultProdConDistribution(
+    prodcon_distribution_ = new scal::DefaultProdConDistribution(
         FLAGS_producers, FLAGS_consumers);
   }
   if (pthread_barrier_init(&prod_con_barrier_, NULL, num_threads)) {
