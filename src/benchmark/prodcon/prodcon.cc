@@ -13,6 +13,7 @@
 #include <time.h>
 
 #include "benchmark/common.h"
+#include "benchmark/prodcon/prodcon_distribution.h"
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "datastructures/pool.h"
 #include "util/allocation.h"
@@ -34,31 +35,27 @@ DEFINE_bool(log_operations, false, "log invocation/response/linearization "
 DEFINE_bool(barrier, false, "uses a barrier between the enqueues and "
     "dequeues such that first all elements are enqueued, then all elements"
     "are dequeued");
+DEFINE_bool(shuffle_threads, false, "shuffle producers and consumers");
 
 using scal::Benchmark;
 
+
 class ProdConBench : public Benchmark {
  public:
-  ProdConBench(uint64_t num_threads,
-               uint64_t thread_prealloc_size,
-               void *data)
-                   : Benchmark(num_threads,
-                               thread_prealloc_size,
-                               data) {
-    if (pthread_barrier_init(&prod_con_barrier_, NULL, num_threads)) {
-      fprintf(stderr, "%s: error: Unable to init start barrier.\n", __func__);
-      abort();
-    }
-  }
+  ProdConBench(
+      uint64_t num_threads, uint64_t thread_prealloc_size, void *data);
+
  protected:
-  void bench_func(void);
+  void bench_func();
 
  private:
-  void producer(void);
-  void consumer(void);
+  void producer();
+  void consumer();
 
+  scal::ProdConDistribution* prodon_distribution_;
   pthread_barrier_t prod_con_barrier_;
 };
+
 
 uint64_t g_num_threads;
 
@@ -149,7 +146,25 @@ int main(int argc, const char **argv) {
   return EXIT_SUCCESS;
 }
 
-void ProdConBench::producer(void) {
+
+ProdConBench::ProdConBench(
+    uint64_t num_threads, uint64_t thread_prealloc_size, void* data)
+        : Benchmark(num_threads, thread_prealloc_size, data) {
+  if (FLAGS_shuffle_threads) {
+    prodon_distribution_ = new scal::RandomProdConDistribution(
+        FLAGS_producers, FLAGS_consumers);
+  } else {
+    prodon_distribution_ = new scal::DefaultProdConDistribution(
+        FLAGS_producers, FLAGS_consumers);
+  }
+  if (pthread_barrier_init(&prod_con_barrier_, NULL, num_threads)) {
+    fprintf(stderr, "%s: error: Unable to init start barrier.\n", __func__);
+    abort();
+  }
+}
+
+
+void ProdConBench::producer() {
   Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
   uint64_t thread_id = scal::ThreadContext::get().thread_id();
   uint64_t item;
@@ -168,16 +183,20 @@ void ProdConBench::producer(void) {
   }
 }
 
-void ProdConBench::consumer(void) {
+
+void ProdConBench::consumer() {
   Pool<uint64_t> *ds = static_cast<Pool<uint64_t>*>(data_);
-  const uint64_t thread_id = scal::ThreadContext::get().thread_id();
+  //const uint64_t thread_id = scal::ThreadContext::get().thread_id();
   // Calculate the items each consumer has to collect.
   uint64_t operations = FLAGS_producers * FLAGS_operations / FLAGS_consumers;
-  const uint64_t rest = (FLAGS_producers * FLAGS_operations) % FLAGS_consumers;
+  //const uint64_t rest = (FLAGS_producers * FLAGS_operations) % FLAGS_consumers;
   // We assume that thread ids are increasing, starting from 1.
+  /*
   if (rest >= thread_id) {
     operations++;
   }
+  */
+
   uint64_t j = 0;
   uint64_t ret;
   bool ok;
@@ -193,17 +212,12 @@ void ProdConBench::consumer(void) {
   }
 }
 
-void ProdConBench::bench_func(void) {
-  // The lower thread indices are assigned to the producer threads.
-  // As the threads with lower indices start slightly earlier, the producer
-  // threads already fill the queue before the consumers start. Assigning the
-  // lower thread indices to the consumer threads leads to an increased number
-  // of null-return dequeues. We do not assign the thread id's in an alternating
-  // fashion because because thread-id based load balancers significantly
-  // benefit from such a thread id assignment.
-  uint64_t thread_id = scal::ThreadContext::get().thread_id();
+
+void ProdConBench::bench_func() {
+  // We need 0-based idx.
+  const uint64_t thread_id = scal::ThreadContext::get().thread_id() - 1;
   if (FLAGS_barrier) {
-    if (thread_id <= FLAGS_producers) {
+    if (prodon_distribution_->IsProducer(thread_id)) {
       producer();
     }
 
@@ -214,15 +228,14 @@ void ProdConBench::bench_func(void) {
       abort();
     }
 
-    if (thread_id <= FLAGS_consumers) {
+    if (!prodcon_distribution_->IsProducer(thread_id)) {
       if (global_start_time_ == 0) {
         __sync_bool_compare_and_swap(&global_start_time_, 0, get_utime());
       }
       consumer();
     }
-
-  }else {
-    if (thread_id <= FLAGS_producers) {
+  } else {
+    if (prodon_distribution_->IsProducer(thread_id)) {
       producer();
     } else {
       consumer();
