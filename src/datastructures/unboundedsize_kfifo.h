@@ -27,25 +27,25 @@ namespace scal {
 namespace detail {
 
 template<typename T>
-class KSegment : public ThreadLocalMemory<128> {
+class KSegment : public ThreadLocalMemory<64> {
  public:
   typedef TaggedValue<T> Item;
-  typedef AtomicTaggedValue<T, 0, 0> AtomicItem;
+  typedef AtomicTaggedValue<T, 0, 4*128> AtomicItem;
   typedef TaggedValue<KSegment*> SegmentPtr;
-  typedef AtomicTaggedValue<KSegment*, 64, 64> AtomicSegmentPtr;
+  typedef AtomicTaggedValue<KSegment*, 0, /*64*/ 4 * 128> AtomicSegmentPtr;
 
   explicit KSegment(uint64_t k)
-      : k_(k)
-      , deleted_(false)
+      : deleted_(0)
+      , k_(k)
       , next_(SegmentPtr(NULL, 0))
       , items_(static_cast<AtomicItem*>(
             ThreadLocalAllocator::Get().CallocAligned(
-                k_, sizeof(AtomicItem), 64))) {
+                k, sizeof(AtomicItem), 64))) {
   }
 
   inline uint64_t k() { return k_; }
-  inline bool deleted() { return deleted_; }
-  inline void set_deleted(bool deleted) { deleted_ = deleted; }
+  inline uint8_t deleted() { return deleted_; }
+  inline void set_deleted() { deleted_ = 1; }
 
   inline SegmentPtr next() { return next_.load(); }
   inline bool atomic_set_next(
@@ -60,8 +60,9 @@ class KSegment : public ThreadLocalMemory<128> {
   }
 
  private:
+  uint8_t deleted_;
+  uint8_t pad_[63];
   uint64_t k_;
-  bool deleted_;
   AtomicSegmentPtr next_;
   AtomicItem* items_;
 };
@@ -79,14 +80,15 @@ class UnboundedSizeKFifo : public Queue<T> {
  private:
   typedef detail::KSegment<T> KSegment;
   typedef typename KSegment::SegmentPtr SegmentPtr;
-  typedef typename KSegment::AtomicSegmentPtr AtomicSegmentPtr;
   typedef typename KSegment::Item Item;
+  typedef typename KSegment::AtomicItem AtomicItem;
+  typedef AtomicTaggedValue<KSegment*, 4096, 4096> AtomicSegmentPtr;
 
-  void advance_head(SegmentPtr head_old);
-  void advance_tail(SegmentPtr tail_old);
-  bool find_index(KSegment *start_index, bool empty,
+  void advance_head(const SegmentPtr& head_old);
+  void advance_tail(const SegmentPtr& tail_old);
+  bool find_index(KSegment* const start_index, bool empty,
                   int64_t *item_index, Item* old);
-  bool committed(SegmentPtr tail_old,
+  bool committed(const SegmentPtr& tail_old,
                  const Item& new_item, uint64_t item_index);
 
 #ifdef LOCALLY_LINEARIZABLE
@@ -121,7 +123,7 @@ UnboundedSizeKFifo<T>::UnboundedSizeKFifo(uint64_t k)
 
 
 template<typename T>
-void UnboundedSizeKFifo<T>::advance_head(SegmentPtr head_old) {
+void UnboundedSizeKFifo<T>::advance_head(const SegmentPtr& head_old) {
   const SegmentPtr head_current = head_->load();
   if (head_current == head_old) {
     const SegmentPtr tail_current = tail_->load();
@@ -137,7 +139,7 @@ void UnboundedSizeKFifo<T>::advance_head(SegmentPtr head_old) {
                                                tail_current.tag() + 1));
         }
       }
-      head_old.value()->set_deleted(true);
+      head_old.value()->set_deleted();
       head_->swap(
           head_old, SegmentPtr(head_next_ksegment.value(), head_old.tag() + 1));
     }
@@ -146,7 +148,7 @@ void UnboundedSizeKFifo<T>::advance_head(SegmentPtr head_old) {
 
 
 template<typename T>
-void UnboundedSizeKFifo<T>::advance_tail(SegmentPtr tail_old) {
+void UnboundedSizeKFifo<T>::advance_tail(const SegmentPtr& tail_old) {
   const SegmentPtr tail_current = tail_->load();
   SegmentPtr next_ksegment;
   if (tail_current == tail_old) {
@@ -156,11 +158,13 @@ void UnboundedSizeKFifo<T>::advance_tail(SegmentPtr tail_old) {
         tail_->swap(tail_old, SegmentPtr(next_ksegment.value(),
                                          next_ksegment.tag() + 1));
       } else {
-        const SegmentPtr new_ksegment(
-            new KSegment(k_), next_ksegment.tag() + 1);
+        KSegment* segment = new KSegment(k_);
+        const SegmentPtr new_ksegment(segment, next_ksegment.tag() + 1);
         if (tail_old.value()->atomic_set_next(next_ksegment, new_ksegment)) {
           tail_->swap(
               tail_old, SegmentPtr(new_ksegment.value(), tail_old.tag() + 1));
+        } else {
+          delete segment;
         }
       }
     }
@@ -170,10 +174,10 @@ void UnboundedSizeKFifo<T>::advance_tail(SegmentPtr tail_old) {
 
 template<typename T>
 bool UnboundedSizeKFifo<T>::find_index(
-    detail::KSegment<T> *start_index, bool empty, int64_t *item_index,
+    detail::KSegment<T>* const start_index, bool empty, int64_t *item_index,
     Item* old) {
   const uint64_t k = start_index->k();
-  const uint64_t random_index = pseudorand() % k;
+  const uint64_t random_index = hwrand() % k;
   uint64_t index;
   for (size_t i = 0; i < k; i++) {
     index = ((random_index + i) % k);
@@ -190,11 +194,11 @@ bool UnboundedSizeKFifo<T>::find_index(
 
 template<typename T>
 bool UnboundedSizeKFifo<T>::committed(
-    SegmentPtr tail_old, const Item& new_item, uint64_t item_index) {
+    const SegmentPtr& tail_old, const Item& new_item, uint64_t item_index) {
   if (tail_old.value()->item(item_index) != new_item) {
     return true;
   }
-  SegmentPtr head_current = head_->load();
+  const SegmentPtr head_current = head_->load();
   const Item empty_item((T)NULL, 0);
 
   if (tail_old.value()->deleted() == true) {
@@ -203,10 +207,10 @@ bool UnboundedSizeKFifo<T>::committed(
       // We are fine if element still has been removed.
       return true;
     }
-  } else if (tail_old == head_current) {
+  } else if (tail_old.value() == head_current.value()) {
     // Insert tail segment is now head.
-    SegmentPtr head_new(head_current.value(), head_current.tag() + 1);
-    if (head_->swap(head_current, head_new)) {
+    if (head_->swap(head_current,
+                    SegmentPtr(head_current.value(), head_current.tag() + 1))) {
       // We are fine if we can update head and thus fail any concurrent
       // advance_head attempts.
       return true;
@@ -242,7 +246,7 @@ bool UnboundedSizeKFifo<T>::dequeue(T *item) {
     tail_old = tail_->load();
     if (head_old == head_->load()) {
       if (found_idx) {
-        if (head_old == tail_old) {
+        if (head_old.value() == tail_old.value()) {
           advance_tail(tail_old);
         }
         const Item newcp((T)NULL, old_item.tag() + 1);
@@ -251,7 +255,8 @@ bool UnboundedSizeKFifo<T>::dequeue(T *item) {
           return true;
         }
       } else {
-        if ((head_old == tail_old) && (tail_old == tail_->load())) {
+        if ((head_old.value() == tail_old.value()) &&
+            (tail_old == tail_->load())) {
           return false;
         }
         advance_head(head_old);

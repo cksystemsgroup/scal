@@ -15,121 +15,133 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <new>  // Used for placement new.
-
 #include "datastructures/queue.h"
-#include "util/atomic_value.h"
-#include "util/malloc.h"
+#include "util/allocation.h"
+#include "util/atomic_value_new.h"
 #include "util/platform.h"
 #include "util/random.h"
+
+#define BSKFIFO_WASTE 1
+
+#ifdef BSKFIFO_WASTE
+#define PTR_ALIGNMENT (4096)
+#define ITEM_PAD (128 *  4)
+#else
+#define PTR_ALIGNMENT (128)
+#define ITEM_PAD (128)
+#endif  // BSKFIFO_WASTE
+
+namespace scal {
 
 template<typename T>
 class BoundedSizeKFifo : public Queue<T> {
  public:
-  static BoundedSizeKFifo<T> *get_aligned(
-      uint64_t k, uint64_t num_segments, size_t alignment) {
-    using scal::malloc_aligned;
-    void *mem = malloc_aligned(sizeof(BoundedSizeKFifo<T>), alignment);
-    BoundedSizeKFifo<T>* kfifo = new(mem) BoundedSizeKFifo<T>(k, num_segments);
-    return kfifo;
-  }
-
   BoundedSizeKFifo(uint64_t k, uint64_t num_segments);
   bool enqueue(T item);
   bool dequeue(T *item);
 
  private:
-  static const uint64_t kPtrAlignment = scal::kCachePrefetch;
-  static const int64_t kNoIndexFound = -1;
+  typedef TaggedValue<uint64_t> SegmentPtr;
+  typedef AtomicTaggedValue<uint64_t, PTR_ALIGNMENT, 128> AtomicSegmentPtr;
+  typedef TaggedValue<T> Item;
+  typedef AtomicTaggedValue<T, 0, ITEM_PAD> AtomicItem;
+
+  inline bool find_index(
+      uint64_t start_index, bool empty, int64_t *item_index, Item* old);
+  inline bool advance_head(const SegmentPtr& head_old);
+  inline bool advance_tail(const SegmentPtr& tail_old);
+  inline bool queue_full(
+      const SegmentPtr& head_old, const SegmentPtr& tail_old);
+  inline bool segment_not_empty(const SegmentPtr& head_old);
+  inline bool not_in_valid_region(uint64_t tail_old_pointer,
+                                  uint64_t tail_current_pointer,
+                                  uint64_t head_current_pointer);
+  inline bool in_valid_region(uint64_t tail_old_pointer,
+                              uint64_t tail_current_pointer,
+                              uint64_t head_current_pointer);
+  bool committed(
+      const SegmentPtr& tail_old, const Item& new_item, uint64_t item_index);
 
   uint64_t queue_size_;
   size_t k_;
-  AtomicValue<T> **queue_;
-  AtomicValue<uint64_t> *head_;
-  AtomicValue<uint64_t> *tail_;
-
-  void find_index(uint64_t start_index, bool empty, int64_t *item_index,
-                  AtomicValue<T> *old);
-  bool advance_head(AtomicValue<uint64_t> head_old);
-  bool advance_tail(AtomicValue<uint64_t> tail_old);
-  bool segment_not_empty(uint64_t head_old_pointer);
-  bool queue_full(uint64_t head_old_pointer, uint64_t tail_old_pointer);
-  bool committed(uint64_t tail_old_pointer, AtomicValue<T> *new_item,
-                 uint64_t item_index);
-  bool not_in_valid_region(uint64_t tail_old_pointer,
-                           uint64_t tail_current_pointer,
-                           uint64_t head_current_pointer);
-  bool in_valid_region(uint64_t tail_old_pointer,
-                       uint64_t tail_current_pointer,
-                       uint64_t head_current_pointer);
+  AtomicSegmentPtr* head_;
+  AtomicSegmentPtr* tail_;
+  AtomicItem* queue_;
+  uint8_t pad_[
+    128
+        - sizeof(queue_size_)
+        - sizeof(k_)
+        - sizeof(head_)
+        - sizeof(tail_)
+        - sizeof(queue_)];
 };
 
-template<typename T>
-BoundedSizeKFifo<T>::BoundedSizeKFifo(uint64_t k, uint64_t num_segments) {
-  k_ = k;
-  queue_size_ = k * num_segments;
-  queue_ = static_cast<AtomicValue<T>**>(calloc(
-      queue_size_, sizeof(AtomicValue<T>*)));
-  for (uint64_t i = 0; i < queue_size_; i++) {
-    queue_[i] = scal::get<AtomicValue<T> >(kPtrAlignment * 4);
-  }
 
-  // Allocate kPtrAligned head and tail ``pointers''.
-  head_ = scal::get_aligned<AtomicValue<uint64_t> >(kPtrAlignment);
-  tail_ = scal::get_aligned<AtomicValue<uint64_t> >(kPtrAlignment);
+template<typename T>
+BoundedSizeKFifo<T>::BoundedSizeKFifo(uint64_t k, uint64_t num_segments)
+    : queue_size_(k * num_segments)
+    , k_(k)
+    , head_(new AtomicSegmentPtr())
+    , tail_(new AtomicSegmentPtr())
+    , queue_(static_cast<AtomicItem*>(
+          CallocAligned(k * num_segments, sizeof(AtomicItem), 64))) {
 }
 
+
 template<typename T>
-void BoundedSizeKFifo<T>::find_index(uint64_t start_index,
-                                     bool empty,
-                                     int64_t *item_index,
-                                     AtomicValue<T> *old) {
-  uint64_t random_index = pseudorand() % k_;
+bool BoundedSizeKFifo<T>::find_index(
+    uint64_t start_index, bool empty, int64_t *item_index, Item* old) {
+  const uint64_t random_index = pseudorand() % k_;
   uint64_t index;
-  *item_index = kNoIndexFound;
   for (size_t i = 0; i < k_; i++) {
     index = (start_index + ((random_index + i) % k_)) % queue_size_;
-    *old = *queue_[index];
+    *old = queue_[index].load();
     if ((empty && old->value() == (T)NULL)
         || (!empty && old->value() != (T)NULL)) {
       *item_index = index;
-      return;
-    }
-  }
-}
-
-template<typename T>
-bool BoundedSizeKFifo<T>::advance_head(AtomicValue<uint64_t> head_old) {
-  AtomicValue<uint64_t> newcp(head_old.value() + k_, head_old.aba() + 1);
-  return head_->cas(head_old, newcp);
-}
-
-template<typename T>
-bool BoundedSizeKFifo<T>::advance_tail(AtomicValue<uint64_t> tail_old) {
-  AtomicValue<uint64_t> newcp(tail_old.value() + k_, tail_old.aba() + 1);
-  return tail_->cas(tail_old, newcp);
-}
-
-template<typename T>
-bool BoundedSizeKFifo<T>::queue_full(uint64_t head_old_pointer,
-                                     uint64_t tail_old_pointer) {
-  AtomicValue<uint64_t> head_current = *head_;
-  if ((head_old_pointer == head_current.value())
-      && (((tail_old_pointer + k_) % queue_size_) == head_old_pointer)) {
-    return true;
-  }
-  return false;
-}
-
-template<typename T>
-bool BoundedSizeKFifo<T>::segment_not_empty(uint64_t head_old_pointer) {
-  for (size_t i = 0; i < k_; i++) {
-    if (queue_[(head_old_pointer + i) % queue_size_]->value() != (T)NULL) {
       return true;
     }
   }
   return false;
 }
+
+
+template<typename T>
+bool BoundedSizeKFifo<T>::advance_head(const SegmentPtr& head_old) {
+  return head_->swap(
+      head_old, SegmentPtr((head_old.value() + k_) % queue_size_, head_old.tag() + 1));
+}
+
+
+template<typename T>
+bool BoundedSizeKFifo<T>::advance_tail(const SegmentPtr& tail_old) {
+  return tail_->swap(
+      tail_old, SegmentPtr((tail_old.value() + k_) % queue_size_, tail_old.tag() + 1));
+}
+
+
+template<typename T>
+bool BoundedSizeKFifo<T>::queue_full(
+    const SegmentPtr& head_old, const SegmentPtr& tail_old) {
+  if (((tail_old.value() + k_) % queue_size_) == head_old.value() &&
+      (head_old.value() == head_->load().value())) {
+    return true;
+  }
+  return false;
+}
+
+
+template<typename T>
+bool BoundedSizeKFifo<T>::segment_not_empty(const SegmentPtr& head_old) {
+  const uint64_t start = head_old.value();
+  for (size_t i = 0; i < k_; i++) {
+    if (queue_[(start + i) % queue_size_].load().value() != (T)NULL) {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 template<typename T>
 bool BoundedSizeKFifo<T>::in_valid_region(uint64_t tail_old_pointer,
@@ -145,6 +157,7 @@ bool BoundedSizeKFifo<T>::in_valid_region(uint64_t tail_old_pointer,
           || tail_old_pointer <= tail_current_pointer) ? true : false;
 }
 
+
 template<typename T>
 bool BoundedSizeKFifo<T>::not_in_valid_region(uint64_t tail_old_pointer,
                                               uint64_t tail_current_pointer,
@@ -159,62 +172,67 @@ bool BoundedSizeKFifo<T>::not_in_valid_region(uint64_t tail_old_pointer,
           && head_current_pointer < tail_old_pointer) ? true : false;
 }
 
+
 template<typename T>
-bool BoundedSizeKFifo<T>::committed(uint64_t tail_old_pointer,
-                                    AtomicValue<T> *new_item,
+bool BoundedSizeKFifo<T>::committed(const SegmentPtr& tail_old,
+                                    //uint64_t tail_old_pointer,
+                                    //AtomicValue<T> *new_item,
+                                    const Item& new_item,
                                     uint64_t item_index) {
-  if (queue_[item_index]->value() != new_item->value()) {
+  if (queue_[item_index].load() != new_item)  {
     return true;
   }
-  AtomicValue<uint64_t> tail_current = *tail_;
-  AtomicValue<uint64_t> head_current = *head_;
 
-  if (in_valid_region(tail_old_pointer, tail_current.value(),
+  SegmentPtr tail_current = tail_->load();
+  SegmentPtr head_current = head_->load();
+  if (in_valid_region(tail_old.value(), tail_current.value(),
                       head_current.value())) {
     return true;
-  } else if (not_in_valid_region(tail_old_pointer, tail_current.value(),
+  } else if (not_in_valid_region(tail_old.value(), tail_current.value(),
                                  head_current.value())) {
-    AtomicValue<T> newcp((T)NULL, new_item->aba() + 1);
-    if (!queue_[item_index]->cas(*new_item, newcp)) {
+    if (!queue_[item_index].swap(
+          new_item, Item((T)NULL, new_item.tag() + 1))) {
       return true;
     }
   } else {
-    AtomicValue<uint64_t> newcp = head_current;
-    newcp.set_aba(newcp.aba() + 1);
-    if (head_->cas(head_current, newcp)) {
+    if (head_->swap(
+          head_current, SegmentPtr(head_current.value(),
+                                   head_current.tag() + 1))) {
       return true;
     }
-    AtomicValue<T> newcp2((T)NULL, new_item->aba() + 1);
-    if (!queue_[item_index]->cas(*new_item, newcp2)) {
+    if (!queue_[item_index].swap(
+          new_item, Item((T)NULL, new_item.tag() + 1))) { 
       return true;
     }
   }
   return false;
 }
 
+
 template<typename T>
 bool BoundedSizeKFifo<T>::dequeue(T *item) {
-  AtomicValue<uint64_t> tail_old;
-  AtomicValue<uint64_t> head_old;
+  SegmentPtr tail_old;
+  SegmentPtr head_old;
   int64_t item_index;
-  AtomicValue<T> old_item;
+  Item old_item;
+  bool found_idx;
   while (true) {
-    head_old = *head_;
-    tail_old = *tail_;
-    find_index(head_old.value(), false, &item_index, &old_item);
-    if (head_old.raw() == head_->raw()) {
-      if (item_index != kNoIndexFound) {
+    head_old = head_->load();
+    tail_old = tail_->load();
+    found_idx = find_index(head_old.value(), false, &item_index, &old_item);
+    if (head_old == head_->load()) {
+      if (found_idx) {
         if (head_old.value() == tail_old.value()) {
           advance_tail(tail_old);
         }
-        AtomicValue<T> newcp((T)NULL, old_item.aba() + 1);
-        if (queue_[item_index]->cas(old_item, newcp)) {
+        if (queue_[item_index].swap(
+              old_item, Item((T)NULL, old_item.tag() + 1))) {
           *item = old_item.value();
           return true;
         }
       } else {
-        if (head_old.value() == tail_old.value()
-            && tail_old.value() == tail_->value()) {
+        if ((head_old.value() == tail_old.value()) &&
+            (tail_old.value() == tail_->load().value())) {
           return false;
         }
         advance_head(head_old);
@@ -223,32 +241,35 @@ bool BoundedSizeKFifo<T>::dequeue(T *item) {
   }
 }
 
+
 template<typename T>
 bool BoundedSizeKFifo<T>::enqueue(T item) {
+  TaggedValue<T>::CheckCompatibility(item);
   if (item == (T)NULL) {
     printf("%s: unable to enqueue NULL or equivalent value\n", __func__);
     abort();
   }
-  AtomicValue<uint64_t> tail_old;
-  AtomicValue<uint64_t> head_old;
+  SegmentPtr tail_old;
+  SegmentPtr head_old;
   int64_t item_index;
-  AtomicValue<T> old_item;
+  Item old_item;
+  bool found_idx;
   while (true) {
-    tail_old = *tail_;
-    head_old = *head_;
-    find_index(tail_old.value(), true, &item_index, &old_item);
-    if (tail_old.raw() == tail_->raw()) {
-      if (item_index != kNoIndexFound) {
-        AtomicValue<T> newcp(item, old_item.aba() + 1);
-        if (queue_[item_index]->cas(old_item, newcp)) {
-          if (committed(tail_old.value(), &newcp, item_index)) {
+    tail_old = tail_->load();
+    head_old = head_->load();
+    found_idx = find_index(tail_old.value(), true, &item_index, &old_item);
+    if (tail_old == tail_->load()) {
+      if (found_idx) {
+        const Item new_item(item, old_item.tag() + 1);
+        if (queue_[item_index].swap(old_item, new_item)) {
+          if (committed(tail_old, new_item, item_index)) {
             return true;
           }
         }
       } else {
-        if (queue_full(head_old.value(), tail_old.value())) {
-          if (segment_not_empty(head_old.value()) &&
-              head_old.value() == head_->value()) {
+        if (queue_full(head_old, tail_old)) {
+          if (segment_not_empty(head_old) &&
+              (head_old.value() == head_->load().value())) {
             return false;
           }
           advance_head(head_old);
@@ -258,5 +279,7 @@ bool BoundedSizeKFifo<T>::enqueue(T item) {
     }
   }
 }
+
+}  // namespace scal
 
 #endif  // SCAL_DATASTRUCTURES_BOUNDEDSIZE_KFIFO_H_
