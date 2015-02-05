@@ -21,7 +21,7 @@ void* ds_new(void) {
       new scal::DistributedQueue<uint64_t, scal::TreiberStack<uint64_t> >(
           FLAGS_p,
           g_num_threads + 1,
-          new BalancerLocalLinearizability()));
+          new BalancerLocalLinearizability(FLAGS_p)));
 }
 
 

@@ -68,6 +68,13 @@
       ],
     },
     {
+      'target_name': 'bs-kfifo',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_bskfifo.cc'
+      ],
+    },
+    {
       'target_name': 'll-us-kfifo',
       'type': 'static_library',
       'cflags': [ '-DLOCALLY_LINEARIZABLE' ],
@@ -89,6 +96,68 @@
       'cflags': [ ],
       'sources': [
         'src/benchmark/std_glue/glue_ll_dq_treiber.cc'
+      ],
+    },
+    {
+      'target_name': 'll-dq-ms-nonlinempty',
+      'type': 'static_library',
+      'defines': [
+        'BACKEND_MS_QUEUE',
+        'BALANCER_LL',
+        'NON_LINEARIZABLE_EMPTY'
+      ],
+      'sources': [
+        'src/benchmark/std_glue/glue_dq.cc'
+      ],
+    },
+    {
+      'target_name': 'll-dq-treiber-nonlinempty',
+      'type': 'static_library',
+      'defines': [
+        'BACKEND_TREIBER',
+        'BALANCER_LL',
+        'NON_LINEARIZABLE_EMPTY'
+      ],
+      'sources': [
+        'src/benchmark/std_glue/glue_dq.cc'
+      ],
+    },
+    {
+      'target_name': 'll-dyn-dq-ms-nonlinempty',
+      'type': 'static_library',
+      'defines': [
+        'BACKEND_MS_QUEUE',
+        'NON_LINEARIZABLE_EMPTY'
+      ],
+      'sources': [
+        'src/benchmark/std_glue/glue_dyn_dq.cc'
+      ],
+    },
+    {
+      'target_name': 'll-dyn-dq-treiber-nonlinempty',
+      'type': 'static_library',
+      'defines': [
+        'BACKEND_TREIBER',
+        'NON_LINEARIZABLE_EMPTY'
+      ],
+      'sources': [
+        'src/benchmark/std_glue/glue_dyn_dq.cc'
+      ],
+    },
+    {
+      'target_name': 'll-dyn-dq-ms',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ll_dyn_dq_ms.cc'
+      ],
+    },
+    {
+      'target_name': 'll-dyn-dq-treiber',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ll_dyn_dq_treiber.cc'
       ],
     },
     {

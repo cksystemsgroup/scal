@@ -136,6 +136,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-bs-kfifo',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:bs-kfifo',
+      ],
+    },
+    {
       'target_name': 'prodcon-ll-us-kfifo',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -163,6 +173,66 @@
         'libscal',
         'prodcon-base',
         'glue.gypi:ll-dq-treiber',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ll-dq-ms-nonlinempty',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-dq-ms-nonlinempty',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ll-dq-treiber-nonlinempty',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-dq-treiber-nonlinempty',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ll-dyn-dq-ms-nonlinempty',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-dyn-dq-ms-nonlinempty',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ll-dyn-dq-treiber-nonlinempty',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-dyn-dq-treiber-nonlinempty',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ll-dyn-dq-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-dyn-dq-ms',
+      ],
+    },
+    {
+      'target_name': 'prodcon-ll-dyn-dq-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:ll-dyn-dq-treiber',
       ],
     },
     {
