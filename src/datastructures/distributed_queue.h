@@ -68,6 +68,9 @@ bool DistributedQueue<T, P>::get(T *item) {
         return true;
       }
     }
+#ifdef NON_LINEARIZABLE_EMPTY
+    return false;
+#endif // NON_LINEARIZABLE_EMPTY
     for (i = 0; i < num_queues_; i++) {
       index = (start + i) % num_queues_;
       if (backend_[index]->put_state() != tails[index]) {
