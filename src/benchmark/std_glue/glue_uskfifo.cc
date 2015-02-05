@@ -9,8 +9,6 @@
 #include "datastructures/unboundedsize_kfifo.h"
 
 DEFINE_uint64(k, 80, "k-segment size");
-DEFINE_uint64(num_segments, 1000000, "number of k-segments in the "
-                                     "bounded-size version");
 
 void* ds_new() {
   return static_cast<void*>(new scal::UnboundedSizeKFifo<uint64_t>(FLAGS_k));
