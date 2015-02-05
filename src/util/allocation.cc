@@ -83,6 +83,14 @@ void* MallocAligned(size_t size, size_t alignment) {
 }
 
 
+void* CallocAligned(size_t num, size_t size, size_t alignment) {
+  const size_t sz = num * size;
+  void* mem = MallocAligned(sz, alignment);
+  memset(mem, 0, sz);
+  return mem;
+}
+
+
 void ThreadLocalAllocator::CreateTlaKey() {
   pthread_key_create(&tla_key, NULL);
 }

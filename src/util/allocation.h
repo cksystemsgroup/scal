@@ -12,6 +12,7 @@
 
 namespace scal {
 
+void* CallocAligned(size_t num, size_t size, size_t alignment);
 void* MallocAligned(size_t size, size_t alignment);
 
 size_t HumanSizeToPages(const char* hsize, size_t len);
@@ -75,6 +76,7 @@ inline void* ThreadLocalMemory<0>::operator new(size_t size) {
 
 template<int ALIGN>
 inline void ThreadLocalMemory<ALIGN>::operator delete(void* ptr) {
+  ThreadLocalAllocator::Get().TryFreeLast();
 }
 
 }  // namespace scal
