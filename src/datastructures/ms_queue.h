@@ -28,7 +28,7 @@ namespace scal {
 namespace detail {
 
 template<typename S>
-class Node : public ThreadLocalMemory<kCachePrefetch>  {
+class Node : public ThreadLocalMemory<64>  {
  public:
   explicit Node(S item) : value(item) {}
 
