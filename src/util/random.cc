@@ -16,14 +16,9 @@ const uint32_t kM = 2147483647;
 const uint32_t kQ = 127773;
 const uint32_t kR = 2836;
 
-// Used for hwrand
-inline uint64_t rdtsc(void) {
-  unsigned int hi, lo;
-  __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
-  return ((uint64_t) lo) | (((uint64_t) hi) << 32);
-}
-
 }  // namespace
+
+namespace scal {
 
 // Schrage minimum standard PRNG. Assumes int to be 32 bits.
 // Range: [0,kM]
@@ -39,19 +34,13 @@ uint64_t pseudorand() {
   return seed;
 }
 
+
 uint64_t pseudorandrange(uint32_t min, uint32_t max) {
   uint32_t range = max - min;
   return (static_cast<double>(pseudorand()) / (static_cast<double>(kM) + 1.0))
       * static_cast<double>(range) + min;
 }
 
-
-uint64_t hwrand(void) {
-  uint64_t rnd = (rdtsc() >> 6);
-  return rnd;
-}
-
-namespace scal {
 
 void srand(uint32_t seed) {
   ThreadContext::get().set_random_seed(seed);
