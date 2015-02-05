@@ -52,7 +52,7 @@ class ProdConBench : public Benchmark {
   void producer();
   void consumer();
 
-  scal::ProdConDistribution* prodon_distribution_;
+  scal::ProdConDistribution* prodcon_distribution_;
   pthread_barrier_t prod_con_barrier_;
 };
 
@@ -217,7 +217,7 @@ void ProdConBench::bench_func() {
   // We need 0-based idx.
   const uint64_t thread_id = scal::ThreadContext::get().thread_id() - 1;
   if (FLAGS_barrier) {
-    if (prodon_distribution_->IsProducer(thread_id)) {
+    if (prodcon_distribution_->IsProducer(thread_id)) {
       producer();
     }
 
@@ -235,7 +235,7 @@ void ProdConBench::bench_func() {
       consumer();
     }
   } else {
-    if (prodon_distribution_->IsProducer(thread_id)) {
+    if (prodcon_distribution_->IsProducer(thread_id)) {
       producer();
     } else {
       consumer();
