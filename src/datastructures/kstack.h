@@ -32,20 +32,20 @@ namespace scal {
 namespace detail {
 
 template<typename T>
-class KSegment : public ThreadLocalMemory<128> {
+class KSegment : public ThreadLocalMemory<64> {
  public:
   typedef TaggedValue<T> Item;
-  typedef AtomicTaggedValue<T, 0, 128> AtomicItem;
+  typedef AtomicTaggedValue<T, 0, 0> AtomicItem;
   typedef TaggedValue<KSegment*> SegmentPtr;
-  typedef AtomicTaggedValue<KSegment*, 0, 128> AtomicSegmentPtr;
+  typedef AtomicTaggedValue<KSegment*, 0, 64> AtomicSegmentPtr;
 
 #ifdef LOCALLY_LINEARIZABLE
   inline void mark() {
-    markers[scal::ThreadContext::get().thread_id()] = 1;
+    markers[scal::ThreadContext::get().thread_id()].value = 1;
   }
 
   inline bool is_marked() {
-    return markers[scal::ThreadContext::get().thread_id()] != 0;
+    return markers[scal::ThreadContext::get().thread_id()].value != 0;
   }
 #endif  // LOCALLY_LINEARIZABLE
 
@@ -54,9 +54,17 @@ class KSegment : public ThreadLocalMemory<128> {
         next(SegmentPtr(NULL, 0)),
         items(static_cast<AtomicItem*>(
             ThreadLocalAllocator::Get().CallocAligned(
-                k, sizeof(*items), 128))) {
+                k, sizeof(*items), 64))) {
 #ifdef LOCALLY_LINEARIZABLE
     memset(markers, 0, sizeof(markers));
+    const bool checkMarkers = false;
+    if (checkMarkers) {
+      uint64_t cnt = 0;
+      for (uint64_t i = 0; i < kMaxThreads;i++) {
+        cnt += markers[i].value;
+      }
+      assert(cnt == 0);
+    }
 #endif  // LOCALLY_LINEARIZABLE
   }
 
@@ -66,9 +74,12 @@ class KSegment : public ThreadLocalMemory<128> {
   AtomicItem* items;
 
 #ifdef LOCALLY_LINEARIZABLE
-  // Ideally, the markers would be padded and aligned as well but they take up
-  // too much memory.
-  intptr_t markers[kMaxThreads];
+  typedef union {
+    uint8_t pad_[16];
+    intptr_t value;
+  } Marker;
+
+  Marker markers[kMaxThreads];
 #endif  // LOCALLY_LINEARIZABLE
 };
 
@@ -91,10 +102,10 @@ class KStack : public Stack<T> {
   inline bool is_empty(KSegment* segment);
   inline bool find_index(
       KSegment *segment, bool empty, uint64_t *item_index, TaggedValue<T>* old);
-  bool try_add_new_ksegment(TaggedValue<KSegment*> top_old, const T& item);
-  void try_remove_ksegment(TaggedValue<KSegment*> top_old);
+  bool try_add_new_ksegment(const TaggedValue<KSegment*>& top_old, const T& item);
+  void try_remove_ksegment(const TaggedValue<KSegment*>& top_old);
   bool committed(
-      TaggedValue<KSegment*> top_old, TaggedValue<T> item_new, uint64_t index);
+      TaggedValue<KSegment*> top_old, const TaggedValue<T>& item_new, uint64_t index);
 
   AtomicTopPtr* top_;
   uint64_t k_;
@@ -137,15 +148,18 @@ bool KStack<T>::is_empty(KSegment* segment) {
 
 template<typename T>
 bool KStack<T>::try_add_new_ksegment(
-    TaggedValue<KSegment*> top_old, const T& item) {
+    const TaggedValue<KSegment*>& top_old, const T& item) {
   if (top_->load() == top_old) {
     KSegment* segment_new = new KSegment(k_);
     segment_new->items[0].store(Item(item, 0));
     segment_new->next.store(SegmentPtr(top_old.value(), 0));
+#ifdef LOCALLY_LINEARIZABLE
+    segment_new->mark();
+#endif  // LOCALLY_LINEARIZABLE
     if (top_->swap(top_old, SegmentPtr(segment_new, top_old.tag()+ 1))) {
       return true;
     } else {
-      ThreadLocalAllocator::Get().TryFreeLast();
+      delete segment_new;
     }
   }
   return false;
@@ -153,7 +167,8 @@ bool KStack<T>::try_add_new_ksegment(
 
 
 template<typename T>
-void KStack<T>::try_remove_ksegment(TaggedValue<KSegment*> top_old) {
+void KStack<T>::try_remove_ksegment(
+    const TaggedValue<KSegment*>& top_old) {
   SegmentPtr next = top_->load().value()->next.load();
   if (top_->load() == top_old) {
     if (next.value() != NULL) {
@@ -171,7 +186,7 @@ void KStack<T>::try_remove_ksegment(TaggedValue<KSegment*> top_old) {
 
 template<typename T>
 bool KStack<T>::committed(
-    TaggedValue<KSegment*> top_old, TaggedValue<T> item_new, uint64_t index) {
+    TaggedValue<KSegment*> top_old, const TaggedValue<T>& item_new, uint64_t index) {
   if (top_old.value()->items[index].load() != item_new) {
     return true;
   } else if (top_old.value()->remove == 0) {
@@ -199,7 +214,7 @@ bool KStack<T>::committed(
 template<typename T>
 bool KStack<T>::find_index(
     KSegment *segment, bool empty, uint64_t *item_index, TaggedValue<T>* old) {
-  const uint64_t random_index = pseudorand() % k_;
+  const uint64_t random_index = hwrand() % k_;
   uint64_t i;
   for (uint64_t _cnt = 0; _cnt < k_; _cnt++) {
     i = (random_index + _cnt) % k_;
