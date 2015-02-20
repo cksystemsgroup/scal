@@ -147,7 +147,7 @@ void Benchmark::startup_thread() {
     fprintf(stderr, "%s: pthread_barrier_wait failed.\n", __func__);
     abort();
   }
-  if (global_start_time_ == 0) {
+  if (rc == PTHREAD_BARRIER_SERIAL_THREAD) {
     __sync_bool_compare_and_swap(&global_start_time_, 0, get_utime());
   }
   bench_func();
