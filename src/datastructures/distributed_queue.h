@@ -13,14 +13,15 @@
 #include "util/allocation.h"
 #include "util/atomic_value_new.h"
 #include "util/platform.h"
+#include "util/threadlocals.h"
 
 namespace scal {
 
-template<typename T, class P>
+template<typename T, class P, class B>
 class DistributedQueue : public Pool<T> {
  public:
   DistributedQueue(
-      size_t num_queues, uint64_t num_threads, BalancerInterface *balancer);
+      size_t num_queues, uint64_t num_threads, B* balancer);
   bool put(T item);
   bool get(T *item);
 
@@ -28,14 +29,14 @@ class DistributedQueue : public Pool<T> {
   static const uint64_t kPtrAlignment = scal::kCachePrefetch;
 
   size_t num_queues_;
-  BalancerInterface* balancer_;
+  B* balancer_;
   P **backend_;
 };
 
 
-template<typename T, class P>
-DistributedQueue<T, P>::DistributedQueue(
-    size_t num_queues, uint64_t num_threads, BalancerInterface *balancer)
+template<typename T, class P, class B>
+DistributedQueue<T, P, B>::DistributedQueue(
+    size_t num_queues, uint64_t num_threads, B* balancer)
     : num_queues_(num_queues),
       balancer_(balancer) {
   backend_ = static_cast<P**>(calloc(num_queues_, sizeof(P*)));
@@ -47,17 +48,25 @@ DistributedQueue<T, P>::DistributedQueue(
 }
 
 
-template<typename T, class P>
-bool DistributedQueue<T, P>::put(T item) {
-  const uint64_t index = balancer_->get(num_queues_, true);
+template<typename T, class P, class B>
+bool DistributedQueue<T, P, B>::put(T item) {
+  const uint64_t index = balancer_->put_id();
   return backend_[index]->put(item);
 }
 
 
-template<typename T, class P>
-bool DistributedQueue<T, P>::get(T *item) {
+template<typename T, class P, class B>
+bool DistributedQueue<T, P, B>::get(T *item) {
+  uint64_t start;
+
+#ifdef GET_TRY_LOCAL_FIRST
+  if (balancer_->local_get_id(&start) && backend_[start]->get(item)) {
+    return true;
+  }
+#endif  // GET_TRY_LOCAL_FIRST
+
   size_t i;
-  uint64_t start = balancer_->get(num_queues_, false);
+  start = balancer_->get_id();
   size_t index;
   State tails[num_queues_];  // NOLINT
   while (true) {
