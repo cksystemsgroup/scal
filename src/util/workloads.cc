@@ -6,9 +6,13 @@
 
 #include <stdint.h>
 
+#include "util/platform.h"
+
+namespace scal {
+
 // iteratively compute pi
 // the greater n, the better the approximation
-double calculate_pi(int n) {
+double ComputePi(uint64_t n) {
   int f = 1 - n;
   int ddF_x = 1;
   int ddF_y = -2 * n;
@@ -28,3 +32,13 @@ double calculate_pi(int n) {
   }
   return 8.0 * in / (static_cast<double>(n) * n);
 }
+
+
+void RdtscWait(uint64_t n) {
+  const uint64_t start = Rdtsc();
+  while (Rdtsc() < (start + n)) {
+    __asm__("PAUSE");
+  }
+}
+
+}  // namespace scal

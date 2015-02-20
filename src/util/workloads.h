@@ -5,6 +5,16 @@
 #ifndef SCAL_UTIL_WORKLOADS_H_
 #define SCAL_UTIL_WORKLOADS_H_
 
-double calculate_pi(int n);
+#include <stdint.h>
 
-#endif  // SRC_UTIL_WORKLOADS_H_
+#include "util/platform.h"
+
+namespace scal {
+
+double ComputePi(uint64_t n);
+
+void RdtscWait(uint64_t n);
+
+}  // namespace scal
+
+#endif  // SCAL_UTIL_WORKLOADS_H_
