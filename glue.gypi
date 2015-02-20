@@ -47,13 +47,6 @@
       ],
     },
     {
-      'target_name': 'lru-dq',
-      'type': 'static_library',
-      'sources': [
-        'src/benchmark/std_glue/glue_lru_dq.cc'
-      ],
-    },
-    {
       'target_name': 'fc',
       'type': 'static_library',
       'sources': [

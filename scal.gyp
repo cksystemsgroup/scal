@@ -146,16 +146,6 @@
       ],
     },
     {
-      'target_name': 'prodcon-lru-dq',
-      'type': 'executable',
-      'libraries': [ '<@(default_libraries)' ],
-      'dependencies': [
-        'libscal',
-        'prodcon-base',
-        'glue.gypi:lru-dq',
-      ],
-    },
-    {
       'target_name': 'prodcon-fc',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
