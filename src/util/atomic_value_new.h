@@ -12,6 +12,8 @@
 #include <atomic>
 #include <limits>
 
+#include "util/platform.h"
+
 // #define TAGGED_VALUE_CHECKED_MODE 1
 
 template<typename T, int ALIGN, int PAD> class AtomicTaggedValue;
@@ -23,15 +25,17 @@ class TaggedValue {
   typedef uint16_t tag_type;
   typedef T value_type;
 
-  static inline void CheckCompatibility(T value) {
+  static const tag_type kMaxTag = (1UL << 16) - 1;
+
+  static always_inline void CheckCompatibility(T value) {
 #ifdef TAGGED_VALUE_CHECKED_MODE
     assert((value & kValueMask) == value);
 #endif  // TAGGED_VALUE_CHECKED_MODE
   }
 
-  inline TaggedValue() : raw_(0) {}
+  always_inline TaggedValue() : raw_(0) {}
 
-  explicit inline TaggedValue(T value, tag_type tag)
+  explicit always_inline TaggedValue(T value, tag_type tag)
       : raw_((reinterpret_cast<raw_type>(value) & kValueMask) |
              (static_cast<raw_type>(tag) << 48)) {
 #ifdef TAGGED_VALUE_CHECKED_MODE
@@ -47,31 +51,31 @@ class TaggedValue {
                  "or 48 bits with the 48'th bit being extended");
   }
 
-  inline TaggedValue(const TaggedValue& other) {
+  always_inline TaggedValue(const TaggedValue& other) {
     // See operator=.
     (*this) = other;
   }
 
-  inline T value() const {
+  always_inline T value() const {
     return reinterpret_cast<T>(
         (raw_ & kValueMask) |
         (((raw_ >> (kValueBits - 1)) & 0x1) * kExtendMask));
   }
 
-  inline tag_type tag() const {
+  always_inline tag_type tag() const {
     return static_cast<tag_type>(raw_ >> kValueBits);
   }
 
-  inline bool operator==(const TaggedValue<T>& other) const {
+  always_inline bool operator==(const TaggedValue<T>& other) const {
     return raw_ == other.raw_;
   }
 
-  inline bool operator!=(const TaggedValue<T>& other) const {
+  always_inline bool operator!=(const TaggedValue<T>& other) const {
     return !(*this == other);
   }
 
   // No copy-and-swap since we only need to manage primitive members.
-  inline TaggedValue<T>& operator=(const TaggedValue<T>& other) {
+  always_inline TaggedValue<T>& operator=(const TaggedValue<T>& other) {
     raw_ = other.raw_;
     return *this;
   }
@@ -82,7 +86,7 @@ class TaggedValue {
   static const uint64_t kExtendMask =
       std::numeric_limits<raw_type>::max() - kValueMask;
 
-  explicit inline TaggedValue(raw_type raw) : raw_(raw) {}
+  explicit always_inline TaggedValue(raw_type raw) : raw_(raw) {}
 
   raw_type raw_;
 
@@ -94,26 +98,26 @@ class TaggedValue {
 template<typename T, int ALIGN = 0, int PAD = 0>
 class AtomicTaggedValue {
  public:
-  inline AtomicTaggedValue() : raw_atomic_(0) {}
+  always_inline AtomicTaggedValue() : raw_atomic_(0) {}
 
-  explicit inline AtomicTaggedValue(const TaggedValue<T>& tagged_value)
+  explicit always_inline AtomicTaggedValue(const TaggedValue<T>& tagged_value)
       : raw_atomic_(tagged_value.raw_) {}
 
-  inline TaggedValue<T> load() const {
+  always_inline TaggedValue<T> load() const {
     return TaggedValue<T>(raw_atomic_.load());
   }
 
-  inline void store(const TaggedValue<T>& tagged_value) {
+  always_inline void store(const TaggedValue<T>& tagged_value) {
     raw_atomic_.store(tagged_value.raw_);
   }
 
-  inline bool swap(const TaggedValue<T>& expected,  // NOLINT
+  always_inline bool swap(const TaggedValue<T>& expected,  // NOLINT
                    const TaggedValue<T>& desired) {
     uint64_t val = expected.raw_;
     return raw_atomic_.compare_exchange_strong(val, desired.raw_);
   }
 
-  inline void* operator new(size_t size) {
+  always_inline void* operator new(size_t size) {
     if (ALIGN == 0) {
       return malloc(size);
     }
@@ -125,7 +129,7 @@ class AtomicTaggedValue {
     return mem;
   }
 
-  inline void operator delete(void* ptr) {
+  always_inline void operator delete(void* ptr) {
     free(ptr);
   }
 
