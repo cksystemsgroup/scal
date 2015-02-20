@@ -30,9 +30,9 @@ template<typename T>
 class KSegment : public ThreadLocalMemory<64> {
  public:
   typedef TaggedValue<T> Item;
-  typedef AtomicTaggedValue<T, 0, 4*128> AtomicItem;
+  typedef AtomicTaggedValue<T, 0, 128> AtomicItem;
   typedef TaggedValue<KSegment*> SegmentPtr;
-  typedef AtomicTaggedValue<KSegment*, 0, /*64*/ 4 * 128> AtomicSegmentPtr;
+  typedef AtomicTaggedValue<KSegment*, 0, 128> AtomicSegmentPtr;
 
   explicit KSegment(uint64_t k)
       : deleted_(0)
@@ -53,7 +53,9 @@ class KSegment : public ThreadLocalMemory<64> {
     return next_.swap(old_next, new_next);
   }
 
-  inline Item item(uint64_t index) { return items_[index].load(); }
+  inline Item item(uint64_t index) {
+    return items_[index].load();
+  }
   inline bool atomic_set_item(
       uint64_t index, const Item& old_item, const Item& new_item) {
     return items_[index].swap(old_item, new_item);
