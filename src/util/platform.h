@@ -8,6 +8,10 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#ifndef always_line
+#define always_inline inline __attribute__((always_inline))
+#endif  // always_inline
+
 namespace scal {
 
 const uint64_t  kPageSize = 4096;
@@ -15,14 +19,22 @@ const uint64_t  kCachelineSize = 64;
 const uint64_t  kCachePrefetch = 128;
 const size_t    kWordSize = sizeof(void*);
 
+// Data structures may rely on this constant to statically limit any buffers.
+const uint64_t  kMaxThreads = 128;
+
+
 // For sake of simplicity: Assume posix with optional _SC_NPROCESSORS_ONLN
 // variable.
-inline long number_of_cores() {
+always_inline long number_of_cores() {
   return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
-// Data structures may rely on this constant to statically limit any buffers.
-const uint64_t  kMaxThreads = 128;
+
+always_inline uint64_t Rdtsc() {
+  unsigned int hi, lo;
+  __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+  return  ((uint64_t) lo) | (((uint64_t) hi) << 32);
+}
 
 }  // namespace scal
 
