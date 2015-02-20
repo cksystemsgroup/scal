@@ -20,10 +20,10 @@ DEFINE_bool(hw_random, false, "use hardware random generator instead "
 
 void* ds_new(void) {
   return static_cast<void*>(
-      new scal::DistributedQueue<uint64_t, scal::MSQueue<uint64_t> >(
+      new scal::DistributedQueue<uint64_t, scal::MSQueue<uint64_t>, scal::Balancer1Random>(
           FLAGS_p,
           g_num_threads + 1,
-          new Balancer1Random(FLAGS_hw_random)));
+          new scal::Balancer1Random(FLAGS_p, FLAGS_hw_random)));
 }
 
 
