@@ -43,6 +43,7 @@ template<typename T>
 class MSQueue : public Queue<T> {
  public:
   typedef detail::Node<T> Node;
+  typedef TaggedValue<Node*> NodePtr;
 
   MSQueue();
   bool enqueue(T item);
@@ -64,8 +65,10 @@ class MSQueue : public Queue<T> {
 
   bool empty();
 
+  bool try_enqueue(T item, uint64_t tal_old_tag);
+  uint8_t try_dequeue(T* item, uint64_t head_old_tag, State* put_state);
+
  private:
-  typedef TaggedValue<Node*> NodePtr;
   typedef AtomicTaggedValue<Node*, scal::kCachePrefetch> AtomicNodePtr;
 
   AtomicNodePtr* head_;
@@ -108,6 +111,28 @@ bool MSQueue<T>::enqueue(T item) {
 
 
 template<typename T>
+bool MSQueue<T>::try_enqueue(T item, uint64_t tail_old_tag) {
+  NodePtr next;
+  NodePtr tail_old;
+  tail_old = tail_->load();
+  next = tail_old.value()->next.load();
+  if (tail_old_tag == tail_old.tag()) {
+    if (next.value() == NULL) {
+      Node* node = new Node(item);
+      if (tail_old.value()->next.swap(
+              next, NodePtr(node, next.tag() + 1))) {
+        tail_->swap(tail_old, NodePtr(node, tail_old.tag() + 1));
+        return true;
+      }
+    } else {
+      tail_->swap(tail_old, NodePtr(next.value(), tail_old.tag() + 1));
+    }
+  }
+  return false;
+}
+
+
+template<typename T>
 bool MSQueue<T>::empty() {
   NodePtr head_old;
   NodePtr tail_old;
@@ -128,7 +153,7 @@ bool MSQueue<T>::empty() {
 
 
 template<typename T>
-bool MSQueue<T>::dequeue(T *item) {
+bool MSQueue<T>::dequeue(T* item) {
   NodePtr head_old;
   NodePtr tail_old;
   NodePtr next;
@@ -156,6 +181,31 @@ bool MSQueue<T>::dequeue(T *item) {
 
 
 template<typename T>
+uint8_t MSQueue<T>::try_dequeue(
+    T* item, uint64_t head_old_tag, State* put_state) {
+  NodePtr head_old = head_->load();
+  NodePtr tail_old = tail_->load();
+  NodePtr next = head_old.value()->next.load();
+  if (head_old_tag == head_old.tag()) {
+    if (head_old.value() == tail_old.value()) {
+      if (next.value() == NULL) {
+        *put_state = tail_old.tag();
+        return 1;
+      }
+      tail_->swap(tail_old, NodePtr(next.value(), tail_old.tag() + 1));
+    } else {
+      *item = next.value()->value;
+      if (head_->swap(
+              head_old, NodePtr(next.value(), head_old.tag() + 1))) {
+        return 0;
+      }
+    }
+  }
+  return 2;
+}
+
+
+template<typename T>
 bool MSQueue<T>::get_return_put_state(T *item, State* put_state) {
   NodePtr head_old;
   NodePtr tail_old;
@@ -167,7 +217,7 @@ bool MSQueue<T>::get_return_put_state(T *item, State* put_state) {
     if (head_->load() == head_old) {
       if (head_old.value() == tail_old.value()) {
         if (next.value() == NULL) {
-          *put_state = head_old.tag();
+          *put_state = tail_old.tag();
           return false;
         }
         tail_->swap(tail_old, NodePtr(next.value(), tail_old.tag() + 1));
