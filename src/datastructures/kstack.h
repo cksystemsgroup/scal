@@ -33,11 +33,12 @@ namespace detail {
 
 template<typename T>
 class KSegment : public ThreadLocalMemory<64> {
+//class KSegment : public ThreadLocalMemory<128> {
  public:
   typedef TaggedValue<T> Item;
-  typedef AtomicTaggedValue<T, 0, 0> AtomicItem;
+  typedef AtomicTaggedValue<T, 0, 128> AtomicItem;
   typedef TaggedValue<KSegment*> SegmentPtr;
-  typedef AtomicTaggedValue<KSegment*, 0, 64> AtomicSegmentPtr;
+  typedef AtomicTaggedValue<KSegment*, 0, 128> AtomicSegmentPtr;
 
 #ifdef LOCALLY_LINEARIZABLE
   inline void mark() {
@@ -97,7 +98,7 @@ class KStack : public Stack<T> {
   typedef detail::KSegment<T> KSegment;
   typedef typename detail::KSegment<T>::Item Item;
   typedef typename detail::KSegment<T>::SegmentPtr SegmentPtr;
-  typedef AtomicTaggedValue<KSegment*, 128, 128> AtomicTopPtr;
+  typedef AtomicTaggedValue<KSegment*, 4096, 4096> AtomicTopPtr;
 
   inline bool is_empty(KSegment* segment);
   inline bool find_index(
