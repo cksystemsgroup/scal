@@ -47,6 +47,13 @@
       ],
     },
     {
+      'target_name': 'lru-dq',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_lru_dq.cc'
+      ],
+    },
+    {
       'target_name': 'fc',
       'type': 'static_library',
       'sources': [
@@ -85,7 +92,7 @@
     {
       'target_name': 'll-dq-ms',
       'type': 'static_library',
-      'cflags': [ ],
+      'defines': [ 'GET_TRY_LOCAL_FIRST' ],
       'sources': [
         'src/benchmark/std_glue/glue_ll_dq_ms.cc'
       ],
@@ -93,7 +100,7 @@
     {
       'target_name': 'll-dq-treiber',
       'type': 'static_library',
-      'cflags': [ ],
+      'defines': [ 'GET_TRY_LOCAL_FIRST' ],
       'sources': [
         'src/benchmark/std_glue/glue_ll_dq_treiber.cc'
       ],
