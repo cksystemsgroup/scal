@@ -32,9 +32,8 @@ DEFINE_bool(log_operations, false, "log invocation/response/linearization "
                                    "of all operations");
 DEFINE_bool(allow_empty_returns, false, "does not stop the execution at an "
                                    "empty-dequeue");
-using scal::Benchmark;
 
-class SeqAltBench : public Benchmark {
+class SeqAltBench : public scal::Benchmark {
  public:
   SeqAltBench(uint64_t num_threads,
                uint64_t thread_prealloc_size,
@@ -129,7 +128,7 @@ void SeqAltBench::bench_func(void) {
         abort();
       }
       scal::StdOperationLogger::get().response(true, item);
-      calculate_pi(FLAGS_c);
+      scal::RdtscWait(FLAGS_c);
     }
     
     if (i >= FLAGS_prefill) {
@@ -142,7 +141,7 @@ void SeqAltBench::bench_func(void) {
         }
       }
       scal::StdOperationLogger::get().response(true, item);
-      calculate_pi(FLAGS_c);
+      scal::RdtscWait(FLAGS_c);
     }
   }
 }

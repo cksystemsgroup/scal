@@ -179,7 +179,7 @@ void ProdConBench::producer() {
       abort();
     }
     scal::StdOperationLogger::get().response(true, item);
-    calculate_pi(FLAGS_c);
+    scal::RdtscWait(FLAGS_c);
   }
 }
 
@@ -204,7 +204,7 @@ void ProdConBench::consumer() {
     scal::StdOperationLogger::get().invoke(scal::LogType::kDequeue);
     ok = ds->get(&ret);
     scal::StdOperationLogger::get().response(ok, ret);
-    calculate_pi(FLAGS_c);
+    scal::RdtscWait(FLAGS_c);
     if (!ok) {
       continue;
     }
