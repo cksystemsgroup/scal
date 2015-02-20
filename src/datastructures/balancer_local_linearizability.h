@@ -8,12 +8,13 @@
 #include <gflags/gflags.h>
 
 #include "datastructures/balancer.h"
+#include "util/platform.h"
 #include "util/threadlocals.h"
 #include "util/random.h"
 
 DEFINE_uint64(ll_balancer_seed, 0, "local linearizability balancer seed");
 
-class BalancerLocalLinearizability : public BalancerInterface {
+class BalancerLocalLinearizability {
  public:
   BalancerLocalLinearizability(size_t size) : size_(size) {
     distribution_ = new size_t[size];
@@ -23,17 +24,17 @@ class BalancerLocalLinearizability : public BalancerInterface {
     scal::shuffle<size_t>(distribution_, size, FLAGS_ll_balancer_seed);
   }
 
-  uint64_t get(uint64_t num_queues, bool enqueue) {
-    if (num_queues == 1) {
-      return 0;
-    }
-    uint64_t id;
-    if (enqueue) {
-      id = distribution_[scal::ThreadContext::get().thread_id() % size_];
-    } else {
-      id = scal::hwrand();
-    }
-    return id % num_queues;
+  always_inline uint64_t get_id() {
+    return scal::hwrand() % size_;
+  }
+
+  always_inline uint64_t put_id() {
+    return distribution_[scal::ThreadContext::get().thread_id() % size_];
+  }
+
+  always_inline bool local_get_id(uint64_t* idx) {
+    *idx = distribution_[scal::ThreadContext::get().thread_id() % size_];
+    return true;
   }
 
  private:

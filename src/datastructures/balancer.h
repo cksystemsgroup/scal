@@ -9,7 +9,10 @@
 
 class BalancerInterface {
  public:
-  virtual uint64_t get(uint64_t num_queues, bool enqueue) = 0;
+  virtual uint64_t get_id() = 0;
+  virtual uint64_t put_id() = 0;
+  virtual bool local_get_id(uint64_t* idx) { return false; }
+
   virtual ~BalancerInterface() {}
 };
 

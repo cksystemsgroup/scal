@@ -6,27 +6,31 @@
 #define SCAL_DATASTRUCTURES__BALANCER_1RANDOM_H_
 
 #include "datastructures/balancer.h"
+
+#include "util/platform.h"
 #include "util/random.h"
 
-class Balancer1Random : public BalancerInterface {
+namespace scal {
+
+class Balancer1Random {
  public:
-  explicit Balancer1Random(bool use_hw_random) {
-    use_hw_random_ = use_hw_random;
+  always_inline explicit Balancer1Random(uint64_t size, bool use_hw_random) 
+      : size_(size), use_hw_random_(use_hw_random) {
   }
 
-  uint64_t get(uint64_t num_queues, bool enqueue) {
-    if (num_queues == 1) {
-      return 0;
-    }
-    if (use_hw_random_) {
-      return scal::hwrand() % num_queues;
-    } else {
-      return scal::pseudorand() % num_queues;
-    }
+  always_inline uint64_t get_id() {
+    return scal::pseudorand() % size_;
+  }
+
+  always_inline uint64_t put_id() {
+    return scal::pseudorand() % size_;
   }
 
  private:
+  uint64_t size_;
   bool use_hw_random_;
 };
+
+}  // namespace scal
 
 #endif  // SCAL_DATASTRUCTURES_BALANCER_1RANDOM_H_
