@@ -1,3 +1,14 @@
+@article{LocLin,
+  author = {A. Haas and T.A. Henzinger and A. Holzer and C.M. Kirsch and M. Lippautz and H. Payer and A. Sezgin and A. Sokolova and H. Veith},
+  title = {Local Linearizability},
+  journal = {CoRR},
+  volume = {abs/1502.07118},
+  year = {2015},
+  eprint = {1502.07118},
+  eprinttype = {arxiv},
+  primaryclass = {abs}
+}
+
 @inproceedings{POPL15,
   author = {M. Dodds and A. Haas and C.M. Kirsch},
   title = {A Scalable, Correct Time-Stamped Stack},
