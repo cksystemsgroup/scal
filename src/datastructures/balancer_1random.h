@@ -14,15 +14,15 @@ namespace scal {
 
 class Balancer1Random {
  public:
-  always_inline explicit Balancer1Random(uint64_t size, bool use_hw_random) 
+  _always_inline explicit Balancer1Random(uint64_t size, bool use_hw_random) 
       : size_(size), use_hw_random_(use_hw_random) {
   }
 
-  always_inline uint64_t get_id() {
+  _always_inline uint64_t get_id() {
     return scal::pseudorand() % size_;
   }
 
-  always_inline uint64_t put_id() {
+  _always_inline uint64_t put_id() {
     return scal::pseudorand() % size_;
   }
 

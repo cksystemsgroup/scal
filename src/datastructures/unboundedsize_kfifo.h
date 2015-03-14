@@ -30,11 +30,11 @@ template<typename T>
 class KSegment : public ThreadLocalMemory<64> {
  public:
   typedef TaggedValue<T> Item;
-  typedef AtomicTaggedValue<T, 0, 128> AtomicItem;
+  typedef AtomicTaggedValue<T, 0, 4 * 128> AtomicItem;
   typedef TaggedValue<KSegment*> SegmentPtr;
-  typedef AtomicTaggedValue<KSegment*, 0, 128> AtomicSegmentPtr;
+  typedef AtomicTaggedValue<KSegment*, 0, 4 * 128> AtomicSegmentPtr;
 
-  explicit KSegment(uint64_t k)
+  _always_inline explicit KSegment(uint64_t k)
       : deleted_(0)
       , k_(k)
       , next_(SegmentPtr(NULL, 0))
@@ -43,20 +43,21 @@ class KSegment : public ThreadLocalMemory<64> {
                 k, sizeof(AtomicItem), 64))) {
   }
 
-  inline uint64_t k() { return k_; }
-  inline uint8_t deleted() { return deleted_; }
-  inline void set_deleted() { deleted_ = 1; }
+  _always_inline uint64_t k() { return k_; }
+  _always_inline uint8_t deleted() { return deleted_; }
+  _always_inline void set_deleted() { deleted_ = 1; }
 
-  inline SegmentPtr next() { return next_.load(); }
-  inline bool atomic_set_next(
+  _always_inline SegmentPtr next() { return next_.load(); }
+  _always_inline bool atomic_set_next(
       const SegmentPtr& old_next, const SegmentPtr& new_next) {
     return next_.swap(old_next, new_next);
   }
 
-  inline Item item(uint64_t index) {
+  _always_inline Item item(uint64_t index) {
+    __builtin_prefetch(&items_[index + 1], 0, 0);
     return items_[index].load();
   }
-  inline bool atomic_set_item(
+  _always_inline bool atomic_set_item(
       uint64_t index, const Item& old_item, const Item& new_item) {
     return items_[index].swap(old_item, new_item);
   }
@@ -86,12 +87,12 @@ class UnboundedSizeKFifo : public Queue<T> {
   typedef typename KSegment::AtomicItem AtomicItem;
   typedef AtomicTaggedValue<KSegment*, 4096, 4096> AtomicSegmentPtr;
 
-  void advance_head(const SegmentPtr& head_old);
-  void advance_tail(const SegmentPtr& tail_old);
-  bool find_index(KSegment* const start_index, bool empty,
-                  int64_t *item_index, Item* old);
-  bool committed(const SegmentPtr& tail_old,
-                 const Item& new_item, uint64_t item_index);
+  _always_inline void advance_head(const SegmentPtr& head_old);
+  _always_inline void advance_tail(const SegmentPtr& tail_old);
+  _always_inline bool find_index(
+      KSegment* const start_index, bool empty, int64_t *item_index, Item* old);
+  _always_inline bool committed(
+      const SegmentPtr& tail_old, const Item& new_item, uint64_t item_index);
 
 #ifdef LOCALLY_LINEARIZABLE
   struct Marker {
@@ -99,11 +100,11 @@ class UnboundedSizeKFifo : public Queue<T> {
     uint8_t padding[64 - sizeof(SegmentPtr)];
   };
 
-  inline void SetLastSegment(SegmentPtr tail) {
+  _always_inline void SetLastSegment(SegmentPtr tail) {
     markers[ThreadContext::get().thread_id()].value = tail;
   }
 
-  inline bool IsLastSegment(SegmentPtr tail) {
+  _always_inline bool IsLastSegment(SegmentPtr tail) {
     return markers[ThreadContext::get().thread_id()].value == tail;
   }
 

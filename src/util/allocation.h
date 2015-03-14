@@ -30,7 +30,7 @@ extern pthread_once_t tla_key_once;
 size_t HumanSizeToPages(const char* hsize, size_t len);
 
 
-always_inline size_t RoundSize(uint64_t size, uint64_t round_to) {
+_always_inline size_t RoundSize(uint64_t size, uint64_t round_to) {
   if ((round_to == 0) || (size % round_to) == 0) {
     return size;
   }
@@ -38,7 +38,7 @@ always_inline size_t RoundSize(uint64_t size, uint64_t round_to) {
 }
 
 
-always_inline void* MallocAligned(size_t size, size_t alignment) {
+_always_inline void* MallocAligned(size_t size, size_t alignment) {
   void* mem;
   if (posix_memalign(reinterpret_cast<void**>(&mem),
                      alignment, size)) {
@@ -49,7 +49,7 @@ always_inline void* MallocAligned(size_t size, size_t alignment) {
 }
 
 
-always_inline void* CallocAligned(size_t num, size_t size, size_t alignment) {
+_always_inline void* CallocAligned(size_t num, size_t size, size_t alignment) {
   const size_t sz = num * size;
   void* mem = MallocAligned(sz, alignment);
   memset(mem, 0, sz);
@@ -59,26 +59,26 @@ always_inline void* CallocAligned(size_t num, size_t size, size_t alignment) {
 
 class ThreadLocalAllocator {
  public:
-  static always_inline ThreadLocalAllocator& Get();
+  static _always_inline ThreadLocalAllocator& Get();
 
-  always_inline ThreadLocalAllocator()
+  _always_inline ThreadLocalAllocator()
       : prealloc_size_(0),
         start_(0),
         end_(0),
         current_(0) {
   }
 
-  always_inline void Init(size_t prealloc_size, bool touch_memory);
-  always_inline void* Calloc(size_t num, size_t size);
-  always_inline void* CallocAligned(size_t num, size_t size, size_t alignment);
-  always_inline void* Malloc(size_t size);
-  always_inline void* MallocAligned(size_t size, size_t alignment);
-  always_inline bool TryFreeLast();
+  _always_inline void Init(size_t prealloc_size, bool touch_memory);
+  _always_inline void* Calloc(size_t num, size_t size);
+  _always_inline void* CallocAligned(size_t num, size_t size, size_t alignment);
+  _always_inline void* Malloc(size_t size);
+  _always_inline void* MallocAligned(size_t size, size_t alignment);
+  _always_inline bool TryFreeLast();
 
  private:
   static inline void CreateTlaKey();
 
-  always_inline void ResetBuffer();
+  _always_inline void ResetBuffer();
 
   static pthread_key_t tla_key;
 
@@ -202,8 +202,8 @@ bool ThreadLocalAllocator::TryFreeLast() {
 template<int ALIGN>
 class ThreadLocalMemory {
  public:
-  static always_inline void* operator new(size_t size);
-  static always_inline void operator delete(void* ptr);
+  static _always_inline void* operator new(size_t size);
+  static _always_inline void operator delete(void* ptr);
 };
 
 

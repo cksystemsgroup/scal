@@ -8,9 +8,13 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#ifndef always_line
-#define always_inline inline __attribute__((always_inline))
-#endif  // always_inline
+#ifndef _always_line
+#ifdef DEBUG
+#define _always_inline inline
+#else
+#define _always_inline inline __attribute__((always_inline))
+#endif  // DEBUG
+#endif  // _always_inline
 
 namespace scal {
 
@@ -25,12 +29,12 @@ const uint64_t  kMaxThreads = 128;
 
 // For sake of simplicity: Assume posix with optional _SC_NPROCESSORS_ONLN
 // variable.
-always_inline long number_of_cores() {
+_always_inline long number_of_cores() {
   return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 
-always_inline uint64_t Rdtsc() {
+_always_inline uint64_t Rdtsc() {
   unsigned int hi, lo;
   __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
   return  ((uint64_t) lo) | (((uint64_t) hi) << 32);

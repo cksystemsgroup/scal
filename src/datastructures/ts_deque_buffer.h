@@ -157,7 +157,7 @@ class TSDequeBuffer {
           scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(Item**), 
             scal::kCachePrefetch * 4));
 
-      for (int i = 0; i < num_threads_; i++) {
+      for (uint64_t i = 0; i < num_threads_; i++) {
 
         left_[i] = static_cast<std::atomic<Item*>*>(
             scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
@@ -215,7 +215,7 @@ class TSDequeBuffer {
       uint64_t sum1 = 0;
       uint64_t sum2 = 1;
 
-      for (int i = 0; i < num_threads_; i++) {
+      for (uint64_t i = 0; i < num_threads_; i++) {
         sum1 += *counter1_[i];
         sum2 += *counter2_[i];
       }

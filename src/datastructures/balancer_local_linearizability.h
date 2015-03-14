@@ -24,15 +24,15 @@ class BalancerLocalLinearizability {
     scal::shuffle<size_t>(distribution_, size, FLAGS_ll_balancer_seed);
   }
 
-  always_inline uint64_t get_id() {
+  _always_inline uint64_t get_id() {
     return scal::hwrand() % size_;
   }
 
-  always_inline uint64_t put_id() {
+  _always_inline uint64_t put_id() {
     return distribution_[scal::ThreadContext::get().thread_id() % size_];
   }
 
-  always_inline bool local_get_id(uint64_t* idx) {
+  _always_inline bool local_get_id(uint64_t* idx) {
     *idx = distribution_[scal::ThreadContext::get().thread_id() % size_];
     return true;
   }

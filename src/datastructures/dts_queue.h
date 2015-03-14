@@ -81,7 +81,7 @@ class DTSQueue : Queue<T>{
           scal::ThreadLocalAllocator::Get().CallocAligned(num_threads_, sizeof(std::atomic<Item*>*), 
             scal::kCachePrefetch * 4));
 
-      for (int i = 0; i < num_threads_; i++) {
+      for (uint64_t i = 0; i < num_threads_; i++) {
 
         insert_[i] = static_cast<std::atomic<Item*>*>(
             scal::get<std::atomic<Item*>>(scal::kCachePrefetch * 4));
@@ -132,7 +132,7 @@ class DTSQueue : Queue<T>{
       uint64_t sum1 = 0;
       uint64_t sum2 = 1;
 
-      for (int i = 0; i < num_threads_; i++) {
+      for (uint64_t i = 0; i < num_threads_; i++) {
         sum1 += *counter1_[i];
         sum2 += *counter2_[i];
       }

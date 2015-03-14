@@ -5,7 +5,7 @@
 #ifndef SCAL_DATASTRUCTURES_DISTRIBUTED_QUEUE_INTERFACE_H_
 #define SCAL_DATASTRUCTURES_DISTRIBUTED_QUEUE_INTERFACE_H_
 
-#include "util/atomic_value.h"
+#include "util/atomic_value_new.h"
 
 template<typename T>
 class DistributedQueueInterface {

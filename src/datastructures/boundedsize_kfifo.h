@@ -46,20 +46,20 @@ class BoundedSizeKFifo : public Queue<T> {
   typedef TaggedValue<T> Item;
   typedef AtomicTaggedValue<T, 0, ITEM_PAD> AtomicItem;
 
-  inline bool find_index(
+  _always_inline bool find_index(
       uint64_t start_index, bool empty, int64_t *item_index, Item* old);
-  inline bool advance_head(const SegmentPtr& head_old);
-  inline bool advance_tail(const SegmentPtr& tail_old);
-  inline bool queue_full(
+  _always_inline bool advance_head(const SegmentPtr& head_old);
+  _always_inline bool advance_tail(const SegmentPtr& tail_old);
+  _always_inline bool queue_full(
       const SegmentPtr& head_old, const SegmentPtr& tail_old);
-  inline bool segment_not_empty(const SegmentPtr& head_old);
-  inline bool not_in_valid_region(uint64_t tail_old_pointer,
+  _always_inline bool segment_not_empty(const SegmentPtr& head_old);
+  _always_inline bool not_in_valid_region(uint64_t tail_old_pointer,
                                   uint64_t tail_current_pointer,
                                   uint64_t head_current_pointer);
-  inline bool in_valid_region(uint64_t tail_old_pointer,
+  _always_inline bool in_valid_region(uint64_t tail_old_pointer,
                               uint64_t tail_current_pointer,
                               uint64_t head_current_pointer);
-  bool committed(
+  _always_inline bool committed(
       const SegmentPtr& tail_old, const Item& new_item, uint64_t item_index);
 
   uint64_t queue_size_;
