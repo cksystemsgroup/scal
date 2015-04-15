@@ -47,6 +47,13 @@
       ],
     },
     {
+      'target_name': 'dq-partrr-ms',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_dq_partrr_ms.cc'
+      ],
+    },
+    {
       'target_name': 'fc',
       'type': 'static_library',
       'sources': [

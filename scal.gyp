@@ -136,6 +136,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-dq-partrr-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:dq-partrr-ms',
+      ],
+    },
+    {
       'target_name': 'prodcon-dq-1random-treiber',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],

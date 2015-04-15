@@ -10,7 +10,7 @@
 #include "util/platform.h"
 #include "util/threadlocals.h"
 
-class BalancerPartitionedRoundRobin : public BalancerInterface {
+class BalancerPartitionedRoundRobin {
  public:
   BalancerPartitionedRoundRobin(uint64_t partitions, uint64_t num_queues) {
     num_queues_ = num_queues;
@@ -27,6 +27,17 @@ class BalancerPartitionedRoundRobin : public BalancerInterface {
     }
   }
 
+  _always_inline uint64_t get_id() {
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
+    return __sync_fetch_and_add(dequeue_rrs_[thread_id % partitions_], 1) % num_queues_;
+  }
+
+  _always_inline uint64_t put_id() {
+    uint64_t thread_id = scal::ThreadContext::get().thread_id();
+      return __sync_fetch_and_add(enqueue_rrs_[thread_id % partitions_], 1) % num_queues_;
+  }
+
+  /*
   uint64_t get(uint64_t num_queues, MSQueue<uint64_t> **queues, bool enqueue) {
     uint64_t thread_id = scal::ThreadContext::get().thread_id();
     if (enqueue) {
@@ -37,6 +48,7 @@ class BalancerPartitionedRoundRobin : public BalancerInterface {
           % num_queues;
     }
   }
+  */
 
  private:
   uint64_t num_queues_;
