@@ -516,6 +516,16 @@
       ],
     },
     {
+      'target_name': 'seqalt-dq-partrr-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:dq-partrr-ms',
+      ],
+    },
+    {
       'target_name': 'seqalt-kstack',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
