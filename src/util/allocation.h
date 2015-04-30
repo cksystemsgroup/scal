@@ -134,20 +134,19 @@ void* ThreadLocalAllocator::Malloc(size_t size) {
                     "thread-local allocation", size);
     abort();
   }
-  last_size_ = size;
   if ((current_ + static_cast<intptr_t>(size)) >= end_) {
     if (FLAGS_reuse_memory) {
       if (FLAGS_warn_on_overflow) {
         fprintf(stderr, "%p: overflowing buffer. resetting.\n", this);
       }
-      ResetBuffer();
     } else {
       fprintf(stderr, "warning: allocating new buffer\n");
       start_ = reinterpret_cast<uintptr_t>(
           scal::MallocAligned(prealloc_size_, kPageSize));
-      ResetBuffer();
     }
+    ResetBuffer();
   }
+  last_size_ = size;
   void* object = reinterpret_cast<void*>(current_);
   current_ += size;
   return object;
