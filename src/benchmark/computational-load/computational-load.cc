@@ -58,8 +58,8 @@ int main(int argc, const char **argv) {
   benchmark.run();
   printf("{ \"c\": %lu "
          ",\"operations\": %lu "
-         ",\"threads\": %lu"
-         ",\"time\": %f"
+         ",\"threads\": %lu "
+         ",\"time\": %f "
          "}\n",
          FLAGS_c, FLAGS_operations, FLAGS_threads, (double)benchmark.execution_time()/FLAGS_operations);
   return EXIT_SUCCESS;
