@@ -136,6 +136,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-dq-partrr-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:dq-partrr-ms',
+      ],
+    },
+    {
       'target_name': 'prodcon-dq-1random-treiber',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -486,6 +496,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-eb-stack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:eb-stack',
+      ],
+    },
+    {
       'target_name': 'seqalt-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -503,6 +523,16 @@
         'libscal',
         'seqalt-base',
         'glue.gypi:treiber',
+      ],
+    },
+    {
+      'target_name': 'seqalt-dq-partrr-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:dq-partrr-ms',
       ],
     },
     {
@@ -773,6 +803,16 @@
         'libscal',
         'seqalt-base',
         'glue.gypi:lts-queue',
+      ],
+    },
+    {
+      'target_name': 'seqalt-eb-stack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:eb-stack',
       ],
     },
   ]

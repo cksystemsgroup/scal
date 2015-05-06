@@ -47,6 +47,13 @@
       ],
     },
     {
+      'target_name': 'dq-partrr-ms',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_dq_partrr_ms.cc'
+      ],
+    },
+    {
       'target_name': 'fc',
       'type': 'static_library',
       'sources': [
@@ -305,5 +312,13 @@
         'src/benchmark/std_glue/glue_ts_hardware_deque.cc'
       ],
     },
+    {
+      'target_name': 'eb-stack',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_eb_stack.cc'
+      ],
+    }
   ]
 }

@@ -245,6 +245,11 @@ prodcon_dts_queue_SOURCES = \
         $(PRODCON_BASE_OBJS) \
         src/benchmark/std_glue/glue_dts_queue.cc
 
+bin_PROGRAMS += prodcon-eb-stack
+prodcon_eb_stack_SOURCES = \
+        $(PRODCON_BASE_OBJS) \
+        src/benchmark/std_glue/glue_eb_stack.cc
+
 #
 # SPF benchmark
 #
