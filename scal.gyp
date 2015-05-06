@@ -496,6 +496,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-eb-stack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:eb-stack',
+      ],
+    },
+    {
       'target_name': 'seqalt-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -793,6 +803,16 @@
         'libscal',
         'seqalt-base',
         'glue.gypi:lts-queue',
+      ],
+    },
+    {
+      'target_name': 'seqalt-eb-stack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:eb-stack',
       ],
     },
   ]
