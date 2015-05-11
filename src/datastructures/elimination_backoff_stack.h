@@ -79,9 +79,8 @@ class EliminationBackoffStack : public Stack<T> {
   typedef detail::Operation<T> Operation;
 
   typedef TaggedValue<Node*> NodePtr;
-  typedef AtomicTaggedValue<Node*, 64, 64> AtomicNodePtr;   // TODO <typename T, int ALIGN, int PAD> 
-                                                            // ? AtomicTaggedValue.ALIGN == ThreadLocalMemory.ALIGN
-                                                            // ? what's PAD
+  typedef AtomicTaggedValue<Node*, 64, 64> AtomicNodePtr;   
+
   AtomicNodePtr* top_;
   Operation* *operations_;
 
@@ -100,7 +99,7 @@ template<typename T>
 EliminationBackoffStack<T>::EliminationBackoffStack(
     uint64_t num_threads, uint64_t size_collision, uint64_t delay) 
   : num_threads_(num_threads), size_collision_(size_collision), delay_(delay) {
-  top_ = new AtomicNodePtr(); //scal::get<AtomicPointer<Node*> >(kCachePrefetch*4);
+  top_ = new AtomicNodePtr();
 
   operations_ = static_cast<Operation**>(
       ThreadLocalAllocator::Get().CallocAligned(num_threads, 
@@ -113,22 +112,18 @@ EliminationBackoffStack<T>::EliminationBackoffStack(
   collision_ = static_cast<std::atomic<uint64_t>**>(
       ThreadLocalAllocator::Get().CallocAligned(size_collision_,
           sizeof(TaggedValue<uint64_t>*), kCachePrefetch * 4));
-          //sizeof(AtomicValue<uint64_t>*), kCachePrefetch * 4));
   
   void* mem;
   for (uint64_t i = 0; i < num_threads; i++) {
-    // operations_[i] = scal::get<Operation>(kCachePrefetch * 4);
     mem = MallocAligned(sizeof(Operation), kCachePrefetch * 4);
     operations_[i] = new (mem) Operation();
   }
   for (uint64_t i = 0; i < num_threads; i++) {
-    // location_[i] = scal::get<std::atomic<uint64_t>>(kCachePrefetch * 4);
     mem = MallocAligned(sizeof(std::atomic<uint64_t>), kCachePrefetch * 4);
     location_[i] = new (mem) std::atomic<uint64_t>();
   }
 
   for (uint64_t i = 0; i < size_collision_; i++) {
-    // collision_[i] = scal::get<std::atomic<uint64_t>>(kCachePrefetch * 4);
     mem = MallocAligned(sizeof(std::atomic<uint64_t>), kCachePrefetch * 4);
     collision_[i] = new (mem) std::atomic<uint64_t>();
   
@@ -143,14 +138,8 @@ inline uint64_t get_pos(uint64_t size) {
 template<typename T>
 bool EliminationBackoffStack<T>::try_collision(
     uint64_t thread_id, uint64_t other, T *item) {
-  
-  //AtomicValue<T> old_value(other, 0);
   TaggedValue<T> old_value(other, 0);
-
   if (operations_[thread_id]->opcode == Opcode::Push) {
-
-
-    //AtomicValue<T> new_value(thread_id, 0);
     TaggedValue<T> new_value(thread_id, 0);
     if (location_[other]->compare_exchange_weak(
           other, thread_id)) {
@@ -159,8 +148,6 @@ bool EliminationBackoffStack<T>::try_collision(
       return false;
     }
   } else {
-
-    //AtomicValue<T> new_value(EMPTY, 0);
     TaggedValue<T> new_value(EMPTY, 0);
     if (location_[other]->compare_exchange_weak(
           other, EMPTY)) {
@@ -225,17 +212,10 @@ bool EliminationBackoffStack<T>::push(T item) {
       if (backoff(Opcode::Push, &item)) {
         return true;
       }
-  // Node *n = scal::tlget<Node>(0);
   Node *n = new Node(item);
-  // n->data = item;
   NodePtr top_old;
   NodePtr top_new;
-  // top_new->weak_set_value(n);
-  // top_new->store(n);
   while (true) {
-    // top_old = *top_;
-    // n->next.weak_set_value(top_old->value());
-    // top_new->weak_set_aba(top_old->aba() + 1);
     top_old = top_->load();
     n->next = top_old.value();
     top_new = NodePtr(n, top_old.tag() + 1);
@@ -259,13 +239,10 @@ bool EliminationBackoffStack<T>::pop(T *item) {
   NodePtr top_old;
   NodePtr top_new;
   while (true) {
-    // top_old = *top_;
     top_old = top_->load();
     if (top_old.value() == NULL) {
       return false;
     }
-    // top_new->weak_set_value(top_old->value()->next.value());
-    // top_new->weak_set_aba(top_old->aba() + 1);
     top_new = NodePtr(top_old.value()->next, top_old.tag() + 1);
 
     if (!top_->swap(top_old, top_new)) {

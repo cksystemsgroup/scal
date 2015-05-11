@@ -75,6 +75,13 @@
       ],
     },
     {
+      'target_name': 'sq',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_sq_queue.cc'
+      ],
+    },
+    {
       'target_name': 'us-kfifo',
       'type': 'static_library',
       'sources': [
@@ -183,6 +190,13 @@
       ],
       'dependencies': [
         'upstream.gypi:lcrq-base',
+      ],
+    },
+    {
+      'target_name': 'lb-stack',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_lb_stack.cc'
       ],
     },
     {
