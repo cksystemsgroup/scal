@@ -186,16 +186,6 @@
       ],
     },
     {
-      'target_name': 'prodcon-sq',
-      'type': 'executable',
-      'libraries': [ '<@(default_libraries)' ],
-      'dependencies': [
-        'libscal',
-        'prodcon-base',
-        'glue.gypi:sq',
-      ],
-    },
-    {
       'target_name': 'prodcon-us-kfifo',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -623,16 +613,6 @@
         'libscal',
         'seqalt-base',
         'glue.gypi:rd',
-      ],
-    },
-    {
-      'target_name': 'seqalt-sq',
-      'type': 'executable',
-      'libraries': [ '<@(default_libraries)' ],
-      'dependencies': [
-        'libscal',
-        'seqalt-base',
-        'glue.gypi:sq',
       ],
     },
     {

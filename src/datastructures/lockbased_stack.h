@@ -50,7 +50,6 @@ class LockBasedStack : public Stack<T> {
   AtomicNodePtr* top_;
 
   pthread_mutex_t *global_lock_;
-  pthread_cond_t *push_cond_;
 
   inline void check_error(const char *std, int rc) {
     if (rc != 0) {
@@ -60,20 +59,14 @@ class LockBasedStack : public Stack<T> {
       abort();
     }
   }
-  
 };
 
 template<typename T>
 LockBasedStack<T>::LockBasedStack() : top_(new AtomicNodePtr()) {
   global_lock_ = static_cast<pthread_mutex_t*>(
-    ThreadLocalAllocator::Get().MallocAligned(sizeof(pthread_mutex_t), 64));
+                  MallocAligned(sizeof(pthread_mutex_t), 64));
   int rc = pthread_mutex_init(global_lock_, NULL);
   check_error("pthread_mutex_init", rc);
-
-  push_cond_ = static_cast<pthread_cond_t*>(
-    ThreadLocalAllocator::Get().MallocAligned(sizeof(pthread_cond_t), 64));
-  rc = pthread_cond_init(push_cond_, NULL);
-  check_error("pthread_cond_init", rc);
 }
 
 template<typename T>
@@ -83,13 +76,10 @@ bool LockBasedStack<T>::push(T item) {
 
   int rc = pthread_mutex_lock(global_lock_);
   check_error("pthread_mutex_lock", rc);
-  
+
   top_old = top_->load();
   n->next = top_old.value();
-  top_->store(NodePtr(n, 0));
-
-  rc = pthread_cond_broadcast(push_cond_);
-  check_error("pthread_cond_broadcast", rc);
+  top_->store(NodePtr(n, top_old.tag() + 1));
 
   rc = pthread_mutex_unlock(global_lock_);
   check_error("pthread_mutex_unlock", rc);
@@ -99,18 +89,42 @@ bool LockBasedStack<T>::push(T item) {
 template<typename T>
 bool LockBasedStack<T>::pop(T *item) {
   NodePtr top_old;
-  
+
   int rc = pthread_mutex_lock(global_lock_);
   check_error("pthread_mutex_lock", rc);
-  
+
   top_old = top_->load();
   if (top_old.value() == NULL) {
     rc = pthread_mutex_unlock(global_lock_);
     check_error("pthread_mutex_unlock", rc);
     return false;
   }
-  top_->store(NodePtr(top_old.value()->next, 0));
+  top_->store(NodePtr(top_old.value()->next, top_old.tag() + 1));
   *item = top_old.value()->value;
+
+  rc = pthread_mutex_unlock(global_lock_);
+  check_error("pthread_mutex_unlock", rc);
+  return true;
+}
+
+template<typename T>
+bool LockBasedStack<T>::get_return_put_state(T* item, State* put_state) {
+  NodePtr top_old;
+  NodePtr top_new;
+
+  int rc = pthread_mutex_lock(global_lock_);
+  check_error("pthread_mutex_lock", rc);
+
+  top_old = top_->load();
+  if (top_old.value() == NULL) {
+    *put_state = top_old.tag();
+    rc = pthread_mutex_unlock(global_lock_);
+    check_error("pthread_mutex_unlock", rc);
+    return false;
+  }
+  top_->store(NodePtr(top_old.value()->next, top_old.tag() + 1));
+  *item = top_old.value()->value;
+  *put_state = top_old.tag();
 
   rc = pthread_mutex_unlock(global_lock_);
   check_error("pthread_mutex_unlock", rc);

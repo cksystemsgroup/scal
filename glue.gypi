@@ -75,13 +75,6 @@
       ],
     },
     {
-      'target_name': 'sq',
-      'type': 'static_library',
-      'sources': [
-        'src/benchmark/std_glue/glue_sq_queue.cc'
-      ],
-    },
-    {
       'target_name': 'us-kfifo',
       'type': 'static_library',
       'sources': [
