@@ -12,18 +12,18 @@
 
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "datastructures/balancer_id.h"
-#include "datastructures/distributed_queue.h"
-#include "datastructures/treiber_stack.h"
+#include "datastructures/distributed_data_structure.h"
+#include "datastructures/ms_queue.h"
 #include "util/malloc.h"
 
 DEFINE_uint64(p, 80, "number of partial queues");
 
 void* ds_new(void) {
-  BalancerId *balancer = new BalancerId();
-  DistributedQueue<uint64_t, TreiberStack<uint64_t> > *dq =
-      new DistributedQueue<uint64_t, TreiberStack<uint64_t> >(
-          FLAGS_p, g_num_threads + 1, balancer);
-  return static_cast<void*>(dq);
+  return static_cast<void*>
+      new scal::DistributedDataStructure<uint64_t, scal::MSQueue<uint64_t>, scal::BalancerId>(
+          FLAGS_p, 
+          g_num_threads + 1,
+          new scal::BalancerId());
 }
 
 char* ds_get_stats(void) {

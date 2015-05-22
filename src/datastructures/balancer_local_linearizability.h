@@ -12,6 +12,8 @@
 #include "util/threadlocals.h"
 #include "util/random.h"
 
+namespace scal {
+
 DEFINE_uint64(ll_balancer_seed, 0, "local linearizability balancer seed");
 
 class BalancerLocalLinearizability {
@@ -45,5 +47,7 @@ class BalancerLocalLinearizability {
         - sizeof(size_)
         - sizeof(distribution_)];
 };
+
+}  // namespace scal
 
 #endif  // SCAL_DATASTRUCTURES_BALANCER_LOCAL_LINEARIZABILITY_H_

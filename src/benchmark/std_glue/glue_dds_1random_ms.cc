@@ -9,29 +9,31 @@
 #include <string.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
-#include "datastructures/balancer_partrr.h"
-#include "datastructures/distributed_queue.h"
+#include "datastructures/balancer_1random.h"
+#include "datastructures/distributed_data_structure.h"
 #include "datastructures/ms_queue.h"
 
 DEFINE_uint64(p, 80, "number of partial queues");
-DEFINE_uint64(partitions, 1, "number of round robin partitions");
+DEFINE_bool(hw_random, false, "use hardware random generator instead "
+                              "of pseudo");
+
 
 void* ds_new(void) {
-  BalancerPartitionedRoundRobin *balancer =
-      new BalancerPartitionedRoundRobin(FLAGS_partitions, FLAGS_p);
-  DistributedQueue<uint64_t, MSQueue<uint64_t> > *sp =
-      new DistributedQueue<uint64_t, MSQueue<uint64_t> >(
-          FLAGS_p, g_num_threads + 1, balancer);
-  return static_cast<void*>(sp);
+  return static_cast<void*>(
+      new scal::DistributedDataStructure<uint64_t, scal::MSQueue<uint64_t>, scal::Balancer1Random>(
+          FLAGS_p,
+          g_num_threads + 1,
+          new scal::Balancer1Random(FLAGS_p, FLAGS_hw_random)));
 }
+
 
 char* ds_get_stats(void) {
   char buffer[255] = { 0 };
   uint32_t n = snprintf(buffer,
                         sizeof(buffer),
-                        " ,\"p\": %" PRIu64 " ,\"partitions\":%" PRIu64,
+                        " ,\"p\": %" PRIu64 " ,\"hw_random\": %hu",
                         FLAGS_p,
-                        FLAGS_partitions);
+                        FLAGS_hw_random);
   if (n != strlen(buffer)) {
     fprintf(stderr, "%s: error creating stats string\n", __func__);
     abort();

@@ -33,24 +33,31 @@
       ],
     },
     {
-      'target_name': 'dq-1random-ms',
+      'target_name': 'dds-1random-ms',
       'type': 'static_library',
       'sources': [
-        'src/benchmark/std_glue/glue_dq_1random_ms.cc'
+        'src/benchmark/std_glue/glue_dds_1random_ms.cc'
       ],
     },
     {
-      'target_name': 'dq-1random-treiber',
+      'target_name': 'dds-1random-treiber',
       'type': 'static_library',
       'sources': [
-        'src/benchmark/std_glue/glue_dq_1random_treiber.cc'
+        'src/benchmark/std_glue/glue_dds_1random_treiber.cc'
       ],
     },
     {
-      'target_name': 'dq-partrr-ms',
+      'target_name': 'dds-partrr-ms',
       'type': 'static_library',
       'sources': [
-        'src/benchmark/std_glue/glue_dq_partrr_ms.cc'
+        'src/benchmark/std_glue/glue_dds_partrr_ms.cc'
+      ],
+    },
+    {
+      'target_name': 'dds-partrr-treiber',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_dds_partrr_treiber.cc'
       ],
     },
     {
@@ -82,13 +89,6 @@
       ],
     },
     {
-      'target_name': 'bs-kfifo',
-      'type': 'static_library',
-      'sources': [
-        'src/benchmark/std_glue/glue_bskfifo.cc'
-      ],
-    },
-    {
       'target_name': 'll-us-kfifo',
       'type': 'static_library',
       'cflags': [ '-DLOCALLY_LINEARIZABLE' ],
@@ -97,23 +97,30 @@
       ],
     },
     {
-      'target_name': 'll-dq-ms',
+      'target_name': 'bs-kfifo',
       'type': 'static_library',
-      'defines': [ 'GET_TRY_LOCAL_FIRST' ],
       'sources': [
-        'src/benchmark/std_glue/glue_ll_dq_ms.cc'
+        'src/benchmark/std_glue/glue_bskfifo.cc'
       ],
     },
     {
-      'target_name': 'll-dq-treiber',
+      'target_name': 'll-dds-ms',
       'type': 'static_library',
       'defines': [ 'GET_TRY_LOCAL_FIRST' ],
       'sources': [
-        'src/benchmark/std_glue/glue_ll_dq_treiber.cc'
+        'src/benchmark/std_glue/glue_ll_dds_ms.cc'
       ],
     },
     {
-      'target_name': 'll-dq-ms-nonlinempty',
+      'target_name': 'll-dds-treiber',
+      'type': 'static_library',
+      'defines': [ 'GET_TRY_LOCAL_FIRST' ],
+      'sources': [
+        'src/benchmark/std_glue/glue_ll_dds_treiber.cc'
+      ],
+    },
+    {
+      'target_name': 'll-dds-ms-nonlinempty',
       'type': 'static_library',
       'defines': [
         'BACKEND_MS_QUEUE',
@@ -121,11 +128,11 @@
         'NON_LINEARIZABLE_EMPTY'
       ],
       'sources': [
-        'src/benchmark/std_glue/glue_dq.cc'
+        'src/benchmark/std_glue/glue_dds.cc'
       ],
     },
     {
-      'target_name': 'll-dq-treiber-nonlinempty',
+      'target_name': 'll-dds-treiber-nonlinempty',
       'type': 'static_library',
       'defines': [
         'BACKEND_TREIBER',
@@ -133,45 +140,45 @@
         'NON_LINEARIZABLE_EMPTY'
       ],
       'sources': [
-        'src/benchmark/std_glue/glue_dq.cc'
+        'src/benchmark/std_glue/glue_dds.cc'
       ],
     },
     {
-      'target_name': 'll-dyn-dq-ms-nonlinempty',
+      'target_name': 'll-dyn-dds-ms-nonlinempty',
       'type': 'static_library',
       'defines': [
         'BACKEND_MS_QUEUE',
         'NON_LINEARIZABLE_EMPTY'
       ],
       'sources': [
-        'src/benchmark/std_glue/glue_dyn_dq.cc'
+        'src/benchmark/std_glue/glue_dyn_dds.cc'
       ],
     },
     {
-      'target_name': 'll-dyn-dq-treiber-nonlinempty',
+      'target_name': 'll-dyn-dds-treiber-nonlinempty',
       'type': 'static_library',
       'defines': [
         'BACKEND_TREIBER',
         'NON_LINEARIZABLE_EMPTY'
       ],
       'sources': [
-        'src/benchmark/std_glue/glue_dyn_dq.cc'
+        'src/benchmark/std_glue/glue_dyn_dds.cc'
       ],
     },
     {
-      'target_name': 'll-dyn-dq-ms',
+      'target_name': 'll-dyn-dds-ms',
       'type': 'static_library',
       'cflags': [ ],
       'sources': [
-        'src/benchmark/std_glue/glue_ll_dyn_dq_ms.cc'
+        'src/benchmark/std_glue/glue_ll_dyn_dds_ms.cc'
       ],
     },
     {
-      'target_name': 'll-dyn-dq-treiber',
+      'target_name': 'll-dyn-dds-treiber',
       'type': 'static_library',
       'cflags': [ ],
       'sources': [
-        'src/benchmark/std_glue/glue_ll_dyn_dq_treiber.cc'
+        'src/benchmark/std_glue/glue_ll_dyn_dds_treiber.cc'
       ],
     },
     {
@@ -190,6 +197,13 @@
       'type': 'static_library',
       'sources': [
         'src/benchmark/std_glue/glue_lb_stack.cc'
+      ],
+    },
+    {
+      'target_name': 'lb-queue',
+      'type': 'static_library',
+      'sources': [
+        'src/benchmark/std_glue/glue_lb_queue.cc'
       ],
     },
     {
@@ -332,6 +346,14 @@
       'cflags': [ ],
       'sources': [
         'src/benchmark/std_glue/glue_eb_stack.cc'
+      ],
+    },
+    {
+      'target_name': 'wf-queue',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_wf_ppopp12.cc'
       ],
     }
   ]

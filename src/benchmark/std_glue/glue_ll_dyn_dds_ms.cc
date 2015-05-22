@@ -4,12 +4,12 @@
 
 #define __STDC_FORMAT_MACROS 1  // we want PRIu64 and friends
 
-#include "datastructures/dyn_distributed_queue.h"
+#include "datastructures/dyn_distributed_data_structure.h"
 #include "datastructures/ms_queue.h"
 
 void* ds_new() {
     return static_cast<void*>(
-        new scal::DynamicDistributedQueue<uint64_t, scal::MSQueue<uint64_t>>(
+        new scal::DynamicDistributedDataStructure<uint64_t, scal::MSQueue<uint64_t>>(
             1024));
 }
 

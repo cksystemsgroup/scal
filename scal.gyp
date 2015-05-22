@@ -126,33 +126,43 @@
       ],
     },
     {
-      'target_name': 'prodcon-dq-1random-ms',
+      'target_name': 'prodcon-dds-1random-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:dq-1random-ms',
+        'glue.gypi:dds-1random-ms',
       ],
     },
     {
-      'target_name': 'prodcon-dq-partrr-ms',
+      'target_name': 'prodcon-dds-partrr-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:dq-partrr-ms',
+        'glue.gypi:dds-partrr-ms',
       ],
     },
     {
-      'target_name': 'prodcon-dq-1random-treiber',
+      'target_name': 'prodcon-dds-partrr-treiber',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:dq-1random-treiber',
+        'glue.gypi:dds-partrr-treiber',
+      ],
+    },
+    {
+      'target_name': 'prodcon-dds-1random-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:dds-1random-treiber',
       ],
     },
     {
@@ -216,103 +226,113 @@
       ],
     },
     {
-      'target_name': 'prodcon-ll-dq-ms',
+      'target_name': 'prodcon-ll-dds-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dq-ms',
+        'glue.gypi:ll-dds-ms',
       ],
     },
     {
-      'target_name': 'prodcon-ll-dq-treiber',
+      'target_name': 'prodcon-ll-dds-treiber',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dq-treiber',
+        'glue.gypi:ll-dds-treiber',
       ],
     },
     {
-      'target_name': 'prodcon-ll-dq-ms-nonlinempty',
+      'target_name': 'prodcon-ll-dds-ms-nonlinempty',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dq-ms-nonlinempty',
+        'glue.gypi:ll-dds-ms-nonlinempty',
       ],
     },
     {
-      'target_name': 'prodcon-ll-dq-treiber-nonlinempty',
+      'target_name': 'prodcon-ll-dds-treiber-nonlinempty',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dq-treiber-nonlinempty',
+        'glue.gypi:ll-dds-treiber-nonlinempty',
       ],
     },
     {
-      'target_name': 'prodcon-ll-dyn-dq-ms-nonlinempty',
+      'target_name': 'prodcon-ll-dyn-dds-ms-nonlinempty',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dyn-dq-ms-nonlinempty',
+        'glue.gypi:ll-dyn-dds-ms-nonlinempty',
       ],
     },
     {
-      'target_name': 'prodcon-ll-dyn-dq-treiber-nonlinempty',
+      'target_name': 'prodcon-ll-dyn-dds-treiber-nonlinempty',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dyn-dq-treiber-nonlinempty',
+        'glue.gypi:ll-dyn-dds-treiber-nonlinempty',
       ],
     },
     {
-      'target_name': 'prodcon-ll-dyn-dq-ms',
+      'target_name': 'prodcon-ll-dyn-dds-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dyn-dq-ms',
+        'glue.gypi:ll-dyn-dds-ms',
       ],
     },
+    # {
+    #   'target_name': 'prodcon-wf-queue',
+    #   'type': 'executable',
+    #   'libraries': [ '<@(default_libraries)' ],
+    #   'dependencies': [
+    #     'libscal',
+    #     'prodcon-base',
+    #     'glue.gypi:wf-queue',
+    #   ],
+    # },
     {
-      'target_name': 'seqalt-ll-dyn-dq-ms',
+      'target_name': 'seqalt-ll-dyn-dds-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-dyn-dq-ms',
+        'glue.gypi:ll-dyn-dds-ms',
       ],
     },
     {
-      'target_name': 'prodcon-ll-dyn-dq-treiber',
+      'target_name': 'prodcon-ll-dyn-dds-treiber',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dyn-dq-treiber',
+        'glue.gypi:ll-dyn-dds-treiber',
       ],
     },
     {
-      'target_name': 'seqalt-ll-dyn-dq-treiber',
+      'target_name': 'seqalt-ll-dyn-dds-treiber',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-dyn-dq-treiber',
+        'glue.gypi:ll-dyn-dds-treiber',
       ],
     },
     {
@@ -526,6 +546,16 @@
       ],
     },
     {
+      'target_name': 'prodcon-lb-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:lb-queue',
+      ],
+    },
+    {
       'target_name': 'seqalt-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -546,13 +576,23 @@
       ],
     },
     {
-      'target_name': 'seqalt-dq-partrr-ms',
+      'target_name': 'seqalt-dds-partrr-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:dq-partrr-ms',
+        'glue.gypi:dds-partrr-ms',
+      ],
+    },
+    {
+      'target_name': 'seqalt-dds-partrr-treiber',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:dds-partrr-treiber',
       ],
     },
     {
@@ -576,23 +616,23 @@
       ],
     },
     {
-      'target_name': 'seqalt-dq-1random-ms',
+      'target_name': 'seqalt-dds-1random-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:dq-1random-ms',
+        'glue.gypi:dds-1random-ms',
       ],
     },
     {
-      'target_name': 'seqalt-dq-1random-treiber',
+      'target_name': 'seqalt-dds-1random-treiber',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:dq-1random-treiber',
+        'glue.gypi:dds-1random-treiber',
       ],
     },
     {
@@ -626,6 +666,16 @@
       ],
     },
     {
+      'target_name': 'seqalt-bs-kfifo',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:bs-kfifo',
+      ],
+    },
+    {
       'target_name': 'seqalt-us-kfifo',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
@@ -646,23 +696,23 @@
       ],
     },
     {
-      'target_name': 'seqalt-ll-dq-ms',
+      'target_name': 'seqalt-ll-dds-ms',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-dq-ms',
+        'glue.gypi:ll-dds-ms',
       ],
     },
     {
-      'target_name': 'seqalt-ll-dq-treiber',
+      'target_name': 'seqalt-ll-dds-treiber',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-dq-treiber',
+        'glue.gypi:ll-dds-treiber',
       ],
     },
     {
@@ -855,5 +905,25 @@
         'glue.gypi:lb-stack',
       ],
     },
+    {
+      'target_name': 'seqalt-lb-queue',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:lb-queue',
+      ],
+    },
+    # {
+    #   'target_name': 'seqalt-wf-queue',
+    #   'type': 'executable',
+    #   'libraries': [ '<@(default_libraries)' ],
+    #   'dependencies': [
+    #     'libscal',
+    #     'seqalt-base',
+    #     'glue.gypi:wf-queue',
+    #   ],
+    # }
   ]
 }

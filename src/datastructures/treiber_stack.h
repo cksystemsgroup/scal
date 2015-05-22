@@ -10,7 +10,7 @@
 #ifndef SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 #define SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 
-#include "datastructures/distributed_queue_interface.h"
+#include "datastructures/distributed_data_structure_interface.h"
 #include "datastructures/stack.h"
 #include "util/allocation.h"
 #include "util/atomic_value_new.h"

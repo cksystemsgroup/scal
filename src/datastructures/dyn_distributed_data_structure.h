@@ -2,11 +2,11 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-#ifndef DATASTRUCTURES_DYN_DISTRIBUTED_QUEUE_H_
-#define DATASTRUCTURES_DYN_DISTRIBUTED_QUEUE_H_
+#ifndef DATASTRUCTURES_DYN_DISTRIBUTED_DATA_STRUCTURE_H_
+#define DATASTRUCTURES_DYN_DISTRIBUTED_DATA_STRUCTURE_H_
 
 #include "datastructures/pool.h"
-#include "datastructures/distributed_queue_interface.h"
+#include "datastructures/distributed_data_structure_interface.h"
 #include "util/allocation.h"
 #include "util/lock.h"
 #include "util/platform.h"
@@ -33,9 +33,9 @@ struct PNode : ThreadLocalMemory<64> {
 
 
 template<typename T, class P>
-class DynamicDistributedQueue : public Pool<T> {
+class DynamicDistributedDataStructure : public Pool<T> {
  public:
-  DynamicDistributedQueue(uint64_t max_threads);
+  DynamicDistributedDataStructure(uint64_t max_threads);
   bool put(T item);
   bool get(T* item);
 
@@ -58,7 +58,7 @@ class DynamicDistributedQueue : public Pool<T> {
 
 
 template<typename T, class P>
-DynamicDistributedQueue<T, P>::DynamicDistributedQueue(uint64_t max_threads) 
+DynamicDistributedDataStructure<T, P>::DynamicDistributedDataStructure(uint64_t max_threads) 
     : max_nodes_(max_threads)
     , p_(0)
     , ds_state_(0) {
@@ -69,7 +69,7 @@ DynamicDistributedQueue<T, P>::DynamicDistributedQueue(uint64_t max_threads)
 
 
 template<typename T, class P>
-detail::PNode<P>* DynamicDistributedQueue<T, P>::GetLocalNode(bool create_if_absent) {
+detail::PNode<P>* DynamicDistributedDataStructure<T, P>::GetLocalNode(bool create_if_absent) {
   scal::ThreadContext& ctx = scal::ThreadContext::get();
   void* data = ctx.get_data();
   if ((data == NULL) && create_if_absent) {
@@ -83,7 +83,7 @@ detail::PNode<P>* DynamicDistributedQueue<T, P>::GetLocalNode(bool create_if_abs
 
 
 template<typename T, class P>
-void DynamicDistributedQueue<T, P>::AnnounceThread(ProducerNode* node) {
+void DynamicDistributedDataStructure<T, P>::AnnounceThread(ProducerNode* node) {
   LockHolder l(&segment_lock_);
 
   if ((p_ + 1) == max_nodes_) {
@@ -107,14 +107,14 @@ void DynamicDistributedQueue<T, P>::AnnounceThread(ProducerNode* node) {
 
 
 template<typename T, class P>
-void DynamicDistributedQueue<T, P>::CleanupThread(uint64_t index) {
+void DynamicDistributedDataStructure<T, P>::CleanupThread(uint64_t index) {
   LockHolder l(&segment_lock_);
   CleanupThreadUnlocked(index);
 }
 
 
 template<typename T, class P>
-void DynamicDistributedQueue<T, P>::CleanupThreadUnlocked(uint64_t index) {
+void DynamicDistributedDataStructure<T, P>::CleanupThreadUnlocked(uint64_t index) {
   ProducerNode* n = backends_[index];
   if ((n == NULL) || ((n->alive == 1) || !n->backend->empty())) {
     return;
@@ -128,14 +128,14 @@ void DynamicDistributedQueue<T, P>::CleanupThreadUnlocked(uint64_t index) {
 
 
 template<typename T, class P>
-bool DynamicDistributedQueue<T, P>::put(T item) {
+bool DynamicDistributedDataStructure<T, P>::put(T item) {
   ProducerNode* node = GetLocalNode(true);
   return node->backend->put(item);
 }
 
 
 template<typename T, class P>
-bool DynamicDistributedQueue<T, P>::get(T* item) {
+bool DynamicDistributedDataStructure<T, P>::get(T* item) {
   ProducerNode* node = GetLocalNode(false);
   if ((node != NULL) && node->backend->get(item)) {
     // Fast path: We just get an item from our local backend.
@@ -200,7 +200,7 @@ bool DynamicDistributedQueue<T, P>::get(T* item) {
 
 
 template<typename T, class P>
-void DynamicDistributedQueue<T, P>::Terminate() {
+void DynamicDistributedDataStructure<T, P>::Terminate() {
   ProducerNode* const node = GetLocalNode(false);
   if (node == NULL) {
     return;
@@ -223,4 +223,4 @@ void DynamicDistributedQueue<T, P>::Terminate() {
 
 }  // namespace scal
 
-#endif  // DATASTRUCTURES_DYN_DISTRIBUTED_QUEUE_H_
+#endif  // DATASTRUCTURES_DYN_DISTRIBUTED_DATA_STRUCTURE_H_
