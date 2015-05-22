@@ -2,8 +2,8 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-#ifndef SCAL_DATASTRUCTURES_DTS_QUEUE_H_
-#define SCAL_DATASTRUCTURES_DTS_QUEUE_H_
+#ifndef SCAL_DATASTRUCTURES_RTS_QUEUE_H_
+#define SCAL_DATASTRUCTURES_RTS_QUEUE_H_
 #define __STDC_FORMAT_MACROS 1  // we want PRIu64 and friends
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
@@ -18,10 +18,10 @@
 #include "util/platform.h"
 #include "util/random.h"
 
-#define DTS_DEBUG
+#define RTS_DEBUG
 
 template<typename T>
-class DTSQueue : Queue<T>{
+class RTSQueue : Queue<T>{
   private:
     typedef struct Item {
       std::atomic<Item*> next;
@@ -35,7 +35,7 @@ class DTSQueue : Queue<T>{
     std::atomic<Item*> **insert_;
     std::atomic<Item*> **remove_;
 
-#ifdef DTS_DEBUG
+#ifdef RTS_DEBUG
     uint64_t* *counter1_;
     uint64_t* *counter2_;
 #endif
@@ -98,7 +98,7 @@ class DTSQueue : Queue<T>{
         remove_[i]->store(new_item);
       }
 
-#ifdef DTS_DEBUG
+#ifdef RTS_DEBUG
       counter1_ = static_cast<uint64_t**>(
           scal::ThreadLocalAllocator::Get().CallocAligned(num_threads, sizeof(uint64_t*),
             scal::kCachePrefetch * 4));
@@ -115,7 +115,7 @@ class DTSQueue : Queue<T>{
 #endif
     }
 
-#ifdef DTS_DEBUG
+#ifdef RTS_DEBUG
     inline void inc_counter1(uint64_t value) {
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
       (*counter1_[thread_id]) += value;
@@ -128,7 +128,7 @@ class DTSQueue : Queue<T>{
 #endif
 
     char* ds_get_stats(void) {
-#ifdef DTS_DEBUG
+#ifdef RTS_DEBUG
       uint64_t sum1 = 0;
       uint64_t sum2 = 1;
 
@@ -166,7 +166,7 @@ class DTSQueue : Queue<T>{
     }
 
     inline void insert_element(T element) {
-#ifdef DTS_DEBUG
+#ifdef RTS_DEBUG
       inc_counter1(1);
 #endif
       uint64_t thread_id = scal::ThreadContext::get().thread_id();
@@ -207,7 +207,7 @@ class DTSQueue : Queue<T>{
       // We iterate over all thead-local buffers
       uint64_t num_buffers = num_threads_;
       for (uint64_t i = 0; i < num_buffers; i++) {
-#ifdef DTS_DEBUG
+#ifdef RTS_DEBUG
         inc_counter2(1);
 #endif
 

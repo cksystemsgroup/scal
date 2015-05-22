@@ -486,23 +486,23 @@
       ],
     },
     {
-      'target_name': 'prodcon-dts-queue',
+      'target_name': 'prodcon-rts-queue',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:dts-queue',
+        'glue.gypi:rts-queue',
       ],
     },
     {
-      'target_name': 'prodcon-lts-queue',
+      'target_name': 'prodcon-cts-queue',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:lts-queue',
+        'glue.gypi:cts-queue',
       ],
     },
     {
@@ -816,23 +816,23 @@
       ],
     },
     {
-      'target_name': 'seqalt-dts-queue',
+      'target_name': 'seqalt-rts-queue',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:dts-queue',
+        'glue.gypi:rts-queue',
       ],
     },
     {
-      'target_name': 'seqalt-lts-queue',
+      'target_name': 'seqalt-cts-queue',
       'type': 'executable',
       'libraries': [ '<@(default_libraries)' ],
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:lts-queue',
+        'glue.gypi:cts-queue',
       ],
     },
     {

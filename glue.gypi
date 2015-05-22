@@ -273,17 +273,17 @@
       ],
     },
     {
-      'target_name': 'dts-queue',
+      'target_name': 'rts-queue',
       'type': 'static_library',
       'sources': [
-        'src/benchmark/std_glue/glue_dts_queue.cc'
+        'src/benchmark/std_glue/glue_rts_queue.cc'
       ],
     },
     {
-      'target_name': 'lts-queue',
+      'target_name': 'cts-queue',
       'type': 'static_library',
       'sources': [
-        'src/benchmark/std_glue/glue_lts_queue.cc'
+        'src/benchmark/std_glue/glue_cts_queue.cc'
       ],
     },
     {
