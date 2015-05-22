@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
-#include "datastructures/distributed_queue.h"
+#include "datastructures/distributed_data_structure.h"
 
 DEFINE_uint64(p, 80, "number of partial queues");
 
@@ -34,14 +34,14 @@ DEFINE_uint64(p, 80, "number of partial queues");
 #include "datastructures/balancer_1random.h"
 DEFINE_bool(hw_random, false, "use hardware random generator instead "
                               "of pseudo");
-#define GENERATE_BALANCER() (new Balancer1Random(FLAGS_hw_random))
+#define GENERATE_BALANCER() (new scal::Balancer1Random(FLAGS_hw_random))
 #define BALANCER_T() scal::Balancer1Random
 
 #elif defined(BALANCER_LL)
 
 #include "datastructures/balancer_local_linearizability.h"
-#define GENERATE_BALANCER() (new BalancerLocalLinearizability(FLAGS_p))
-#define BALANCER_T() BalancerLocalLinearizability
+#define GENERATE_BALANCER() (new scal::BalancerLocalLinearizability(FLAGS_p))
+#define BALANCER_T() scal::BalancerLocalLinearizability
 
 #else
 
@@ -51,7 +51,7 @@ DEFINE_bool(hw_random, false, "use hardware random generator instead "
 
 void* ds_new() {
   return static_cast<void*>(
-      new scal::DistributedQueue<T, BACKEND(), BALANCER_T() >(
+      new scal::DistributedDataStructure<T, BACKEND(), BALANCER_T() >(
           FLAGS_p, g_num_threads + 1, GENERATE_BALANCER()));
 }
 

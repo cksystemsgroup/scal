@@ -15,7 +15,7 @@
 
 #include <new>
 
-#include "datastructures/distributed_queue_interface.h"
+#include "datastructures/distributed_data_structure_interface.h"
 #include "datastructures/queue.h"
 #include "util/allocation.h"
 #include "util/atomic_value_new.h"

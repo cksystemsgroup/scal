@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <string.h>     // strerror_r
 
-#include "datastructures/distributed_queue_interface.h"
 #include "datastructures/stack.h"
 #include "util/allocation.h"
 #include "util/atomic_value_new.h"

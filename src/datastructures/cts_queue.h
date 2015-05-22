@@ -2,8 +2,8 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-#ifndef SCAL_DATASTRUCTURES_LTS_QUEUE_H_
-#define SCAL_DATASTRUCTURES_LTS_QUEUE_H_
+#ifndef SCAL_DATASTRUCTURES_CTS_QUEUE_H_
+#define SCAL_DATASTRUCTURES_CTS_QUEUE_H_
 #define __STDC_FORMAT_MACROS 1  // we want PRIu64 and friends
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
@@ -21,7 +21,7 @@
 #define DTS_DEBUG
 
 template<typename T>
-class LTSQueue : Queue<T>{
+class CTSQueue : Queue<T>{
   private:
     typedef struct Item {
       std::atomic<Item*> next;
@@ -336,4 +336,4 @@ class LTSQueue : Queue<T>{
     }
 };
 
-#endif  // SCAL_DATASTRUCTURES_LTS_QUEUE_H_
+#endif  // SCAL_DATASTRUCTURES_CTS_QUEUE_H_

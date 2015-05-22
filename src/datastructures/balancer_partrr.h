@@ -10,6 +10,8 @@
 #include "util/platform.h"
 #include "util/threadlocals.h"
 
+namespace scal {
+
 class BalancerPartitionedRoundRobin {
  public:
   BalancerPartitionedRoundRobin(uint64_t partitions, uint64_t num_queues) {
@@ -56,5 +58,7 @@ class BalancerPartitionedRoundRobin {
   uint64_t **enqueue_rrs_;
   uint64_t **dequeue_rrs_;
 };
+
+}  // namespace scal
 
 #endif  // SRC_DATASTRUCTURES_BALANCER_PARTRR_H_

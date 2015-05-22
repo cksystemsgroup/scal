@@ -5,9 +5,9 @@
 #include <gflags/gflags.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
-#include "datastructures/dts_queue.h"
+#include "datastructures/cts_queue.h"
 
-#define TS_DS DTSQueue<uint64_t>
+#define TS_DS CTSQueue<uint64_t>
 
 TS_DS *ts_;
 

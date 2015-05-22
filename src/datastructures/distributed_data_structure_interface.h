@@ -2,13 +2,13 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-#ifndef SCAL_DATASTRUCTURES_DISTRIBUTED_QUEUE_INTERFACE_H_
-#define SCAL_DATASTRUCTURES_DISTRIBUTED_QUEUE_INTERFACE_H_
+#ifndef SCAL_DATASTRUCTURES_DISTRIBUTED_DATA_STRUCTURE_INTERFACE_H_
+#define SCAL_DATASTRUCTURES_DISTRIBUTED_DATA_STRUCTURE_INTERFACE_H_
 
 #include "util/atomic_value_new.h"
 
 template<typename T>
-class DistributedQueueInterface {
+class DistributedDataStructureInterface {
  public:
   virtual bool put(T item) = 0;
 
@@ -23,4 +23,4 @@ class DistributedQueueInterface {
   virtual bool get_return_empty_state(T *item, AtomicRaw *state) = 0;
 };
 
-#endif  // SCAL_DATASTRUCTURES_DISTRIBUTED_QUEUE_INTERFACE_H_
+#endif  // SCAL_DATASTRUCTURES_DISTRIBUTED_DATA_STRUCTURE_INTERFACE_H_

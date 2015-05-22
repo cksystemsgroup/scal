@@ -10,8 +10,8 @@
 
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "datastructures/balancer_1random.h"
-#include "datastructures/distributed_queue.h"
-#include "datastructures/ms_queue.h"
+#include "datastructures/distributed_data_structure.h"
+#include "datastructures/treiber_stack.h"
 
 DEFINE_uint64(p, 80, "number of partial queues");
 DEFINE_bool(hw_random, false, "use hardware random generator instead "
@@ -20,7 +20,7 @@ DEFINE_bool(hw_random, false, "use hardware random generator instead "
 
 void* ds_new(void) {
   return static_cast<void*>(
-      new scal::DistributedQueue<uint64_t, scal::MSQueue<uint64_t>, scal::Balancer1Random>(
+      new scal::DistributedDataStructure<uint64_t, scal::TreiberStack<uint64_t>, scal::Balancer1Random>(
           FLAGS_p,
           g_num_threads + 1,
           new scal::Balancer1Random(FLAGS_p, FLAGS_hw_random)));

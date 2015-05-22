@@ -64,7 +64,7 @@ class LockBasedQueue : Queue<T> {
     if (rc != 0) {
       char err[256];
       char *tmp = strerror_r(rc, err, 256);
-      fprintf(stderr, "error: %s: %s\n", std, err);
+      fprintf(stderr, "error: %s: %s %s\n", std, err, tmp);
       abort();
     }
   }

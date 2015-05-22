@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
-#include "datastructures/dyn_distributed_queue.h"
+#include "datastructures/dyn_distributed_data_structure.h"
 
 #define T uint64_t
 
@@ -28,7 +28,7 @@
 
 void* ds_new() {
   return static_cast<void*>(
-      new scal::DynamicDistributedQueue<T, BACKEND() >(1024));
+      new scal::DynamicDistributedDataStructure<T, BACKEND() >(1024));
 }
 
 
