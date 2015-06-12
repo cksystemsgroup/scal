@@ -1,3 +1,13 @@
+@InProceedings{NETYS15,
+  author = {A. Haas and T. H{\"u}tter and C.M. Kirsch and M. Lippautz and M. Preishuber and A. Sokolova},
+  title = {Scal: A Benchmarking Suite for Concurrent Data Structures},
+  booktitle = {Proc. International Conference on Networked Systems (NETYS)},
+  publisher = {Springer},
+  series = {LNCS},
+  year = {2015},
+  addendum = {\myinvitedurl{NETYS15-Scal}}
+}
+
 @article{LocLin,
   author = {A. Haas and T.A. Henzinger and A. Holzer and C.M. Kirsch and M. Lippautz and H. Payer and A. Sezgin and A. Sokolova and H. Veith},
   title = {Local Linearizability},
