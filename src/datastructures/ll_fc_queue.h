@@ -2,8 +2,8 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-#ifndef DATASTRUCTURES_DYN_DISTRIBUTED_QUEUE_H_
-#define DATASTRUCTURES_DYN_DISTRIBUTED_QUEUE_H_
+#ifndef DATASTRUCTURES_LL_FC_QUEUE_H_
+#define DATASTRUCTURES_LL_FC_QUEUE_H_
 
 #include "datastructures/pool.h"
 #include "util/allocation.h"
@@ -223,4 +223,4 @@ void LocLinFlatcombiningQueue<T, P>::Terminate() {
 
 }  // namespace scal
 
-#endif  // DATASTRUCTURES_DYN_DISTRIBUTED_QUEUE_H_
+#endif  // DATASTRUCTURES_LL_FC_QUEUE_H_
