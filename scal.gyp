@@ -295,16 +295,16 @@
         'glue.gypi:ll-dyn-dds-ms',
       ],
     },
-    {
-      'target_name': 'prodcon-wf-queue',
-      'type': 'executable',
-      'libraries': [ '<@(default_libraries)' ],
-      'dependencies': [
-        'libscal',
-        'prodcon-base',
-        'glue.gypi:wf-queue',
-      ],
-    },
+    #{
+    #  'target_name': 'prodcon-wf-queue',
+    #  'type': 'executable',
+    #  'libraries': [ '<@(default_libraries)' ],
+    #  'dependencies': [
+    #    'libscal',
+    #    'prodcon-base',
+    #    'glue.gypi:wf-queue',
+    #  ],
+    #},
     {
       'target_name': 'seqalt-ll-dyn-dds-ms',
       'type': 'executable',
@@ -935,16 +935,16 @@
         'glue.gypi:lb-queue',
       ],
     },
-    {
-      'target_name': 'seqalt-wf-queue',
-      'type': 'executable',
-      'libraries': [ '<@(default_libraries)' ],
-      'dependencies': [
-        'libscal',
-        'seqalt-base',
-        'glue.gypi:wf-queue',
-      ],
-    },
+    #{
+    #  'target_name': 'seqalt-wf-queue',
+    #  'type': 'executable',
+    #  'libraries': [ '<@(default_libraries)' ],
+    #  'dependencies': [
+    #    'libscal',
+    #    'seqalt-base',
+    #    'glue.gypi:wf-queue',
+    #  ],
+    #},
     {
       'target_name': 'seqalt-lru-dds-ms',
       'type': 'executable',

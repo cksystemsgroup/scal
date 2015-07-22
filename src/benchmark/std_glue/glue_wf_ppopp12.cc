@@ -12,7 +12,7 @@ DEFINE_uint64(max_retries, 10, "maximum number of retries in the fast path");
 DEFINE_uint64(helping_delay, 10, "number of iterations helping is derfered");
 
 void* ds_new(void) {
-	return static_cast<void*>(
+  return static_cast<void*>(
     new scal::WaitfreeQueue<uint64_t>(
       g_num_threads + 1,
       FLAGS_max_retries,

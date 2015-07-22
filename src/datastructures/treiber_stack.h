@@ -10,6 +10,8 @@
 #ifndef SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 #define SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 
+#include <iostream> // TODO: remove - debugging
+
 #include "datastructures/distributed_data_structure_interface.h"
 #include "datastructures/stack.h"
 #include "util/allocation.h"
@@ -38,8 +40,8 @@ class TreiberStack : public Stack<T> {
   bool push(T item);
   bool pop(T *item);
 
-  bool try_push(T item);
-  bool try_pop(T *item);
+  bool try_push(T item, uint64_t top_old_tag);
+  uint8_t try_pop(T *item, uint64_t top_old_tag, State* put_state);
 
   // Satisfy the DistributedQueueInterface
 
@@ -53,10 +55,6 @@ class TreiberStack : public Stack<T> {
 
   inline bool empty() {
     return top_->load().value() == NULL;
-  }
-
-  inline State put_state() {
-    return top_->load().tag();
   }
 
   inline bool get_return_put_state(T *item, State* put_state);
@@ -109,8 +107,8 @@ bool TreiberStack<T>::try_push(T item, uint64_t top_old_tag) {
   Node* n = new Node(item);
   NodePtr top_old;
   NodePtr top_new;
-
   top_old = top_->load();
+  // std::cout << "try_push | " << "top_old_tag: " << top_old_tag << " / top_old.tag(): " << top_old.tag() << std::endl;
   if (top_old_tag == top_old.tag()) {
     n->next = top_old.value();
     top_new = NodePtr(n, top_old.tag() + 1);
@@ -127,15 +125,15 @@ uint8_t TreiberStack<T>::try_pop(
     T *item, uint64_t top_old_tag, State* put_state) {
   NodePtr top_old;
   NodePtr top_new;
-
   top_old = top_->load();
+  std::cout << "top_old_tag: " << top_old_tag << " top_old.tag(): " << top_old.tag() << std::endl;
   if (top_old_tag == top_old.tag()) {
     if (top_old.value() == NULL) {
       *put_state = top_old.tag();
       return 1; // stack is empty
     }
     top_new = NodePtr(top_old.value()->next, top_old.tag() + 1);
-    if(top_->swap(top_old, top_new)){
+    if(top_->swap(top_old, top_new)) {
       *item = top_old.value()->data;
       return 0; // success
     }

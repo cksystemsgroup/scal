@@ -361,7 +361,7 @@
       'type': 'static_library',
       'cflags': [ ],
       'sources': [
-        'src/benchmark/std_glue/glue_lru_dq.cc'
+        'src/benchmark/std_glue/glue_lru_dds_ms.cc'
       ],
     },
     {
