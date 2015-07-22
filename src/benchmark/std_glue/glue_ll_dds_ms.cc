@@ -19,7 +19,9 @@ DEFINE_uint64(p, 80, "number of partial queues");
 
 void* ds_new(void) {
   return static_cast<void*>(
-      new scal::DistributedDataStructure<uint64_t, scal::MSQueue<uint64_t>, scal::BalancerLocalLinearizability>(
+      new scal::DistributedDataStructure
+        <uint64_t, scal::MSQueue<uint64_t>, 
+        scal::BalancerLocalLinearizability>(
           FLAGS_p,
           g_num_threads + 1,
           new scal::BalancerLocalLinearizability(FLAGS_p)));

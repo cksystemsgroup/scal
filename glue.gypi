@@ -355,6 +355,22 @@
       'sources': [
         'src/benchmark/std_glue/glue_wf_ppopp12.cc'
       ],
+    },
+    {
+      'target_name': 'lru-dds-ms',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_lru_dq.cc'
+      ],
+    },
+    {
+      'target_name': 'lru-dds-treiber-stack',
+      'type': 'static_library',
+      'cflags': [ ],
+      'sources': [
+        'src/benchmark/std_glue/glue_lru_dds_treiber_stack.cc'
+      ],
     }
   ]
 }
