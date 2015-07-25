@@ -5,16 +5,18 @@
 #include <gflags/gflags.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
-#include "datastructures/wf_queue_ppopp12.h"
+//#include "datastructures/wf_queue_ppopp12.h"
+#include "datastructures/wf_queue_ppopp12_new.h"
 
 DEFINE_uint64(max_retries, 10, "maximum number of retries in the fast path");
 DEFINE_uint64(helping_delay, 10, "number of iterations helping is derfered");
 
 void* ds_new(void) {
-  // Main thread may also need the queue.
-  WaitfreeQueue<uint64_t> *wfq = new WaitfreeQueue<uint64_t>(
-      g_num_threads + 1, FLAGS_max_retries, FLAGS_helping_delay);
-  return static_cast<void*>(wfq);
+  return static_cast<void*>(
+    new scal::WaitfreeQueue<uint64_t>(
+      g_num_threads + 1,
+      FLAGS_max_retries,
+      FLAGS_helping_delay));
 }
 
 char* ds_get_stats(void) {

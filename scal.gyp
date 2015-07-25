@@ -295,16 +295,16 @@
         'glue.gypi:ll-dyn-dds-ms',
       ],
     },
-    # {
-    #   'target_name': 'prodcon-wf-queue',
-    #   'type': 'executable',
-    #   'libraries': [ '<@(default_libraries)' ],
-    #   'dependencies': [
-    #     'libscal',
-    #     'prodcon-base',
-    #     'glue.gypi:wf-queue',
-    #   ],
-    # },
+    #{
+    #  'target_name': 'prodcon-wf-queue',
+    #  'type': 'executable',
+    #  'libraries': [ '<@(default_libraries)' ],
+    #  'dependencies': [
+    #    'libscal',
+    #    'prodcon-base',
+    #    'glue.gypi:wf-queue',
+    #  ],
+    #},
     {
       'target_name': 'seqalt-ll-dyn-dds-ms',
       'type': 'executable',
@@ -553,6 +553,26 @@
         'libscal',
         'prodcon-base',
         'glue.gypi:lb-queue',
+      ],
+    },
+    {
+      'target_name': 'prodcon-lru-dds-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:lru-dds-ms',
+      ],
+    },
+    {
+      'target_name': 'prodcon-lru-dds-treiber-stack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'prodcon-base',
+        'glue.gypi:lru-dds-treiber-stack',
       ],
     },
     {
@@ -915,15 +935,35 @@
         'glue.gypi:lb-queue',
       ],
     },
-    # {
-    #   'target_name': 'seqalt-wf-queue',
-    #   'type': 'executable',
-    #   'libraries': [ '<@(default_libraries)' ],
-    #   'dependencies': [
-    #     'libscal',
-    #     'seqalt-base',
-    #     'glue.gypi:wf-queue',
-    #   ],
-    # }
+    #{
+    #  'target_name': 'seqalt-wf-queue',
+    #  'type': 'executable',
+    #  'libraries': [ '<@(default_libraries)' ],
+    #  'dependencies': [
+    #    'libscal',
+    #    'seqalt-base',
+    #    'glue.gypi:wf-queue',
+    #  ],
+    #},
+    {
+      'target_name': 'seqalt-lru-dds-ms',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:lru-dds-ms',
+      ],
+    },
+    {
+      'target_name': 'seqalt-lru-dds-treiber-stack',
+      'type': 'executable',
+      'libraries': [ '<@(default_libraries)' ],
+      'dependencies': [
+        'libscal',
+        'seqalt-base',
+        'glue.gypi:lru-dds-treiber-stack',
+      ],
+    }
   ]
 }

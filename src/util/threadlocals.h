@@ -18,6 +18,10 @@ class ThreadContext {
   static void prepare(uint64_t num_threads);
   static void assign_context();
 
+  static constexpr uint64_t get_max_threads() {
+    return kMaxThreads;
+  }
+
   inline uint64_t thread_id() {
     return thread_id_;
   }

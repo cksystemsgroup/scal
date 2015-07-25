@@ -38,6 +38,9 @@ class TreiberStack : public Stack<T> {
   bool push(T item);
   bool pop(T *item);
 
+  bool try_push(T item, uint64_t top_old_tag);
+  uint8_t try_pop(T *item, uint64_t top_old_tag, State* put_state);
+
   // Satisfy the DistributedQueueInterface
 
   inline bool put(T item) {
@@ -97,6 +100,65 @@ bool TreiberStack<T>::pop(T *item) {
   return true;
 }
 
+template<typename T>
+bool TreiberStack<T>::try_push(T item, uint64_t top_old_tag) {
+  Node* n = new Node(item);
+  NodePtr top_old;
+  NodePtr top_new;
+  top_old = top_->load();
+
+  uint16_t tag_old = top_old.tag();
+  uint16_t put_tag = tag_old >> 8;
+  uint16_t get_tag = tag_old & 0x00FF;
+
+  if (top_old_tag == put_tag) {
+    n->next = top_old.value();
+
+    put_tag += 1;
+    if (put_tag == 256) {
+      put_tag = 0;
+    }
+
+    top_new = NodePtr(n, (put_tag << 8) ^ get_tag);
+    if (top_->swap(top_old, top_new)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+template<typename T>
+uint8_t TreiberStack<T>::try_pop(
+    T *item, uint64_t top_old_tag, State* put_state) {
+  NodePtr top_old;
+  NodePtr top_new;
+  top_old = top_->load();
+
+  uint16_t tag_old = top_old.tag();
+  uint16_t put_tag = tag_old >> 8;
+  uint16_t get_tag = tag_old & 0x00FF;
+
+  if (top_old_tag == get_tag) {
+    if (top_old.value() == NULL) {
+      *put_state = top_old.tag();
+      return 1;  // stack is empty
+    }
+
+    get_tag += 1;
+    if (get_tag == 256) {
+      get_tag = 0;
+    }
+
+    top_new = NodePtr(top_old.value()->next, (put_tag << 8) ^ get_tag);
+    if (top_->swap(top_old, top_new)) {
+      *item = top_old.value()->data;
+      return 0;  // success
+    }
+  }
+  return 2;  // failed
+}
+
 
 template<typename T>
 bool TreiberStack<T>::get_return_put_state(T* item, State* put_state) {
@@ -114,6 +176,7 @@ bool TreiberStack<T>::get_return_put_state(T* item, State* put_state) {
   *put_state = top_old.tag();
   return true;
 }
+
 
 }  // namespace scal
 
