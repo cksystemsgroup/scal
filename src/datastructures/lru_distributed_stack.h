@@ -17,7 +17,7 @@ namespace scal {
 template<typename T>
 class LRUDistributedStack : public Pool<T> {
  public:
-  LRUDistributedStack(uint64_t p);
+  explicit LRUDistributedStack(uint64_t p);
 
   bool put(T item);
   bool get(T *item);
@@ -25,11 +25,11 @@ class LRUDistributedStack : public Pool<T> {
  private:
   uint64_t p_;
   TreiberStack<T>* backends_;
-  uint8_t padding1[128];      // TODO
+  uint8_t padding1[128];
   std::atomic<uint64_t> put_counter_;
-  uint8_t padding2[128];      // TODO
+  uint8_t padding2[128];
   std::atomic<uint64_t> get_counter_;
-  uint8_t padding3[128];      // TODO
+  uint8_t padding3[128];
 };
 
 template<typename T>
@@ -68,7 +68,7 @@ bool LRUDistributedStack<T>::get(T* item) {
     lowest_tag = get_counter_.load() / p_;
     for (uint64_t _i = 0, i = start; _i < p_; _i++, i = (start + _i) % p_) {
       uint64_t old;
-      switch(backends_[i].try_pop(item, lowest_tag, &tops[i])) {
+      switch (backends_[i].try_pop(item, lowest_tag, &tops[i])) {
         case 0:  // ok
           old = get_counter_.fetch_add(1);
           if (old == ((255 * p_) + (p_-1))) {

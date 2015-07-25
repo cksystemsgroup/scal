@@ -17,7 +17,7 @@ namespace scal {
 template<typename T>
 class LRUDistributedQueue : public Pool<T> {
  public:
-  LRUDistributedQueue(uint64_t p);
+  explicit LRUDistributedQueue(uint64_t p);
 
   bool put(T item);
   bool get(T* item);
@@ -56,9 +56,9 @@ bool LRUDistributedQueue<T>::put(T item) {
         // the value of a memory location and returns the old value
         uint64_t old = put_counter_.fetch_add(1);
         // 65535 max. tag value (uint16_t)
-        // put_counter can be greater than max. tag value by p_-1 
+        // put_counter can be greater than max. tag value by p_-1
         if (old == ((65535 * p_) + (p_-1))) {
-          put_counter_.store(0);  
+          put_counter_.store(0);
         }
         return true;
       }
@@ -77,11 +77,11 @@ bool LRUDistributedQueue<T>::get(T* item) {
     lowest_tag = get_counter_.load() / p_;
     for (uint64_t _i = 0, i = start; _i < p_; _i++, i = (start + _i) % p_) {
       uint64_t old;
-      switch(backends_[i].try_dequeue(item, lowest_tag, &tails[i])) {
+      switch (backends_[i].try_dequeue(item, lowest_tag, &tails[i])) {
         case 0:  // ok
           old = get_counter_.fetch_add(1);
           if (old == ((65535 * p_) + (p_-1))) {
-            get_counter_.store(0);  
+            get_counter_.store(0);
           }
           return true;
           break;
@@ -103,7 +103,7 @@ bool LRUDistributedQueue<T>::get(T* item) {
       if (_i == (p_ - 1)) {
         return false;
       }
-    } 
+    }
   }
   return false;  // UNREACHABLE
 }

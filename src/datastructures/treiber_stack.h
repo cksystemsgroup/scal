@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2013, the Scal Project Authors.  All rights reserved.
+// Copyright (c) 2012-2015, the Scal Project Authors.  All rights reserved.
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
@@ -142,7 +142,7 @@ uint8_t TreiberStack<T>::try_pop(
   if (top_old_tag == get_tag) {
     if (top_old.value() == NULL) {
       *put_state = top_old.tag();
-      return 1;  // stack is empty
+      return 1;
     }
 
     get_tag += 1;
@@ -153,10 +153,10 @@ uint8_t TreiberStack<T>::try_pop(
     top_new = NodePtr(top_old.value()->next, (put_tag << 8) ^ get_tag);
     if (top_->swap(top_old, top_new)) {
       *item = top_old.value()->data;
-      return 0;  // success
+      return 0;
     }
   }
-  return 2;  // failed
+  return 2;
 }
 
 
