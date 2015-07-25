@@ -10,8 +10,6 @@
 #ifndef SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 #define SCAL_DATASTRUCTURES_TREIBER_STACK_H_
 
-#include <iostream> // TODO: remove - debugging
-
 #include "datastructures/distributed_data_structure_interface.h"
 #include "datastructures/stack.h"
 #include "util/allocation.h"
@@ -108,10 +106,20 @@ bool TreiberStack<T>::try_push(T item, uint64_t top_old_tag) {
   NodePtr top_old;
   NodePtr top_new;
   top_old = top_->load();
-  // std::cout << "try_push | " << "top_old_tag: " << top_old_tag << " / top_old.tag(): " << top_old.tag() << std::endl;
-  if (top_old_tag == top_old.tag()) {
+
+  uint16_t tag_old = top_old.tag();
+  uint16_t put_tag = tag_old >> 8;
+  uint16_t get_tag = tag_old & 0x00FF;
+
+  if (top_old_tag == put_tag) {
     n->next = top_old.value();
-    top_new = NodePtr(n, top_old.tag() + 1);
+
+    put_tag += 1;
+    if (put_tag == 256) {
+      put_tag = 0;
+    }
+
+    top_new = NodePtr(n, (put_tag << 8) ^ get_tag);
     if (top_->swap(top_old, top_new)) {
       return true;
     }
@@ -126,19 +134,29 @@ uint8_t TreiberStack<T>::try_pop(
   NodePtr top_old;
   NodePtr top_new;
   top_old = top_->load();
-  std::cout << "top_old_tag: " << top_old_tag << " top_old.tag(): " << top_old.tag() << std::endl;
-  if (top_old_tag == top_old.tag()) {
+
+  uint16_t tag_old = top_old.tag();
+  uint16_t put_tag = tag_old >> 8;
+  uint16_t get_tag = tag_old & 0x00FF;
+
+  if (top_old_tag == get_tag) {
     if (top_old.value() == NULL) {
       *put_state = top_old.tag();
-      return 1; // stack is empty
+      return 1;  // stack is empty
     }
-    top_new = NodePtr(top_old.value()->next, top_old.tag() + 1);
-    if(top_->swap(top_old, top_new)) {
+
+    get_tag += 1;
+    if (get_tag == 256) {
+      get_tag = 0;
+    }
+
+    top_new = NodePtr(top_old.value()->next, (put_tag << 8) ^ get_tag);
+    if (top_->swap(top_old, top_new)) {
       *item = top_old.value()->data;
-      return 0; // success
+      return 0;  // success
     }
   }
-  return 2; // failed
+  return 2;  // failed
 }
 
 
