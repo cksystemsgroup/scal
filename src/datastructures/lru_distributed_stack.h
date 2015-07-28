@@ -2,6 +2,10 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
+// NOTE: We split the 16 bit top pointer tag into 
+//  * a 8 bit ABA count for put operations and
+//  * a 8 bit ABA count for get operations. 
+
 
 #ifndef SCAL_DATASTRUCTURES_LRU_DISTRIBUTED_STACK_H_
 #define SCAL_DATASTRUCTURES_LRU_DISTRIBUTED_STACK_H_

@@ -100,6 +100,9 @@ bool TreiberStack<T>::pop(T *item) {
   return true;
 }
 
+// Tailored for the LRU distributed stack implementation.
+// Using only 8 bit of the top pointers tag as ABA count 
+// for put operations.
 template<typename T>
 bool TreiberStack<T>::try_push(T item, uint64_t top_old_tag) {
   Node* n = new Node(item);
@@ -127,7 +130,9 @@ bool TreiberStack<T>::try_push(T item, uint64_t top_old_tag) {
   return false;
 }
 
-
+// Tailored for the LRU distributed stack implementation.
+// Using only 8 bit of the top pointers tag as ABA count 
+// for get operations.
 template<typename T>
 uint8_t TreiberStack<T>::try_pop(
     T *item, uint64_t top_old_tag, State* put_state) {
@@ -158,7 +163,6 @@ uint8_t TreiberStack<T>::try_pop(
   }
   return 2;
 }
-
 
 template<typename T>
 bool TreiberStack<T>::get_return_put_state(T* item, State* put_state) {
