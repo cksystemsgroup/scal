@@ -1,4 +1,4 @@
-# Scal
+# Scal [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://drone.io/github.com/cksystemsgroup/scal/latest)
 
 
 Scal is an open-source benchmarking framework that provides (1) software infrastructure for executing concurrent data structure algorithms, (2) workloads for benchmarking their performance and scalability, and (3) implementations of a large set of concurrent data structures.
@@ -57,7 +57,7 @@ On Ubuntu (&ge; 12.04) based systems:
 
 A similar script is executed on our [continuous integration test.](https://drone.io/github.com/cksystemsgroup/scal/admin)
 
-## Building [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://drone.io/github.com/cksystemsgroup/scal/latest)
+## Building
 
 Note: We switched from autotools to gyp for building the framework. The old
 files are still present in the checkout but will be removed once everything is
