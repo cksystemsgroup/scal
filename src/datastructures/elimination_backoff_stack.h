@@ -21,7 +21,7 @@
 #include "util/platform.h"
 #include "util/threadlocals.h"
 #include "util/random.h"
-#include "util/time.h"
+#include "util/scal-time.h"
 
 #define EMPTY 0
 

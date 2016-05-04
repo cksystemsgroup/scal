@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 #include "util/threadlocals.h"
-#include "util/time.h"
+#include "util/scal-time.h"
 #include "util/malloc.h"
 #include "util/platform.h"
 

@@ -16,7 +16,7 @@
 #include "util/random.h"
 #include "util/malloc.h"
 #include "util/platform.h"
-#include "util/time.h"
+#include "util/scal-time.h"
 
 template<typename T, typename Timestamp>
 class TSStackBuffer {
