@@ -5,7 +5,8 @@
   publisher = {Springer},
   series = {LNCS},
   year = {2015},
-  addendum = {\myinvitedurl{NETYS15-Scal}}
+  addendum = {\myinvitedurl{NETYS15-Scal}},
+  url = {http://www.cs.uni-salzburg.at/~ck/content/publications/invited/NETYS15-Scal.pdf}
 }
 
 @article{LocLin,
