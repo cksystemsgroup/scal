@@ -144,7 +144,7 @@ Try `./prodcon-<data_structure> --help` to see the full list of available parame
 
 ## License
 
-Copyright (c) 2012-2013, the Scal Project Authors.
+Copyright (c) 2012-2016, the Scal Project Authors.
 All rights reserved. Please see the AUTHORS file for details.
 
 Redistribution and use in source and binary forms, with or without
