@@ -101,11 +101,11 @@ The following runs the Michael-Scott queue in a producer/consumer benchmark:
 
 And the same for the bounded-size k-FIFO queue:
 
-    ./prodcon-bskfifo -producers=15 -consumers=15 -operations=100000 -c=250
+    ./prodcon-bs-kfifo -producers=15 -consumers=15 -operations=100000 -c=250
 
 And for Distributed Queue with a 1-random balancer:
 
-    ./prodcon-dq-1random -producers=15 -consumers=15 -operations=100000 -c=250
+    ./prodcon-dds-1random-ms -producers=15 -consumers=15 -operations=100000 -c=250
 
 
 Try `./prodcon-<data_structure> --help` to see the full list of available parameters.
