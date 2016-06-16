@@ -47,6 +47,10 @@ Paper: [Scal: A Benchmarking Suite for Concurrent Data Structures](./paper.pdf)
 * [gflags](https://code.google.com/p/gflags/ "gflags")
 * [google-perftools](https://code.google.com/p/gperftools/ "google-perftools")
 
+On debian (jessie) based systems:
+
+    sudo apt-get install build-essential autoconf libtool google-perftools libgoogle-perftools-dev cmake libgtest-dev libgflags2 libgflags-dev
+
 On Ubuntu (&ge; 12.04) based systems:
 
     sudo apt-get install build-essential autoconf libtool google-perftools libgoogle-perftools-dev cmake libgtest-dev
@@ -97,11 +101,11 @@ The following runs the Michael-Scott queue in a producer/consumer benchmark:
 
 And the same for the bounded-size k-FIFO queue:
 
-    ./prodcon-bskfifo -producers=15 -consumers=15 -operations=100000 -c=250
+    ./prodcon-bs-kfifo -producers=15 -consumers=15 -operations=100000 -c=250
 
 And for Distributed Queue with a 1-random balancer:
 
-    ./prodcon-dq-1random -producers=15 -consumers=15 -operations=100000 -c=250
+    ./prodcon-dds-1random-ms -producers=15 -consumers=15 -operations=100000 -c=250
 
 
 Try `./prodcon-<data_structure> --help` to see the full list of available parameters.
@@ -140,7 +144,7 @@ Try `./prodcon-<data_structure> --help` to see the full list of available parame
 
 ## License
 
-Copyright (c) 2012-2013, the Scal Project Authors.
+Copyright (c) 2012-2016, the Scal Project Authors.
 All rights reserved. Please see the AUTHORS file for details.
 
 Redistribution and use in source and binary forms, with or without
