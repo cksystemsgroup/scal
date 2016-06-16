@@ -47,6 +47,10 @@ Paper: [Scal: A Benchmarking Suite for Concurrent Data Structures](./paper.pdf)
 * [gflags](https://code.google.com/p/gflags/ "gflags")
 * [google-perftools](https://code.google.com/p/gperftools/ "google-perftools")
 
+On debian (jessie) based systems:
+
+    sudo apt-get install build-essential autoconf libtool google-perftools libgoogle-perftools-dev cmake libgtest-dev libgflags2 libgflags-dev
+
 On Ubuntu (&ge; 12.04) based systems:
 
     sudo apt-get install build-essential autoconf libtool google-perftools libgoogle-perftools-dev cmake libgtest-dev
