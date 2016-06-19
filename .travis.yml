@@ -9,16 +9,14 @@ compiler:
 addons:
   apt:
     packages:
-      - google-perftools
-      - libgoogle-perftools-dev
-      - cmake
-      - libgtest-dev
-      
+    - google-perftools
+    - libgoogle-perftools-dev
+    - cmake
+    - libgtest-dev
 before_install: tools/travis_before_install.sh
 install: tools/travis_install.sh
 script: tools/travis_script.sh
-
 notifications:
   email: false
   slack:
-    secure
+    secure: EfvNOjaUCEeMHk7rfeVcw57h10A31HYWkmfxxqtWHuqotMe2mOaXbrI0/GczaE3w3x0I5ZJXGqvcprQEGrfTu+L3779VImeQfHvEtarv9WTLOsVWTmaOr6kObzmanqkwbUWV7E9tVK7OL+xhLPAsd1V6rEekWf07i9fYaRW93jM=
