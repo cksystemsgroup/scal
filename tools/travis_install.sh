@@ -8,15 +8,12 @@ fi
 
 if [[ $(uname -s) = "Linux" ]]; then
   echo "Linux install start"
-  # We want to compile with g++ 4.8 when rather than the default g++
-  #sudo apt-get install -qq gcc-4.8 g++-4.8 
-  #sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
-  
-  # alternative for the 2 line above
-  sudo update-alternatives --config gcc
-
-  # try to handle these pkgs via the .travis.yml file.
-  #sudo apt-get --fix-missing install google-perftools libgoogle-perftools-dev cmake libgtest-dev
+  echo " -> install gflags"
+  sudo apt-get install --fix-missing google-perftools libgoogle-perftools-dev cmake libgtest-dev
+  wget https://gflags.googlecode.com/files/libgflags0_2.0-1_amd64.deb
+  wget https://gflags.googlecode.com/files/libgflags-dev_2.0-1_amd64.deb
+  sudo dpkg -i libgflags0_2.0-1_amd64.deb
+  sudo dpkg -i libgflags-dev_2.0-1_amd64.deb
   tools/make_deps.sh
   echo "Linux install end"
 fi

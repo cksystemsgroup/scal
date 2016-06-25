@@ -11,7 +11,7 @@
 #include "util/allocation.h"
 #include "util/malloc-compat.h"
 #include "util/platform.h"
-#include "util/time.h"
+#include "util/scal-time.h"
 #include "util/threadlocals.h"
 
 DEFINE_bool(set_rt_priority, true,

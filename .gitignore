@@ -22,3 +22,9 @@ out/
 build/
 *.Makefile
 *.target.mk
+
+# others
+.DS_Store
+
+# xcode
+*.xcodeproj

@@ -12,7 +12,7 @@
 #include "util/malloc.h"
 #include "util/random.h"
 #include "util/threadlocals.h"
-#include "util/time.h"
+#include "util/scal-time.h"
 
 DEFINE_string(prealloc_size, "1g", "tread local space that is initialized");
 DEFINE_int64(root, -1, "root for BFS; -1: pseudorandom (time-based seed)");

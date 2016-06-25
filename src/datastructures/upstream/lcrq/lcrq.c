@@ -31,7 +31,6 @@
 #include <time.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <omp.h>
 #include <string.h>
 #include <stdint.h>
 #include <sched.h>

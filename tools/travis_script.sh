@@ -6,7 +6,7 @@ if [[ $(uname -s) = "Darwin" ]]; then
 fi
 
 if [[ $(uname -s) = "Linux" ]]; then
-  build/gyp/gyp --depth=. scalloc.gyp
+  build/gyp/gyp --depth=. scal.gyp
   V=1 BUILDTYPE=Debug make
   V=1 BUILDTYPE=Release make
 fi

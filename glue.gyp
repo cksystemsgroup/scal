@@ -189,7 +189,7 @@
         'src/benchmark/std_glue/glue_lcrq.cc'
       ],
       'dependencies': [
-        'upstream.gypi:lcrq-base',
+        'upstream.gyp:lcrq-base',
       ],
     },
     {

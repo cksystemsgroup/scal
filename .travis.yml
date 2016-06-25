@@ -1,20 +1,33 @@
-language:
-- cpp
-os:
-- linux
-- osx
-compiler:
-- clang
-- gcc
+# Build matrix / environment variable are explained on:
+# http://about.travis-ci.org/docs/user/build-configuration/
+# This file can be validated on:
+# http://lint.travis-ci.org/
+os: linux
+language: cpp
+compiler: gcc
 addons:
   apt:
+    # List of whitelisted in travis packages for ubuntu-precise can be found here:
+    #   https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
+    # List of whitelisted in travis apt-sources:
+    #   https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json
+    sources:
+    - ubuntu-toolchain-r-test
     packages:
+    - gcc-4.8
+    - g++-4.8
     - google-perftools
     - libgoogle-perftools-dev
     - cmake
     - libgtest-dev
 before_install: tools/travis_before_install.sh
-install: tools/travis_install.sh
+install:
+- if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+- echo ${PATH}
+- echo ${CXX}
+- ${CXX} --version
+- ${CXX} -v
+- tools/travis_install.sh
 script: tools/travis_script.sh
 notifications:
   email: false

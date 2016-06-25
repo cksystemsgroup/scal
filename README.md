@@ -1,4 +1,4 @@
-# Scal [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://drone.io/github.com/cksystemsgroup/scal/latest)
+# Scal [![Build Status](https://travis-ci.org/cksystemsgroup/scal.svg?branch=master)](https://travis-ci.org/cksystemsgroup/scal) [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://drone.io/github.com/cksystemsgroup/scal/latest)
 
 
 Scal is an open-source benchmarking framework that provides (1) software infrastructure for executing concurrent data structure algorithms, (2) workloads for benchmarking their performance and scalability, and (3) implementations of a large set of concurrent data structures.

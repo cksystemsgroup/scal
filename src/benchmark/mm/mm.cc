@@ -11,7 +11,7 @@
 #include "benchmark/common.h"
 #include "datastructures/ms_queue.h"
 #include "util/threadlocals.h"
-#include "util/time.h"
+#include "util/scal-time.h"
 #include "util/workloads.h"
 
 DEFINE_string(prealloc_size, "1g", "tread local space that is initialized");

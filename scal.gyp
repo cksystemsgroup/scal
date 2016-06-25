@@ -92,7 +92,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ms',
+        'glue.gyp:ms',
       ],
     },
     {
@@ -102,7 +102,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:treiber',
+        'glue.gyp:treiber',
       ],
     },
     {
@@ -112,7 +112,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:kstack',
+        'glue.gyp:kstack',
       ],
     },
     {
@@ -122,7 +122,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-kstack',
+        'glue.gyp:ll-kstack',
       ],
     },
     {
@@ -132,7 +132,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:dds-1random-ms',
+        'glue.gyp:dds-1random-ms',
       ],
     },
     {
@@ -142,7 +142,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:dds-partrr-ms',
+        'glue.gyp:dds-partrr-ms',
       ],
     },
     {
@@ -152,7 +152,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:dds-partrr-treiber',
+        'glue.gyp:dds-partrr-treiber',
       ],
     },
     {
@@ -162,7 +162,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:dds-1random-treiber',
+        'glue.gyp:dds-1random-treiber',
       ],
     },
     {
@@ -172,7 +172,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:fc',
+        'glue.gyp:fc',
       ],
     },
     {
@@ -182,7 +182,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:rd',
+        'glue.gyp:rd',
       ],
     },
     {
@@ -192,7 +192,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:sq',
+        'glue.gyp:sq',
       ],
     },
     {
@@ -202,7 +202,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:us-kfifo',
+        'glue.gyp:us-kfifo',
       ],
     },
     {
@@ -212,7 +212,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:bs-kfifo',
+        'glue.gyp:bs-kfifo',
       ],
     },
     {
@@ -222,7 +222,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-us-kfifo',
+        'glue.gyp:ll-us-kfifo',
       ],
     },
     {
@@ -232,7 +232,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dds-ms',
+        'glue.gyp:ll-dds-ms',
       ],
     },
     {
@@ -242,7 +242,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dds-treiber',
+        'glue.gyp:ll-dds-treiber',
       ],
     },
     {
@@ -252,7 +252,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dds-ms-nonlinempty',
+        'glue.gyp:ll-dds-ms-nonlinempty',
       ],
     },
     {
@@ -262,7 +262,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dds-treiber-nonlinempty',
+        'glue.gyp:ll-dds-treiber-nonlinempty',
       ],
     },
     {
@@ -272,7 +272,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dyn-dds-ms-nonlinempty',
+        'glue.gyp:ll-dyn-dds-ms-nonlinempty',
       ],
     },
     {
@@ -282,7 +282,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dyn-dds-treiber-nonlinempty',
+        'glue.gyp:ll-dyn-dds-treiber-nonlinempty',
       ],
     },
     {
@@ -292,7 +292,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dyn-dds-ms',
+        'glue.gyp:ll-dyn-dds-ms',
       ],
     },
     #{
@@ -302,7 +302,7 @@
     #  'dependencies': [
     #    'libscal',
     #    'prodcon-base',
-    #    'glue.gypi:wf-queue',
+    #    'glue.gyp:wf-queue',
     #  ],
     #},
     {
@@ -312,7 +312,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-dyn-dds-ms',
+        'glue.gyp:ll-dyn-dds-ms',
       ],
     },
     {
@@ -322,7 +322,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ll-dyn-dds-treiber',
+        'glue.gyp:ll-dyn-dds-treiber',
       ],
     },
     {
@@ -332,7 +332,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-dyn-dds-treiber',
+        'glue.gyp:ll-dyn-dds-treiber',
       ],
     },
     {
@@ -342,7 +342,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:lcrq',
+        'glue.gyp:lcrq',
       ],
     },
     {
@@ -352,7 +352,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:lcrq',
+        'glue.gyp:lcrq',
       ],
     },
     {
@@ -362,7 +362,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-cas-stack',
+        'glue.gyp:hc-ts-cas-stack',
       ],
     },
     {
@@ -372,7 +372,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-stutter-stack',
+        'glue.gyp:hc-ts-stutter-stack',
       ],
     },
     {
@@ -382,7 +382,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-interval-stack',
+        'glue.gyp:hc-ts-interval-stack',
       ],
     },
     {
@@ -392,7 +392,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-atomic-stack',
+        'glue.gyp:hc-ts-atomic-stack',
       ],
     },
     {
@@ -402,7 +402,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-hardware-stack',
+        'glue.gyp:hc-ts-hardware-stack',
       ],
     },
     {
@@ -412,7 +412,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-cas-queue',
+        'glue.gyp:hc-ts-cas-queue',
       ],
     },
     {
@@ -422,7 +422,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-stutter-queue',
+        'glue.gyp:hc-ts-stutter-queue',
       ],
     },
     {
@@ -432,7 +432,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-interval-queue',
+        'glue.gyp:hc-ts-interval-queue',
       ],
     },
     {
@@ -442,7 +442,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-atomic-queue',
+        'glue.gyp:hc-ts-atomic-queue',
       ],
     },
     {
@@ -452,7 +452,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:hc-ts-hardware-queue',
+        'glue.gyp:hc-ts-hardware-queue',
       ],
     },
     {
@@ -462,7 +462,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ts-cas-deque',
+        'glue.gyp:ts-cas-deque',
       ],
     },
     {
@@ -472,7 +472,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ts-stutter-deque',
+        'glue.gyp:ts-stutter-deque',
       ],
     },
     {
@@ -482,7 +482,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ts-interval-deque',
+        'glue.gyp:ts-interval-deque',
       ],
     },
     {
@@ -492,7 +492,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ts-atomic-deque',
+        'glue.gyp:ts-atomic-deque',
       ],
     },
     {
@@ -502,7 +502,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:ts-hardware-deque',
+        'glue.gyp:ts-hardware-deque',
       ],
     },
     {
@@ -512,7 +512,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:rts-queue',
+        'glue.gyp:rts-queue',
       ],
     },
     {
@@ -522,7 +522,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:cts-queue',
+        'glue.gyp:cts-queue',
       ],
     },
     {
@@ -532,7 +532,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:eb-stack',
+        'glue.gyp:eb-stack',
       ],
     },
     {
@@ -542,7 +542,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:lb-stack',
+        'glue.gyp:lb-stack',
       ],
     },
     {
@@ -552,7 +552,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:lb-queue',
+        'glue.gyp:lb-queue',
       ],
     },
     {
@@ -562,7 +562,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:lru-dds-ms',
+        'glue.gyp:lru-dds-ms',
       ],
     },
     {
@@ -572,7 +572,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:lru-dds-treiber-stack',
+        'glue.gyp:lru-dds-treiber-stack',
       ],
     },
     {
@@ -582,7 +582,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ms',
+        'glue.gyp:ms',
       ],
     },
     {
@@ -592,7 +592,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:treiber',
+        'glue.gyp:treiber',
       ],
     },
     {
@@ -602,7 +602,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:dds-partrr-ms',
+        'glue.gyp:dds-partrr-ms',
       ],
     },
     {
@@ -612,7 +612,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:dds-partrr-treiber',
+        'glue.gyp:dds-partrr-treiber',
       ],
     },
     {
@@ -622,7 +622,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:kstack',
+        'glue.gyp:kstack',
       ],
     },
     {
@@ -632,7 +632,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-kstack',
+        'glue.gyp:ll-kstack',
       ],
     },
     {
@@ -642,7 +642,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:dds-1random-ms',
+        'glue.gyp:dds-1random-ms',
       ],
     },
     {
@@ -652,7 +652,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:dds-1random-treiber',
+        'glue.gyp:dds-1random-treiber',
       ],
     },
     {
@@ -662,7 +662,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:fc',
+        'glue.gyp:fc',
       ],
     },
     {
@@ -672,7 +672,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:rd',
+        'glue.gyp:rd',
       ],
     },
     {
@@ -682,7 +682,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:sq',
+        'glue.gyp:sq',
       ],
     },
     {
@@ -692,7 +692,7 @@
       'dependencies': [
         'libscal',
         'prodcon-base',
-        'glue.gypi:bs-kfifo',
+        'glue.gyp:bs-kfifo',
       ],
     },
     {
@@ -702,7 +702,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:us-kfifo',
+        'glue.gyp:us-kfifo',
       ],
     },
     {
@@ -712,7 +712,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-us-kfifo',
+        'glue.gyp:ll-us-kfifo',
       ],
     },
     {
@@ -722,7 +722,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-dds-ms',
+        'glue.gyp:ll-dds-ms',
       ],
     },
     {
@@ -732,7 +732,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ll-dds-treiber',
+        'glue.gyp:ll-dds-treiber',
       ],
     },
     {
@@ -742,7 +742,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-cas-stack',
+        'glue.gyp:hc-ts-cas-stack',
       ],
     },
     {
@@ -752,7 +752,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-stutter-stack',
+        'glue.gyp:hc-ts-stutter-stack',
       ],
     },
     {
@@ -762,7 +762,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-interval-stack',
+        'glue.gyp:hc-ts-interval-stack',
       ],
     },
     {
@@ -772,7 +772,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-atomic-stack',
+        'glue.gyp:hc-ts-atomic-stack',
       ],
     },
     {
@@ -782,7 +782,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-hardware-stack',
+        'glue.gyp:hc-ts-hardware-stack',
       ],
     },
     {
@@ -792,7 +792,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-cas-queue',
+        'glue.gyp:hc-ts-cas-queue',
       ],
     },
     {
@@ -802,7 +802,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-stutter-queue',
+        'glue.gyp:hc-ts-stutter-queue',
       ],
     },
     {
@@ -812,7 +812,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-interval-queue',
+        'glue.gyp:hc-ts-interval-queue',
       ],
     },
     {
@@ -822,7 +822,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-atomic-queue',
+        'glue.gyp:hc-ts-atomic-queue',
       ],
     },
     {
@@ -832,7 +832,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:hc-ts-hardware-queue',
+        'glue.gyp:hc-ts-hardware-queue',
       ],
     },
     {
@@ -842,7 +842,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ts-cas-deque',
+        'glue.gyp:ts-cas-deque',
       ],
     },
     {
@@ -852,7 +852,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ts-stutter-deque',
+        'glue.gyp:ts-stutter-deque',
       ],
     },
     {
@@ -862,7 +862,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ts-interval-deque',
+        'glue.gyp:ts-interval-deque',
       ],
     },
     {
@@ -872,7 +872,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ts-atomic-deque',
+        'glue.gyp:ts-atomic-deque',
       ],
     },
     {
@@ -882,7 +882,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:ts-hardware-deque',
+        'glue.gyp:ts-hardware-deque',
       ],
     },
     {
@@ -892,7 +892,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:rts-queue',
+        'glue.gyp:rts-queue',
       ],
     },
     {
@@ -902,7 +902,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:cts-queue',
+        'glue.gyp:cts-queue',
       ],
     },
     {
@@ -912,7 +912,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:eb-stack',
+        'glue.gyp:eb-stack',
       ],
     },
     {
@@ -922,7 +922,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:lb-stack',
+        'glue.gyp:lb-stack',
       ],
     },
     {
@@ -932,7 +932,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:lb-queue',
+        'glue.gyp:lb-queue',
       ],
     },
     #{
@@ -942,7 +942,7 @@
     #  'dependencies': [
     #    'libscal',
     #    'seqalt-base',
-    #    'glue.gypi:wf-queue',
+    #    'glue.gyp:wf-queue',
     #  ],
     #},
     {
@@ -952,7 +952,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:lru-dds-ms',
+        'glue.gyp:lru-dds-ms',
       ],
     },
     {
@@ -962,7 +962,7 @@
       'dependencies': [
         'libscal',
         'seqalt-base',
-        'glue.gypi:lru-dds-treiber-stack',
+        'glue.gyp:lru-dds-treiber-stack',
       ],
     }
   ]

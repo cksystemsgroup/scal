@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <sys/time.h>
+#include <cstdlib>
 
 inline uint64_t get_utime(void) {
   struct timeval tv;
