@@ -21,7 +21,7 @@
 #define SCAL_DATASTRUCTURES_RANDOM_DEQUEUE_QUEUE_H_
 
 #include <assert.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 #include "datastructures/queue.h"

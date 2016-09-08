@@ -6,7 +6,7 @@
 #define SCAL_DATASTRUCTURES_LOCKBASED_STACK_
 
 #include <pthread.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>     // strerror_r
 

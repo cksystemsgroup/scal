@@ -22,7 +22,7 @@
 #define SCAL_DATASTRUCTURES_WF_QUEUE_PPOPP12_H_
 
 #include <assert.h>
-#include <stdint.h> 
+#include <inttypes.h> 
 
 #include "datastructures/queue.h"
 #include "util/atomic_value.h"

@@ -5,7 +5,7 @@
 #ifndef SCAL_DATASTRUCTURES_DISTRIBUTED_DATA_STRUCTURE_H_
 #define SCAL_DATASTRUCTURES_DISTRIBUTED_DATA_STRUCTURE_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "datastructures/balancer.h"
 #include "datastructures/distributed_data_structure_interface.h"

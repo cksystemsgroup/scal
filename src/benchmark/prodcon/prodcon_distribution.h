@@ -2,7 +2,7 @@
 #define SCAL_BENCHMARK_PRODCON_PRODCON_DISTRIBUTION_H_
 
 #include <gflags/gflags.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <util/random.h>
 

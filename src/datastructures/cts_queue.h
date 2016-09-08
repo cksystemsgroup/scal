@@ -6,7 +6,7 @@
 #define SCAL_DATASTRUCTURES_CTS_QUEUE_H_
 #define __STDC_FORMAT_MACROS 1  // we want PRIu64 and friends
 #define __STDC_LIMIT_MACROS
-#include <stdint.h>
+#include <inttypes.h>
 #include <assert.h>
 #include <atomic>
 #include <stdio.h>

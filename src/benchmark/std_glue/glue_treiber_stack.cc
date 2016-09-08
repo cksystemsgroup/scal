@@ -2,7 +2,7 @@
 // Please see the AUTHORS file for details.  Use of this source code is governed
 // by a BSD license that can be found in the LICENSE file.
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"
 #include "datastructures/treiber_stack.h"

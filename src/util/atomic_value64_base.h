@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_ATOMIC_VALUE64_BASE_H_
 #define SCAL_UTIL_ATOMIC_VALUE64_BASE_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 

@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_ATOMIC_VALUE128_H_
 #define SCAL_UTIL_ATOMIC_VALUE128_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 

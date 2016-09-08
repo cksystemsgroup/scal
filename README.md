@@ -1,4 +1,4 @@
-# Scal [![Build Status](https://travis-ci.org/cksystemsgroup/scal.svg?branch=master)](https://travis-ci.org/cksystemsgroup/scal) [![Build Status](https://drone.io/github.com/cksystemsgroup/scal/status.png)](https://drone.io/github.com/cksystemsgroup/scal/latest)
+# Scal [![Build Status](https://travis-ci.org/cksystemsgroup/scal.svg?branch=master)](https://travis-ci.org/cksystemsgroup/scal)
 
 
 Scal is an open-source benchmarking framework that provides (1) software infrastructure for executing concurrent data structure algorithms, (2) workloads for benchmarking their performance and scalability, and (3) implementations of a large set of concurrent data structures.
@@ -40,26 +40,13 @@ Paper: [Scal: A Benchmarking Suite for Concurrent Data Structures](./paper.pdf)
 [d-RA](./src/datastructures/balancer_1random.h) [DQ](./src/datastructures/ms_queue.h) and [DS](./src/datastructures/treiber_stack.h) | strict pool | 2013 | [[10]](#ref-haas-2013)
 
 ## Dependencies
+On Ubuntu (&ge; 14.04) based systems:
 
-* pkg-config
-* cmake
-* [googletest](https://code.google.com/p/googletest "googletest")
-* [gflags](https://code.google.com/p/gflags/ "gflags")
-* [google-perftools](https://code.google.com/p/gperftools/ "google-perftools")
+    sudo apt-get install --fix-missing google-perftools libgoogle-perftools-dev cmake libgtest-dev libgflags-dev
 
-On debian (jessie) based systems:
+On Debian (jessie) based systems:
 
     sudo apt-get install build-essential autoconf libtool google-perftools libgoogle-perftools-dev cmake libgtest-dev libgflags2 libgflags-dev
-
-On Ubuntu (&ge; 12.04) based systems:
-
-    sudo apt-get install build-essential autoconf libtool google-perftools libgoogle-perftools-dev cmake libgtest-dev
-    wget https://gflags.googlecode.com/files/libgflags0_2.0-1_amd64.deb
-    wget https://gflags.googlecode.com/files/libgflags-dev_2.0-1_amd64.deb
-    sudo dpkg -i libgflags0_2.0-1_amd64.deb
-    sudo dpkg -i libgflags-dev_2.0-1_amd64.deb
-
-A similar script is executed on our [continuous integration test.](https://drone.io/github.com/cksystemsgroup/scal/admin)
 
 ## Building
 
@@ -69,10 +56,10 @@ converted.
 
 This is as easy as
 
-    tools/get_gyp.sh
+    tools/make_deps.sh
     build/gyp/gyp --depth=. scal.gyp
-    make
-    BUILDTYPE=Release make
+    V=1 BUILDTYPE=Debug make
+    V=1 BUILDTYPE=Release make
 
 The debug and release builds reside in `out/`.
 

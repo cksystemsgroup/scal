@@ -5,7 +5,7 @@
 #include <limits.h>
 #include <math.h>
 #include <math.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <sys/timeb.h>
 #include <malloc.h>
 

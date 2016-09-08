@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <sched.h>
 
 #include "primitives.h"

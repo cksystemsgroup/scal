@@ -3,7 +3,7 @@
 // by a BSD license that can be found in the LICENSE file.
 
 #include <gflags/gflags.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "benchmark/std_glue/std_pipe_api.h"

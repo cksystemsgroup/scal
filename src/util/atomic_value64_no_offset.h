@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_ATOMIC_VALUE64_NO_OFFSET_H_
 #define SCAL_UTIL_ATOMIC_VALUE64_NO_OFFSET_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <limits.h>
 

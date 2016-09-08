@@ -5,7 +5,7 @@
 #ifndef SCAL_DATASTRUCTURES_TS_STACK_H_
 #define SCAL_DATASTRUCTURES_TS_STACK_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <atomic>
 
 #include "datastructures/stack.h"

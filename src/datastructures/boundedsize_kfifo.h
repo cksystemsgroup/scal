@@ -11,7 +11,7 @@
 #ifndef SCAL_DATASTRUCTURES_BOUNDEDSIZE_KFIFO_H_
 #define SCAL_DATASTRUCTURES_BOUNDEDSIZE_KFIFO_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 

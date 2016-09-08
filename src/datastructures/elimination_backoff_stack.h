@@ -11,7 +11,7 @@
 #ifndef SCAL_DATASTRUCTURES_ELIMINATION_BACKOFF_STACK_H_
 #define SCAL_DATASTRUCTURES_ELIMINATION_BACKOFF_STACK_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <assert.h>
 #include <atomic>
 

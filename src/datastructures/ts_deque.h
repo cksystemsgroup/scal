@@ -5,7 +5,7 @@
 #ifndef SCAL_DATASTRUCTURES_TS_DEQUE_H_
 #define SCAL_DATASTRUCTURES_TS_DEQUE_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <atomic>
 
 #include "datastructures/pool.h"

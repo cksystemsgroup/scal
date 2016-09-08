@@ -9,7 +9,7 @@
 #ifndef SCAL_UTIL_MALLOC_COMPAT_H_
 #define SCAL_UTIL_MALLOC_COMPAT_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 

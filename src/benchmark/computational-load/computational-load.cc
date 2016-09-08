@@ -3,7 +3,7 @@
 // by a BSD license that can be found in the LICENSE file.
 
 #include <gflags/gflags.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

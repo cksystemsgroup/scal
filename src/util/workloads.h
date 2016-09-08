@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_WORKLOADS_H_
 #define SCAL_UTIL_WORKLOADS_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "util/platform.h"
 

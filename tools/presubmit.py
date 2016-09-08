@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 # Copyright (c) 2012, the Scal project authors.  Please see the AUTHORS file
 # for details. All rights reserved. Use of this source code is governed by a
 # BSD-style license that can be found in the LICENSE file.
@@ -9,7 +11,7 @@ import sys
 
 from presubmit_v8 import CppLintWorker, ENABLED_LINT_RULES
 
-SOURCE_EXTENSIONS = [ ".h", ".c", ".cc" ]
+SOURCE_EXTENSIONS = [ ".h", ".c", ".cc"]
 
 def GitGetChangedFiles():
   f = os.popen("git diff --name-only --cached")
@@ -38,11 +40,11 @@ def Main():
   try:
     results = pool.map_async(CppLintWorker, commands).get(999999)
   except KeyboardInterrupt:
-    print "\nCaught KeyboardInterrupt, terminating workers."
+    print ("\nCaught KeyboardInterrupt, terminating workers.")
     sys.exit(1)
 
   total_errors = sum(results)
-  print "Total errors found: %d" % total_errors
+  print ("Total errors found: %d" % total_errors)
   sys.exit(total_errors == 0)
 
 if __name__ == '__main__':

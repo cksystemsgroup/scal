@@ -2,17 +2,22 @@
 # http://about.travis-ci.org/docs/user/build-configuration/
 # This file can be validated on:
 # http://lint.travis-ci.org/
+
+# Ubuntu 14.04 Trusty support.
+sudo: required
+dist: trusty
+
 os: linux
 language: cpp
 compiler: gcc
 addons:
   apt:
-    # List of whitelisted in travis packages for ubuntu-precise can be found here:
-    #   https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
     # List of whitelisted in travis apt-sources:
     #   https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json
     sources:
     - ubuntu-toolchain-r-test
+    # List of whitelisted in travis packages for ubuntu-precise can be found here:
+    #   https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
     packages:
     - gcc-4.8
     - g++-4.8
@@ -20,16 +25,16 @@ addons:
     - libgoogle-perftools-dev
     - cmake
     - libgtest-dev
-before_install: tools/travis_before_install.sh
+    - libgflags-dev 
+    - libgflags2
 install:
-- if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
-- echo ${PATH}
-- echo ${CXX}
-- ${CXX} --version
-- ${CXX} -v
-- tools/travis_install.sh
-script: tools/travis_script.sh
+- tools/make_deps.sh
+script:
+- build/gyp/gyp --depth=. scal.gyp
+- V=1 BUILDTYPE=Debug make
+- V=1 BUILDTYPE=Release make
 notifications:
   email: false
   slack:
     secure: EfvNOjaUCEeMHk7rfeVcw57h10A31HYWkmfxxqtWHuqotMe2mOaXbrI0/GczaE3w3x0I5ZJXGqvcprQEGrfTu+L3779VImeQfHvEtarv9WTLOsVWTmaOr6kObzmanqkwbUWV7E9tVK7OL+xhLPAsd1V6rEekWf07i9fYaRW93jM=
+

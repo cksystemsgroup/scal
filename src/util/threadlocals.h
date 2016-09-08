@@ -6,7 +6,7 @@
 #define SCAL_UTIL_THREADLOCALS_H_
 
 #include <pthread.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "src/util/random.h"
 

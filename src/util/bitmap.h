@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_BITMAP_H_
 #define SCAL_UTIL_BITMAP_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 
 class Bitmap256 {
  public:

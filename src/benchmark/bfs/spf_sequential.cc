@@ -5,7 +5,7 @@
 #define __STDC_FORMAT_MACROS
 
 #include <gflags/gflags.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "benchmark/bfs/graph.h"
 #include "datastructures/single_list.h"

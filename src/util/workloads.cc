@@ -4,7 +4,7 @@
 
 #include "util/workloads.h"
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "util/platform.h"
 

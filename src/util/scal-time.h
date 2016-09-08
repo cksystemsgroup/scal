@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_TIME_H_
 #define SCAL_UTIL_TIME_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <sys/time.h>
 #include <cstdlib>
 

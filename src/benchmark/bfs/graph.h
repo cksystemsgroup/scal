@@ -5,7 +5,7 @@
 #ifndef SCAL_BENCHMARK_BFS_GRAPH_H
 #define SCAL_BENCHMARK_BFS_GRAPH_H
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <limits>
 #include <vector>

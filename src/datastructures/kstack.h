@@ -13,7 +13,7 @@
 #define SCAL_DATASTRUCTURES_KSTACK_H_
 
 #include <assert.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 #ifdef LOCALLY_LINEARIZABLE

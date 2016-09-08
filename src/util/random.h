@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_RANDOM_H_
 #define SCAL_UTIL_RANDOM_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <chrono>
 #include <random>

@@ -5,7 +5,7 @@
 #include "util/threadlocals.h"
 
 #include <pthread.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 

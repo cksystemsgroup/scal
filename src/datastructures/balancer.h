@@ -5,7 +5,7 @@
 #ifndef SCAL_DATASTRUCTURES_BALANCER_H_
 #define SCAL_DATASTRUCTURES_BALANCER_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 
 class BalancerInterface {
  public:

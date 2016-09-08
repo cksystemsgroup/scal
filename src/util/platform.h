@@ -5,7 +5,7 @@
 #ifndef SCAL_UTIL_PLATFORM_H_
 #define SCAL_UTIL_PLATFORM_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <unistd.h>
 
 #ifndef _always_line

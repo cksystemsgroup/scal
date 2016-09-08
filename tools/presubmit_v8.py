@@ -105,7 +105,7 @@ def CppLintWorker(command):
       out_line = process.stderr.readline()
       if out_line == '' and process.poll() != None:
         if error_count == -1:
-          print "Failed to process %s" % command.pop()
+          print ("Failed to process %s" % command.pop())
           return 1
         break
       m = LINT_OUTPUT_PATTERN.match(out_line)

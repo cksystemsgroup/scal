@@ -2,7 +2,7 @@
 #define SCAL_DATASTRUCTURES_TS_TIMESTAMP_H_
 
 #define __STDC_LIMIT_MACROS
-#include <stdint.h>
+#include <inttypes.h>
 #include <assert.h>
 #include <atomic>
 #include <stdio.h>
