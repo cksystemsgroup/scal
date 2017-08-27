@@ -336,9 +336,10 @@ bool lcrq_dequeue(int64_t* item) {
 
             if (likely(!is_empty(val))) {
                 if (likely(idx == h)) {
-                    if (CAS2((uint64_t*)cell, val, cell_idx, -1, unsafe | (h + RING_SIZE)))
+                    if (CAS2((uint64_t*)cell, val, cell_idx, -1, unsafe | (h + RING_SIZE))) {
                         *item = val;
                         return true;
+                    }
                 } else {
                     if (CAS2((uint64_t*)cell, val, cell_idx, val, set_unsafe(idx))) {
                         count_unsafe_node();
