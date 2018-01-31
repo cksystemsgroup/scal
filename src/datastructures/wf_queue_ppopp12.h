@@ -234,6 +234,7 @@ void WaitfreeQueue<T>::help_if_needed() {
         help_deq(rec->cur_thread_id(), rec->last_phase());
       }
     }
+    rec->reset();
   }
 }
 
