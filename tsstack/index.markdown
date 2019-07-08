@@ -67,13 +67,12 @@ Linearizability requires that the order in which elements are pushed is
 preserved. Concurrently pushed elements, however, are not ordered and thus
 no order has to be preserved. We show in the stack theorem that a partial
 order on elements, as illustrated to the left, is sufficient for a
-linearizable stack implementation . If pop operations always remove one of
+linearizable stack implementation. If pop operations always remove one of
 the top elements in the partial order, then the implementation is
 linearizable with respect to stack semantics. The stack theorem is proven
-in Isabelle HOL (<a href="stackthm.tgz">sources</a>). More details about
-the stack theorem is available in our <a
-href="http://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL15-TSStack.pdf">POPL15
-paper</a>.
+in Isabelle HOL (<a href="stackthm.tgz">sources</a>). More details are
+available in our POPL 2015 <a
+href="http://www.cs.uni-salzburg.at/~ck/content/publications/conferences/POPL15-TSStack.pdf">paper</a> and <a href="https://drive.google.com/drive/folders/0B492ZbXi9VSwUWxkWHdsT1FpZE0">artifact</a>.
 
 </p>
 
